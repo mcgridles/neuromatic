@@ -1,45 +1,45 @@
 import Tkinter
-import toml
 
 
 def callback():
     print "called the callback!"
 
 
+def get_screen_res():
+    root = Tkinter.Tk()
+    root.withdraw()
+    width = root.winfo_screenwidth()
+    height = root.winfo_screenheight()
+    root.destroy()
+
+    return width, height
+
+
 class Window(object):
 
-    def __init__(self, title, height=200, width=100):
+    def __init__(self, title, width, height):
         self.root = Tkinter.Tk()
         self.root.title = title
-        self.set_size(height, width)
+        self.set_size(width, height)
 
-        self.add_menu()
-        self.add_button()
-        self.add_text_box()
+        Menu(self.root)
+        Button(self.root)
+        TextBox(self.root)
 
     def start(self):
         self.root.mainloop()
 
-    def set_size(self, height, width):
-        set_str = '{}x{}'.format(str(height), str(width))
+    def set_size(self, width, height):
+        set_str = '{}x{}'.format(str(width), str(height))
         self.root.geometry(set_str)
-
-    def add_text_box(self):
-        TextBox(self.root)
-
-    def add_menu(self):
-        menu = Menu(self.root)
-        self.root.config(menu=menu.menu)
-        menu.add()
-
-    def add_button(self):
-        Button(self.root)
 
 
 class Menu(object):
 
     def __init__(self, root):
         self.menu = Tkinter.Menu(root)
+        root.config(menu=self.menu)
+        self.add()
 
     def add(self):
         file_menu = Tkinter.Menu(self.menu)
@@ -89,7 +89,8 @@ class TextBox(object):
 
 
 def main():
-    window = Window('test')
+    width, height = get_screen_res()
+    window = Window('test', width, height)
     window.start()
 
 
