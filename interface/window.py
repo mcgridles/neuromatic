@@ -14,6 +14,37 @@ def get_screen_res():
 
     return width, height
 
+# This is where all the buttons different functions will be listed. They will be defined as lambdas so
+# that they can be passed into the button class as input arguments so the button class will remain
+# compact. We can move them to the window class if thats preferable which it probably is
+
+
+create_new_canvas=lambda: (
+    print("Not implemented yet")
+    # TODO: Add functionality to this function (are you sure -> clear canvas components)
+    )
+
+
+generate_nn_script=lambda: (
+    print("Not implemented yet")
+    # TODO: Add functionality to this function (are you sure -> clear canvas components)
+    )
+
+
+train_model=lambda: (
+    print("Not implemented yet")
+    # TODO: Add functionality to this function (are you sure -> clear canvas components)
+    )
+
+cancel_training=lambda: (
+    print("Not implemented yet")
+    # TODO: Add functionality to this function (are you sure -> clear canvas components)
+    )
+clear_canvas=lambda: (
+    print("Not implemented yet")
+    # TODO: Add functionality to this function (are you sure -> clear canvas components)
+    )
+
 
 class Window(object):
 
@@ -48,7 +79,12 @@ class Window(object):
 
     def add_widgets(self):
         Menu(self.root)
-        Button(self.top_frame)
+        #TODO: Format Button Locations
+        Button(self.top_frame, "New", create_new_canvas)
+        Button(self.top_frame, "Generate", generate_nn_script)
+        Button(self.top_frame, "Train", train_model)
+        Button(self.top_frame, "Cancel", cancel_training)
+        Button(self.top_frame, "Clear", clear_canvas)
         TextBox(self.right_frame)
 
     def start(self):
@@ -80,14 +116,18 @@ class Menu(object):
 
 
 class Button(object):
-
-    def __init__(self, root):
+    #TODO: Format Buttons
+    def __init__(self, root, button_label, passed_function):
         f = tkinter.Frame(root, height=47, width=47)
         f.pack_propagate(0)  # don't shrink
         f.pack()
+        self.passed_function = passed_function
+        self.b = tkinter.Button(f, text=button_label, command=self.on_button_click)
+        self.b.pack(fill=tkinter.BOTH, expand=1)
 
-        b = tkinter.Button(f, text="Sure!")
-        b.pack(fill=tkinter.BOTH, expand=1)
+    def on_button_click(self):
+        print("Hello")
+        self.passed_function()
 
 
 class TextBox(object):
