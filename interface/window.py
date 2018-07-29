@@ -80,7 +80,9 @@ class Window(object):
     def add_widgets(self):
         Menu(self.root)
         #TODO: Format Button Locations
-        Button(self.top_frame, "New", create_new_canvas)
+        new_button = Button(self.top_frame, "New", create_new_canvas)
+        # This is just a test, delete the following line
+        new_button.make_draggable()
         Button(self.top_frame, "Generate", generate_nn_script)
         Button(self.top_frame, "Train", train_model)
         Button(self.top_frame, "Cancel", cancel_training)
@@ -118,16 +120,42 @@ class Menu(object):
 class Button(object):
     #TODO: Format Buttons
     def __init__(self, root, button_label, passed_function):
-        f = tkinter.Frame(root, height=47, width=47)
-        f.pack_propagate(0)  # don't shrink
-        f.pack()
+        self.f = tkinter.Frame(root, height=47, width=47)
+        self.f.pack_propagate(0)  # don't shrink
+        self.f.pack()
         self.passed_function = passed_function
-        self.b = tkinter.Button(f, text=button_label, command=self.on_button_click)
+        self.b = tkinter.Button(self.f, text=button_label, command=self.on_button_click)
         self.b.pack(fill=tkinter.BOTH, expand=1)
 
     def on_button_click(self):
-        print("Hello")
         self.passed_function()
+
+    def make_draggable(self):
+        self.b.bind('<Button-1>', self.on_start)
+        self.b.bind('<B1-Motion>', self.on_drag)
+        self.b.bind('<ButtonRelease-1>', self.on_drop)
+        self.b.configure(cursor='hand1')
+
+    def on_start(self, event):
+        x,y = event.x,event.y
+        print(x,y)
+
+    def on_drag(self, event):
+        # have image follow drag
+        x,y = event.x,event.y
+
+    def on_drop(self, event):
+        # find the widget under the cursor
+        x,y = event.x,event.y
+        print(x,y)
+        # See if I can make other buttons dynamically draggable. I can't.
+        #TODO figure out how to get the widget its dragged onto.
+        target = event.widget.winfo_containing(x, y)
+        print(target)
+        try:
+            target.make_draggable()
+        except:
+            pass
 
 
 class TextBox(object):
