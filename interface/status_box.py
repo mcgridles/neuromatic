@@ -1,17 +1,27 @@
-import tkinter
+import tkinter as tk
 
 
 class StatusBox(object):
 
-    def __init__(self, root, height=10, width=40):
-        self.text = tkinter.Text(root, height=height, width=width)
-        self.text.config(state='disabled')
-        self.text.pack(side=tkinter.LEFT, fill=tkinter.BOTH, expand='yes')
+    def __init__(self, root, height=200, width=200):
+        self.frame = tk.Frame(root, height=height, width=width, pady=3, padx=3)
+        self.frame.columnconfigure(0, weight=1)
+        self.frame.rowconfigure(0, weight=1)
+        self.frame.grid(sticky='nsew')
 
-        self.scroll = tkinter.Scrollbar(root)
-        self.scroll.pack(side=tkinter.RIGHT, fill=tkinter.Y)
-        self.scroll.config(command=self.text.yview)
-        self.text.config(yscrollcommand=self.scroll.set)
+        self.text = tk.Text(self.frame)
+        self.text.config(state=tk.DISABLED, wrap=tk.NONE)
+        self.text.grid(row=0, column=0, stick='nsew')
+
+        self.v_scroll = tk.Scrollbar(self.frame, orient=tk.VERTICAL)
+        self.v_scroll.grid(row=0, column=1, stick='ns')
+        self.v_scroll.config(command=self.text.yview)
+        self.text.config(yscrollcommand=self.v_scroll.set)
+
+        self.h_scroll = tk.Scrollbar(self.frame, orient=tk.HORIZONTAL)
+        self.h_scroll.grid(row=1, column=0, stick='ew')
+        self.h_scroll.config(command=self.text.xview)
+        self.text.config(xscrollcommand=self.h_scroll.set)
 
     def add_text(self, text):
         """
@@ -23,36 +33,37 @@ class StatusBox(object):
             raise TypeError('Value passed to add_text must be a string.')
 
         # Enable text edit
-        self.text.config(state='normal')
+        self.text.config(state=tk.NORMAL)
         # Add new text to the bottom
-        self.text.insert('end', text)
+        self.text.insert(tk.END, text)
         # Disable text edit
-        self.text.config(state='disabled')
+        self.text.config(state=tk.DISABLED)
 
         # Get the current position of the scroll bar
-        position = self.scroll.get()
+        y_position = self.v_scroll.get()
+        x_position = self.h_scroll.get()
         # Continue the auto scroll if scroll bar is set to bottom
-        if position[1] == 1.0:
+        if y_position[1] == 1.0 and x_position[0] == 0.0:
             # Scroll to the end of the text box
-            self.text.see('end')
+            self.text.see(tk.END)
+            self.h_scroll.set(x_position[0], x_position[1])
 
 
 if __name__ == '__main__':
-    root = tkinter.Tk()
+    root = tk.Tk()
     root.title('StatusBox Test')
-    root.grid_rowconfigure(1, weight=1)
     root.grid_columnconfigure(0, weight=1)
+    root.grid_rowconfigure(0, weight=1)
 
-    button_frame = tkinter.Frame(root, bg='yellow', width=200, pady=3, padx=3)
-    button_frame.grid(row=1, column=1, sticky='nsew')
-    text_frame = tkinter.Frame(root, bg='green', width=600, pady=3, padx=3)
-    text_frame.grid(row=1, column=0, sticky='nsew')
-
+    text_frame = tk.Frame(root, bg='green', height=200, width=200, pady=3, padx=3)
+    text_frame.grid(row=0, column=0, sticky='nsew')
+    text_frame.rowconfigure(0, weight=1)
+    text_frame.columnconfigure(0, weight=1)
     box = StatusBox(text_frame)
-    f = tkinter.Frame(button_frame, height=47, width=100, pady=3, padx=3)
-    f.pack_propagate(0)  # don't shrink
-    f.pack()
 
-    b = tkinter.Button(f, command=lambda: box.add_text('new\n'), text="add text")
-    b.pack(fill=tkinter.BOTH, expand=1)
+    button_frame = tk.Frame(root, bg='yellow', height=200, width=200, pady=3, padx=3)
+    button_frame.grid(row=0, column=1, sticky='nsew')
+    button = tk.Button(button_frame, command=lambda: box.add_text('test\n'), text="add text")
+    button.pack()
+
     root.mainloop()
