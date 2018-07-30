@@ -81,13 +81,14 @@ class Window(object):
         Menu(self.root)
         #TODO: Format Button Locations
         new_button = Button(self.top_frame, "New", create_new_canvas)
+        newer_button = Button(self.right_frame, "Newer", create_new_canvas)
         # This is just a test, delete the following line
         new_button.make_draggable()
-        Button(self.top_frame, "Generate", generate_nn_script)
-        Button(self.top_frame, "Train", train_model)
-        Button(self.top_frame, "Cancel", cancel_training)
-        Button(self.top_frame, "Clear", clear_canvas)
-        TextBox(self.right_frame)
+        # Button(self.top_frame, "Generate", generate_nn_script)
+        # Button(self.top_frame, "Train", train_model)
+        # Button(self.top_frame, "Cancel", cancel_training)
+        # Button(self.top_frame, "Clear", clear_canvas)
+        # TextBox(self.right_frame)
 
     def start(self):
         self.root.mainloop()
@@ -121,6 +122,7 @@ class Button(object):
     #TODO: Format Buttons
     def __init__(self, root, button_label, passed_function):
         self.f = tkinter.Frame(root, height=47, width=47)
+        self.root = root
         self.f.pack_propagate(0)  # don't shrink
         self.f.pack()
         self.passed_function = passed_function
@@ -148,13 +150,14 @@ class Button(object):
         # find the widget under the cursor
         x,y = event.x,event.y
         print(x,y)
-        # See if I can make other buttons dynamically draggable. I can't.
-        #TODO figure out how to get the widget its dragged onto.
+        # # See if I can make other buttons dynamically draggable. I can't.
+        # #TODO figure out how to get the widget its dragged onto.
         target = event.widget.winfo_containing(x, y)
         print(target)
         try:
             target.make_draggable()
         except:
+            print("Didn't work")
             pass
 
 
