@@ -1,5 +1,8 @@
 import tkinter
+from interface import *
 
+
+Layer_Type = 'Blank'
 
 def callback():
     print("called the callback!")
@@ -44,6 +47,9 @@ clear_canvas=lambda: (
     print("Not implemented yet")
     # TODO: Add functionality to this function (are you sure -> clear canvas components)
     )
+empty_funct=lambda: (
+    print("No Function")
+    )
 
 
 class Window(object):
@@ -51,6 +57,9 @@ class Window(object):
     def __init__(self, title, width, height):
         self.width = width
         self.height = height
+
+        #This will store which layer is selected
+        self.layer_type = None
 
         self.root = tkinter.Tk()
         self.root.title(title)
@@ -81,9 +90,10 @@ class Window(object):
         Menu(self.root)
         #TODO: Format Button Locations
         new_button = Button(self.top_frame, "New", create_new_canvas)
-        newer_button = Button(self.right_frame, "Newer", create_new_canvas)
+        input_layer_button = LayerButton(self.right_frame, "Input Layer", empty_funct)
+        input_layer_button.make_draggable()
+        slot_one_button = SlotButton(self.canvas_frame, "Slot 1", empty_funct)
         # This is just a test, delete the following line
-        new_button.make_draggable()
         # Button(self.top_frame, "Generate", generate_nn_script)
         # Button(self.top_frame, "Train", train_model)
         # Button(self.top_frame, "Cancel", cancel_training)
@@ -96,6 +106,70 @@ class Window(object):
     def set_size(self, width, height):
         set_str = '{}x{}'.format(str(width), str(height))
         self.root.geometry(set_str)
+
+
+class Button(object):
+    #TODO: Format Buttons
+    def __init__(self, root, button_label, passed_function):
+        self.f = tkinter.Frame(root, height=47, width=47)
+        self.root = root
+        self.f.pack_propagate(0)  # don't shrink
+        self.f.pack()
+        self.passed_function = passed_function
+        self.layer_type = button_label
+        self.b = tkinter.Button(self.f, text=button_label, command=self.button_callback)
+        self.b.pack(fill=tkinter.BOTH, expand=1)
+
+    def button_callback(self):
+        self.passed_function()
+
+
+class LayerButton(Button):
+    def make_draggable(self):
+
+        self.b.bind('<Button-1>', self.on_start)
+        self.b.bind('<B1-Motion>', self.on_drag)
+        self.b.bind('<ButtonRelease-1>', self.on_drop)
+        self.b.configure(cursor='hand1')
+
+    def button_callback(self):
+       print("Wrong")
+
+    def on_start(self, event):
+        x,y = event.x,event.y
+        global Layer_Type
+        Layer_Type = 'Filled'
+        print(x,y)
+
+    def on_drag(self, event):
+        # have image follow drag
+        pass
+
+    def on_drop(self, event):
+        x,y = event.x,event.y
+        print('Coords',x,y)
+        target = event.widget.winfo_containing(x, y)
+        print("Target:",target)
+        global Layer_Type
+        Layer_Type = self.layer_type
+        print(target)
+        try:
+            target.invoke()
+        except:
+            print("Didn't work")
+            pass
+
+
+
+class SlotButton(Button):
+    def button_callback(self):
+        print('Here')
+        global Layer_Type
+        if Layer_Type != 'Blank':
+            self.layer_type = Layer_Type
+            Layer_Type = 'Blank'
+            print('This is my type:', self.layer_type)
+            print('This is the global type', Layer_Type)
 
 
 class Menu(object):
@@ -116,50 +190,6 @@ class Menu(object):
         help_menu = tkinter.Menu(self.menu)
         self.menu.add_cascade(label="Help", menu=help_menu)
         help_menu.add_command(label="About...", command=callback)
-
-
-class Button(object):
-    #TODO: Format Buttons
-    def __init__(self, root, button_label, passed_function):
-        self.f = tkinter.Frame(root, height=47, width=47)
-        self.root = root
-        self.f.pack_propagate(0)  # don't shrink
-        self.f.pack()
-        self.passed_function = passed_function
-        self.b = tkinter.Button(self.f, text=button_label, command=self.on_button_click)
-        self.b.pack(fill=tkinter.BOTH, expand=1)
-
-    def on_button_click(self):
-        self.passed_function()
-
-    def make_draggable(self):
-        self.b.bind('<Button-1>', self.on_start)
-        self.b.bind('<B1-Motion>', self.on_drag)
-        self.b.bind('<ButtonRelease-1>', self.on_drop)
-        self.b.configure(cursor='hand1')
-
-    def on_start(self, event):
-        x,y = event.x,event.y
-        print(x,y)
-
-    def on_drag(self, event):
-        # have image follow drag
-        x,y = event.x,event.y
-
-    def on_drop(self, event):
-        # find the widget under the cursor
-        x,y = event.x,event.y
-        print(x,y)
-        # # See if I can make other buttons dynamically draggable. I can't.
-        # #TODO figure out how to get the widget its dragged onto.
-        target = event.widget.winfo_containing(x, y)
-        print(target)
-        try:
-            target.make_draggable()
-        except:
-            print("Didn't work")
-            pass
-
 
 class TextBox(object):
 
