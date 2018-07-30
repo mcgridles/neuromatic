@@ -23,28 +23,28 @@ def get_screen_res():
 
 
 create_new_canvas=lambda: (
-    print("Not implemented yet")
+    print("Creating New Canvas")
     # TODO: Add functionality to this function (are you sure -> clear canvas components)
     )
 
 
 generate_nn_script=lambda: (
-    print("Not implemented yet")
+    print("Generating Neural Network Script")
     # TODO: Add functionality to this function (are you sure -> clear canvas components)
     )
 
 
 train_model=lambda: (
-    print("Not implemented yet")
+    print("Training Model")
     # TODO: Add functionality to this function (are you sure -> clear canvas components)
     )
 
 cancel_training=lambda: (
-    print("Not implemented yet")
+    print("Canceling Training")
     # TODO: Add functionality to this function (are you sure -> clear canvas components)
     )
 clear_canvas=lambda: (
-    print("Not implemented yet")
+    print("Clearing Canvas")
     # TODO: Add functionality to this function (are you sure -> clear canvas components)
     )
 empty_funct=lambda: (
@@ -88,12 +88,32 @@ class Window(object):
 
     def add_widgets(self):
         Menu(self.root)
+
         #TODO: Format Button Locations
         new_button = Button(self.top_frame, "New", create_new_canvas)
-        input_layer_button = LayerButton(self.right_frame, "Input Layer", empty_funct)
+        new_button.f.grid(row=0,column=0)
+        generate_button = Button(self.top_frame, "Generate", generate_nn_script)
+        generate_button.f.grid(row=0, column=1)
+        train_button = Button(self.top_frame, "Train", train_model)
+        train_button.f.grid(row=0, column=2)
+        cancel_button = Button(self.top_frame, "Cancel", cancel_training)
+        cancel_button.f.grid(row=0, column=3)
+        clear_button = Button(self.top_frame, "Clear", clear_canvas)
+        clear_button.f.grid(row=0, column=4)
+
+        input_layer_button = LayerButton(self.right_frame, "Input Layer", empty_funct, 'Input')
+        input_layer_button.f.grid(row=0,column=0)
         input_layer_button.make_draggable()
+        hidden_layer_button = LayerButton(self.right_frame, "Hidden Layer", empty_funct, 'Hidden')
+        hidden_layer_button.f.grid(row=1, column=0)
+        hidden_layer_button.make_draggable()
+        output_layer_button = LayerButton(self.right_frame, "Output Layer", empty_funct, 'Output')
+        output_layer_button.f.grid(row=2, column=0)
+        output_layer_button.make_draggable()
+
         slot_one_button = SlotButton(self.canvas_frame, "Slot 1", empty_funct)
-        # This is just a test, delete the following line
+
+
         # Button(self.top_frame, "Generate", generate_nn_script)
         # Button(self.top_frame, "Train", train_model)
         # Button(self.top_frame, "Cancel", cancel_training)
@@ -110,13 +130,17 @@ class Window(object):
 
 class Button(object):
     #TODO: Format Buttons
-    def __init__(self, root, button_label, passed_function):
+    def __init__(self, root, button_label, passed_function,layer_type='Blank'):
         self.f = tkinter.Frame(root, height=47, width=47)
+        #TODO: CRITICAL check your personal offset. not sure how to do suitable workaround
+        #but this works for now. Change when not as busy
+        self.x_offset = 1230
+        self.y_offset = 101
         self.root = root
         self.f.pack_propagate(0)  # don't shrink
         self.f.pack()
         self.passed_function = passed_function
-        self.layer_type = button_label
+        self.layer_type = layer_type
         self.b = tkinter.Button(self.f, text=button_label, command=self.button_callback)
         self.b.pack(fill=tkinter.BOTH, expand=1)
 
@@ -130,7 +154,7 @@ class LayerButton(Button):
         self.b.bind('<Button-1>', self.on_start)
         self.b.bind('<B1-Motion>', self.on_drag)
         self.b.bind('<ButtonRelease-1>', self.on_drop)
-        self.b.configure(cursor='hand1')
+        self.b.configure(cursor='hand2')
 
     def button_callback(self):
        print("Wrong")
@@ -142,11 +166,12 @@ class LayerButton(Button):
         print(x,y)
 
     def on_drag(self, event):
-        # have image follow drag
+        # Uncomment and click->drag to top left corner and change offset values to the negative values
+        # print(event.x,event.y)
         pass
 
     def on_drop(self, event):
-        x,y = event.x,event.y
+        x,y = event.x + self.x_offset,event.y + self.y_offset
         print('Coords',x,y)
         target = event.widget.winfo_containing(x, y)
         print("Target:",target)
@@ -163,13 +188,23 @@ class LayerButton(Button):
 
 class SlotButton(Button):
     def button_callback(self):
-        print('Here')
         global Layer_Type
         if Layer_Type != 'Blank':
             self.layer_type = Layer_Type
             Layer_Type = 'Blank'
             print('This is my type:', self.layer_type)
             print('This is the global type', Layer_Type)
+        else:
+            print(self.layer_type)
+
+    def get_slot_info(self):
+        return self.layer_type
+        pass
+
+    def edit_slot_info(self, number, activation):
+        self.number = number
+        self.activation = activation
+
 
 
 class Menu(object):
@@ -225,4 +260,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
