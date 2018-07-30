@@ -4,29 +4,37 @@ import tkinter
 class StatusBox(object):
 
     def __init__(self, root, height=10, width=40):
-        frame = tkinter.Frame(root, bg='blue', width=100, height=100, pady=3, padx=3)
-        frame.grid(row=1, sticky='nsew')
-
-        self.text = tkinter.Text(frame, height=height, width=width)
+        self.text = tkinter.Text(root, height=height, width=width)
         self.text.config(state='disabled')
-        self.text.pack(side=tkinter.LEFT, fill=tkinter.Y)
+        self.text.pack(side=tkinter.LEFT, fill=tkinter.BOTH, expand='yes')
 
-        scroll = tkinter.Scrollbar(frame)
-        scroll.pack(side=tkinter.RIGHT, fill=tkinter.Y)
-        scroll.config(command=self.text.yview)
-        self.text.config(yscrollcommand=scroll.set)
+        self.scroll = tkinter.Scrollbar(root)
+        self.scroll.pack(side=tkinter.RIGHT, fill=tkinter.Y)
+        self.scroll.config(command=self.text.yview)
+        self.text.config(yscrollcommand=self.scroll.set)
 
     def add_text(self, text):
         """
-        Append text to the text box in a certain color.
-        -- RED for Error
-        :param text:
-        :param color:
-        :return:
+        Append text to the text.
+        :param text: String to be added to the status box.
+        :return: None
         """
+        if type(text) is not str:
+            raise TypeError('Value passed to add_text must be a string.')
+
+        # Enable text edit
         self.text.config(state='normal')
-        self.text.insert(tkinter.END, text)
+        # Add new text to the bottom
+        self.text.insert('end', text)
+        # Disable text edit
         self.text.config(state='disabled')
+
+        # Get the current position of the scroll bar
+        position = self.scroll.get()
+        # Continue the auto scroll if scroll bar is set to bottom
+        if position[1] == 1.0:
+            # Scroll to the end of the text box
+            self.text.see('end')
 
 
 if __name__ == '__main__':
