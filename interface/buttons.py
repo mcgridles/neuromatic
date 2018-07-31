@@ -3,6 +3,9 @@ Height = 47
 Xoff = 706
 Yoff = 107
 
+def button_init():
+    global Layer_Type
+
 class GenericButton(object):
     #TODO: Format Buttons
     def __init__(self, root, button_label, passed_function, layer_type='Blank', offset=0):
@@ -43,7 +46,7 @@ class LayerButton(GenericButton):
 
     def on_drag(self, event):
         # Uncomment and click->drag to top left corner and change offset values to the negative values
-        print(event.x,event.y)
+        # print(event.x,event.y)
         pass
 
     def on_drop(self, event):
@@ -65,7 +68,7 @@ class LayerButton(GenericButton):
 
 
 class SlotButton(GenericButton):
-    def __init__(self, root, button_label, passed_function, layer_type='Blank'):
+    def __init__(self, root, passed_function, layer_type='Blank'):
         self.f = tkinter.Frame(root, height=Height*5, width=100)
         self.f.pack_propagate(0)  # don't shrink
         self.f.pack()
@@ -76,6 +79,8 @@ class SlotButton(GenericButton):
         self.root = root
         self.passed_function = passed_function
         self.layer_type = layer_type
+        self.number = 1
+        self.activation = 'sigmoid'
         self.btn_text = tkinter.StringVar()
         self.btn_text.set('Blank')
         self.b = tkinter.Button(self.f, textvariable=self.btn_text, command=self.button_callback)
@@ -92,10 +97,10 @@ class SlotButton(GenericButton):
             print(self.layer_type)
 
     def get_slot_info(self):
-        return {'layer_type':self.layer_type,
+        slot_info = {'layer_type':self.layer_type,
                 'number':self.number,
                 'activation':self.activation}
-        pass
+        return slot_info
 
     def edit_slot_info(self, number=1, activation=1):
         self.number = number

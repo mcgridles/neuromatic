@@ -4,6 +4,7 @@ from buttons import *
 
 
 Layer_Type = 'Blank'
+Num_Layers = 3
 
 def callback():
     print("called the callback!")
@@ -17,40 +18,6 @@ def get_screen_res():
     root.destroy()
 
     return width, height
-
-# This is where all the buttons different functions will be listed. They will be defined as lambdas so
-# that they can be passed into the buttons.py class as input arguments so the buttons.py class will remain
-# compact. We can move them to the window class if thats preferable which it probably is
-
-
-create_new_canvas=lambda: (
-    print("Creating New Canvas")
-    # TODO: Add functionality to this function (are you sure -> clear canvas components)
-    )
-
-
-generate_nn_script=lambda: (
-    print("Generating Neural Network Script")
-    # TODO: Add functionality to this function (are you sure -> clear canvas components)
-    )
-
-
-train_model=lambda: (
-    print("Training Model")
-    # TODO: Add functionality to this function (are you sure -> clear canvas components)
-    )
-
-cancel_training=lambda: (
-    print("Canceling Training")
-    # TODO: Add functionality to this function (are you sure -> clear canvas components)
-    )
-clear_canvas=lambda: (
-    print("Clearing Canvas")
-    # TODO: Add functionality to this function (are you sure -> clear canvas components)
-    )
-empty_funct=lambda: (
-    print("No Function")
-    )
 
 
 class Window(object):
@@ -72,8 +39,9 @@ class Window(object):
         self.canvas_frame = None
 
         self.config_frames()
+        self.slots = []
+        self.create_lambdas()
         self.add_widgets()
-
 
     def config_frames(self):
         self.root.grid_rowconfigure(1, weight=1)
@@ -92,38 +60,70 @@ class Window(object):
         Menu(self.root)
 
         #TODO: Format buttons.py Locations
-        new_button = GenericButton(self.top_frame, "New", create_new_canvas)
+        new_button = GenericButton(self.top_frame, "New", self.create_new_canvas)
         new_button.f.grid(row=0,column=0)
-        generate_button = GenericButton(self.top_frame, "Generate", generate_nn_script)
+        generate_button = GenericButton(self.top_frame, "Generate", self.generate_nn_script)
         generate_button.f.grid(row=0, column=1)
-        train_button = GenericButton(self.top_frame, "Train", train_model)
+        train_button = GenericButton(self.top_frame, "Train", self.train_model)
         train_button.f.grid(row=0, column=2)
-        cancel_button = GenericButton(self.top_frame, "Cancel", cancel_training)
+        cancel_button = GenericButton(self.top_frame, "Cancel", self.cancel_training)
         cancel_button.f.grid(row=0, column=3)
-        clear_button = GenericButton(self.top_frame, "Clear", clear_canvas)
+        clear_button = GenericButton(self.top_frame, "Clear", self.clear_canvas)
         clear_button.f.grid(row=0, column=4)
 
-        input_layer_button = LayerButton(self.right_frame, "Input Layer", empty_funct, 'Input', 0)
+        input_layer_button = LayerButton(self.right_frame, "Input Layer", self.empty_funct, 'Input', 0)
         input_layer_button.f.grid(row=0,column=0)
         input_layer_button.make_draggable()
-        hidden_layer_button = LayerButton(self.right_frame, "Hidden Layer", empty_funct, 'Hidden', 1)
+        hidden_layer_button = LayerButton(self.right_frame, "Hidden Layer", self.empty_funct, 'Hidden', 1)
         hidden_layer_button.f.grid(row=1, column=0)
         hidden_layer_button.make_draggable()
-        output_layer_button = LayerButton(self.right_frame, "Output Layer", empty_funct, 'Output', 2)
+        output_layer_button = LayerButton(self.right_frame, "Output Layer", self.empty_funct, 'Output', 2)
         output_layer_button.f.grid(row=2, column=0)
         output_layer_button.make_draggable()
 
-        btn_txt = tkinter.StringVar
-        slot_one_button = SlotButton(self.canvas_frame, btn_txt, empty_funct)
-        slot_one_button.f.grid(row=0,column=3)
-        slot_two_button = SlotButton(self.canvas_frame, btn_txt, empty_funct)
-        slot_two_button.f.grid(row=0, column=4)
-        slot_three_button = SlotButton(self.canvas_frame, btn_txt, empty_funct)
-        slot_three_button.f.grid(row=0,column=5)
+        self.add_slot()
+        self.add_slot()
+        self.add_slot()
+
+    def get_slots(self):
+        for slot in self.slots:
+            print(slot.get_slot_info())
 
 
-    def add_slots(self):
-        pass
+    def create_lambdas(self):
+        # This is where all the buttons different functions will be listed. They will be defined as lambdas so
+        # that they can be passed into the buttons.py class as input arguments so the buttons.py class will remain
+        # compact.
+
+        self.add_slot = lambda: (
+            self.slots.append(SlotButton(self.canvas_frame, self.empty_funct)),
+            self.slots[-1].f.grid(row=0,column=len(self.slots)-1)
+        )
+
+        self.create_new_canvas = lambda: (
+            print("Creating New Canvas")
+        )
+
+        self.generate_nn_script = lambda: (
+            print("Generating Neural Network Script"),
+            self.get_slots()
+        )
+
+        self.train_model = lambda: (
+            print("Training Model")
+        )
+
+        self.cancel_training = lambda: (
+            print("Canceling Training")
+        )
+
+        self.clear_canvas = lambda: (
+            print("Clearing Canvas")
+        )
+
+        self.empty_funct = lambda: (
+            print("No Function")
+        )
 
     def start(self):
         self.root.mainloop()
