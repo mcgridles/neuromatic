@@ -93,7 +93,7 @@ class Window(object):
         output_layer_button.make_draggable()
 
         self.status_box = StatusBox(self.right_frame)
-        # self.status_box.frame.grid(row=4,column=0)
+        self.status_box.frame.grid(row=3,column=0)
 
         # self.log("Box Created")
 
