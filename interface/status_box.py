@@ -3,25 +3,25 @@ import tkinter as tk
 
 class StatusBox(object):
 
-    def __init__(self, root, height=200, width=200):
+    def __init__(self, root, height=100, width=100):
         self.frame = tk.Frame(root, height=height, width=width, pady=3, padx=3)
         self.frame.columnconfigure(0, weight=1)
         self.frame.rowconfigure(0, weight=1)
-        self.frame.grid(sticky='nsew')
+        self.frame.grid(sticky='se', padx=0,pady=200)
 
         self.text = tk.Text(self.frame)
-        self.text.config(state=tk.DISABLED, wrap=tk.NONE)
-        self.text.grid(row=0, column=0, stick='nsew')
+        # self.text.config(state=tk.DISABLED, wrap=tk.NONE)
+        # self.text.grid(row=0, column=0)
 
-        self.v_scroll = tk.Scrollbar(self.frame, orient=tk.VERTICAL)
-        self.v_scroll.grid(row=0, column=1, stick='ns')
-        self.v_scroll.config(command=self.text.yview)
-        self.text.config(yscrollcommand=self.v_scroll.set)
-
-        self.h_scroll = tk.Scrollbar(self.frame, orient=tk.HORIZONTAL)
-        self.h_scroll.grid(row=1, column=0, stick='ew')
-        self.h_scroll.config(command=self.text.xview)
-        self.text.config(xscrollcommand=self.h_scroll.set)
+        # self.v_scroll = tk.Scrollbar(self.frame, orient=tk.VERTICAL)
+        # self.v_scroll.grid(row=0, column=1, stick='ns')
+        # self.v_scroll.config(command=self.text.yview)
+        # self.text.config(yscrollcommand=self.v_scroll.set)
+        # #
+        # self.h_scroll = tk.Scrollbar(self.frame, orient=tk.HORIZONTAL)
+        # self.h_scroll.grid(row=1, column=0, stick='ew')
+        # self.h_scroll.config(command=self.text.xview)
+        # self.text.config(xscrollcommand=self.h_scroll.set)
 
     def add_text(self, text):
         """

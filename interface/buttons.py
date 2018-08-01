@@ -8,20 +8,20 @@ def button_init():
 
 class GenericButton(object):
     #TODO: Format Buttons
-    def __init__(self, root, button_label, passed_function, layer_type='Blank', offset=0):
-        self.f = tkinter.Frame(root, height=Height, width=100)
+    def __init__(self, root, button_label, passed_function, layer_type='Blank', offset=0, assigned_row=0, assigned_col=0):
+        self.f = tkinter.Frame(root, height=Height)
         #TODO: CRITICAL check your personal offset. not sure how to do suitable workaround
         #but this works for now. Change when not as busy
         self.x_offset = Xoff
         self.y_offset = Yoff
         self.root = root
-        self.f.pack_propagate(0)  # don't shrink
-        self.f.pack()
+        # self.f.pack_propagate(0)  # don't shrink
+        self.f.grid(sticky='nesw')
         self.offset = offset*Height
         self.passed_function = passed_function
         self.layer_type = layer_type
         self.b = tkinter.Button(self.f, text=button_label, command=self.button_callback)
-        self.b.pack(fill=tkinter.BOTH, expand=1)
+        self.b.grid(sticky='nesw')
 
     def button_callback(self):
         self.passed_function()
@@ -46,15 +46,15 @@ class LayerButton(GenericButton):
 
     def on_drag(self, event):
         # Uncomment and click->drag to top left corner and change offset values to the negative values
-        # print(event.x,event.y)
+        print(event.x,event.y)
         pass
 
     def on_drop(self, event):
         x,y = event.x + self.x_offset,event.y + self.y_offset
         print('Coords',x,y)
         print('test1',self.root.winfo_rootx(),self.root.winfo_rooty())
-        print('test2', self.root.winfo_rootx(), self.root.winfo_rooty())
-        target = event.widget.winfo_containing(x, y + self.offset)
+        print('test2',self.root.winfo_pointerx(), self.root.winfo_pointery())
+        target = event.widget.winfo_containing(self.root.winfo_pointerx(), self.root.winfo_pointery())
         print("Target:",target)
         global Layer_Type
         Layer_Type = self.layer_type
