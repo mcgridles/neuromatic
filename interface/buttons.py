@@ -1,27 +1,19 @@
 import tkinter
 Height = 47
-Xoff = 706
-Yoff = 107
 
 def button_init():
     global Layer_Type
 
 class GenericButton(object):
     #TODO: Format Buttons
-    def __init__(self, root, button_label, passed_function, layer_type='Blank', offset=0):
-        self.f = tkinter.Frame(root, height=Height, width=100)
-        #TODO: CRITICAL check your personal offset. not sure how to do suitable workaround
-        #but this works for now. Change when not as busy
-        self.x_offset = Xoff
-        self.y_offset = Yoff
+    def __init__(self, root, button_label, passed_function, layer_type='Blank', assigned_row=0, assigned_col=0, logger=None):
+        self.f = tkinter.Frame(root, height=Height)
+        self.f.grid(sticky='nesw')
         self.root = root
-        self.f.pack_propagate(0)  # don't shrink
-        self.f.pack()
-        self.offset = offset*Height
         self.passed_function = passed_function
         self.layer_type = layer_type
         self.b = tkinter.Button(self.f, text=button_label, command=self.button_callback)
-        self.b.pack(fill=tkinter.BOTH, expand=1)
+        self.b.grid(sticky='nesw')
 
     def button_callback(self):
         self.passed_function()
@@ -36,29 +28,20 @@ class LayerButton(GenericButton):
         self.b.configure(cursor='hand2')
 
     def button_callback(self):
-       print("Wrong")
+        pass
 
     def on_start(self, event):
-        x,y = event.x,event.y
         global Layer_Type
-        Layer_Type = 'Filled'
-        print(x,y)
+        Layer_Type = self.layer_type
 
     def on_drag(self, event):
-        # Uncomment and click->drag to top left corner and change offset values to the negative values
-        # print(event.x,event.y)
         pass
 
     def on_drop(self, event):
-        x,y = event.x + self.x_offset,event.y + self.y_offset
-        print('Coords',x,y)
-        print('test1',self.root.winfo_rootx(),self.root.winfo_rooty())
-        print('test2', self.root.winfo_rootx(), self.root.winfo_rooty())
-        target = event.widget.winfo_containing(x, y + self.offset)
-        print("Target:",target)
+        x,y = self.root.winfo_pointerx(), self.root.winfo_pointery()
+        target = event.widget.winfo_containing(x,y)
         global Layer_Type
         Layer_Type = self.layer_type
-        print(target)
         try:
             target.invoke()
         except:
@@ -69,13 +52,8 @@ class LayerButton(GenericButton):
 
 class SlotButton(GenericButton):
     def __init__(self, root, passed_function, layer_type='Blank'):
-        self.f = tkinter.Frame(root, height=Height*5, width=100)
-        self.f.pack_propagate(0)  # don't shrink
-        self.f.pack()
-        #TODO: CRITICAL check your personal offset. not sure how to do suitable workaround
-        #but this works for now. Change when not as busy
-        self.x_offset = Xoff
-        self.y_offset = Yoff
+        self.f = tkinter.Frame(root, height=300, width=100)
+        self.f.grid()
         self.root = root
         self.passed_function = passed_function
         self.layer_type = layer_type
@@ -84,7 +62,7 @@ class SlotButton(GenericButton):
         self.btn_text = tkinter.StringVar()
         self.btn_text.set('Blank')
         self.b = tkinter.Button(self.f, textvariable=self.btn_text, command=self.button_callback)
-        self.b.pack(fill=tkinter.BOTH, expand=True)
+        self.b.grid(row=0,column=0)
 
     def button_callback(self):
         global Layer_Type
@@ -94,12 +72,10 @@ class SlotButton(GenericButton):
             self.btn_text.set(self.layer_type)
         else:
             #TODO This is where you will put the pop up call and function
-            print(self.layer_type)
+            pass
 
     def get_slot_info(self):
-        slot_info = {'layer_type':self.layer_type,
-                'number':self.number,
-                'activation':self.activation}
+        slot_info = {self.layer_type:{'size':self.number,'activation':self.activation}}
         return slot_info
 
     def edit_slot_info(self, number=1, activation=1):
