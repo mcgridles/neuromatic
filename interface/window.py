@@ -70,8 +70,13 @@ class Window(object):
     def add_widgets(self):
         Menu(self.root)
 
+        self.status_box = StatusBox(self.right_frame)
+        self.status_box.frame.grid(row=3, column=0)
+        self.right_frame.rowconfigure(3, weight=1)
+        self.right_frame.columnconfigure(0, weight=1)
+
         #TODO: Format buttons.py Locations
-        new_button = GenericButton(self.top_frame, "New", self.create_new_canvas)
+        new_button = GenericButton(self.top_frame, "New", self.create_new_canvas, logger=self.log)
         new_button.f.grid(row=0,column=0)
         generate_button = GenericButton(self.top_frame, "Generate", self.generate_nn_script)
         generate_button.f.grid(row=0, column=1)
@@ -91,10 +96,6 @@ class Window(object):
         output_layer_button = LayerButton(self.right_frame, "Output Layer", self.empty_funct, 'Output', 2)
         output_layer_button.f.grid(row=2, column=0)
         output_layer_button.make_draggable()
-
-        self.status_box = StatusBox(self.right_frame)
-        self.status_box.frame.grid(row=3,column=0)
-
         # self.log("Box Created")
 
         self.add_slot()
@@ -105,7 +106,7 @@ class Window(object):
         for slot in self.slots:
             print(slot.get_slot_info())
 
-    def log(self,message):
+    def _log(self,message):
         self.status_box.add_text(message)
 
 
@@ -117,6 +118,10 @@ class Window(object):
         self.add_slot = lambda: (
             self.slots.append(SlotButton(self.canvas_frame, self.empty_funct)),
             self.slots[-1].f.grid(row=0,column=len(self.slots)-1)
+        )
+
+        self.log = lambda message: (
+            self._log(message)
         )
 
         self.create_new_canvas = lambda: (

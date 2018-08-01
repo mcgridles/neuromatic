@@ -6,10 +6,10 @@ def button_init():
 
 class GenericButton(object):
     #TODO: Format Buttons
-    def __init__(self, root, button_label, passed_function, layer_type='Blank', assigned_row=0, assigned_col=0):
+    def __init__(self, root, button_label, passed_function, layer_type='Blank', assigned_row=0, assigned_col=0, logger=None):
         self.f = tkinter.Frame(root, height=Height)
-        self.root = root
         self.f.grid(sticky='nesw')
+        self.root = root
         self.passed_function = passed_function
         self.layer_type = layer_type
         self.b = tkinter.Button(self.f, text=button_label, command=self.button_callback)
