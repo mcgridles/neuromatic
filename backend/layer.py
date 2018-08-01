@@ -1,44 +1,15 @@
-from abc import ABC, abstractmethod
+class Layer(object):
 
-class LayerException(Exception):
-    pass
-
-class Layer(ABC):
-
-    self.valid_activations = []
-
-    self.name = ''
-    self.size = 0
-    self.activation = ''
-
-    self.script_lines = ''
-
-    def __init__(self, activation, output_size):
-        if activation not in self.valid_activations:
-            # Raise exception for now, should probably just log in the future
-            # to prevent crashes
-            raise LayerException('Invalid activation function: {0}'.format(activation))
-
-        self.activation = activation
-        self.size = output_size
-        super().__init__()
+    def __init__(self, properties):
+        # properties should be JSON object which will require parsing
+        self.properties = properties
 
     def write_lines(self, fd):
-        fd.write(self.script_lines)
+        line = '\tmodel.add({0}({1}, activation=\'{2}\'))\n'.format(self.properties['name'].capitalize(),
+                                                                    self.properties['size'],
+                                                                    self.properties['activation'])
+        fd.write(line)
 
-    @abstractmethod
-    def assemble_script(self):
-        pass
-
-class Dense(Layer):
-    self.valid_activations = ['relu', 'softmax', 'sigmoid']
-    self.name = 'Dense'
-
-    def assemble_script(self):
-        self.script_lines = '{0}({1}, activation={2})'.format(self.name, self.size, self.activation)
-
-class Dropout(Layer):
-    self.keras_object_name = 'Dropout'
-
-    def assemble_script(self):
-        self.script_lines = '{0}({1}, activation={2})'.format(self.name, self.size, self.activation)
+        if self.properties['dropout']:
+            dropout_line = '\tmodel.add(Dropout({0}))\n'.format(self.properties['dropout'])
+            fd.write(dropout_line)
