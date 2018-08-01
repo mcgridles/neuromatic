@@ -1,10 +1,11 @@
 import os
-import imp
 import shutil
 import numpy as np
 import pandas as pd
 
 from sklearn.model_selection import train_test_split
+
+from layers import DenseLayer, DropoutLayer
 
 class Controller(object):
 
@@ -15,12 +16,20 @@ class Controller(object):
         self.y_test = None
 
         self.canvas_properties = {}
-        self.train_size = 0.8 # we should make this a canvas property
+        self.train_size = 0.8
 
         self.layers = []
+        self.layer_types = {
+            'hidden': DenseLayer,
+            'dropout': DropoutLayer,
+        }
 
     def store_properties(self, properties):
         self.canvas_properties = properties
+
+        self.train_size = self.canvas_properties['training_size']
+        for layer in self.canvas_properties['layers']:
+            new_layer = self.layer_types[layer](self.canvas_properties['layers'])
 
     def read_csv(self):
         training_data = pd.read_csv(self.canvas_properties['training_data_path'])
@@ -30,7 +39,7 @@ class Controller(object):
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X, y, train_size=self.train_size,
                                                                                 shuffle=True)
 
-    def create_network(self):
+    def generate_network(self):
         with open(self.canvas_properties['nn_path'], 'w') as fd:
             # imports
             fd.write('import h5py\n')
@@ -67,7 +76,6 @@ class Controller(object):
                     os.path.join(os.path.dirname(os.path.abspath(__file__)), 'network.py'))
 
     def train_network(self):
-        # This doesn't work as expected
-        network = __import__('network')
+        from network import train_neural_network
 
-        module.train_neural_network()
+        train_neural_network(self.X_train, self.y_train, self.X_test, self.y_test)
