@@ -17,7 +17,7 @@ class GenericLayer(ABC):
         3. Add the available properties that can be set in the GUI
     """
     def __init__(self, properties):
-        self.layer_properties = properties
+        self.properties = properties
 
     @abstractmethod
     def write_lines(self, fd):
@@ -40,10 +40,10 @@ class InputLayer(GenericLayer):
         super(InputLayer, self).__init__(properties)
 
     def write_lines(self, fd):
-        line = '\tmodel.add(Dense({0}, activation={1}, input_shape=({2},{3})))'.format(self.layer_properties['size'],
-                                                                                       self.layer_properties['activation'],
-                                                                                       self.layer_properties['batch_size'],
-                                                                                       self.layer_properties['input_dim'])
+        line = '\tmodel.add(Dense({0}, activation={1}, input_shape=({2},{3})))'.format(self.properties['size'],
+                                                                                       self.properties['activation'],
+                                                                                       self.properties['batch_size'],
+                                                                                       self.properties['input_dim'])
         fd.write(line)
 
 class DenseLayer(GenericLayer):
@@ -58,8 +58,7 @@ class DenseLayer(GenericLayer):
         super(DenseLayer, self).__init__(properties)
 
     def write_lines(self, fd):
-        line = '\tmodel.add(Dense({0}, activation=\'{1}\'))\n'.format(self.layer_properties['size'],
-                                                                      self.layer_properties['activation'])
+        line = '\tmodel.add(Dense({0}, activation=\'{1}\'))\n'.format(self.properties['size'], self.properties['activation'])
         fd.write(line)
 
 class DropoutLayer(GenericLayer):
@@ -73,5 +72,5 @@ class DropoutLayer(GenericLayer):
         super(DropoutLayer, self).__init__(properties)
 
     def write_lines(self, fd):
-        line = '\tmodel.add(Dropout({0}))\n'.format(self.layer_properties['percentage'])
+        line = '\tmodel.add(Dropout({0}))\n'.format(self.properties['percentage'])
         fd.write(line)
