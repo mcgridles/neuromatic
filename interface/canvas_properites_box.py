@@ -21,9 +21,18 @@ def callback(event):
 
 class PropertiesBox(object):
 
-    def __init__(self, root, label_name, init_properties):
-        self.frame = tk.Frame(root, padx=3, pady=3)
-        self.frame.grid(row=0, column=0, sticky='nsew')
+    def __init__(self,
+                 root,
+                 label_name,
+                 init_properties,
+                 frame_row=0,
+                 frame_col=0,
+                 size_x=200,
+                 size_y=200,
+                 sticky='nsew'):
+
+        self.frame = tk.Frame(root, height=size_y, width=size_x, padx=3, pady=3)
+        self.frame.grid(row=frame_row, column=frame_col, sticky=sticky)
         self.frame.rowconfigure(1, weight=1)
         self.frame.columnconfigure(0, weight=1)
         self.frame.grid_propagate(0)
@@ -79,27 +88,72 @@ class PropertiesBox(object):
         self.prop_box.config(state=tk.NORMAL)
         self.prop_box.delete('1.0', tk.END)
 
-        for key in self.box_properties:
-            self.prop_box.insert(tk.END, '{}:\n'.format(key), 'boldline')
-            self.prop_box.insert(tk.END, '   {}\n'.format(self.box_properties[key]))
+        if self.box_properties:
+            for key in self.box_properties:
+                self.prop_box.insert(tk.END, '{}:\n'.format(key), 'boldline')
+                self.prop_box.insert(tk.END, '   {}\n'.format(self.box_properties[key]))
+
+        else:
+            pass
 
         self.prop_box.config(state=tk.DISABLED)
 
 
 class CanvasPropertiesBox(PropertiesBox):
 
-    def __init__(self, root):
+    def __init__(self,
+                 root,
+                 frame_row=0,
+                 frame_col=0,
+                 size_x=200,
+                 size_y=200,
+                 sticky='nsew'):
+
         super(CanvasPropertiesBox, self).__init__(root,
+                                                  frame_row=frame_row,
+                                                  frame_col=frame_col,
+                                                  size_x=size_x,
+                                                  size_y=size_y,
+                                                  sticky=sticky,
                                                   label_name='CanvasPropertiesBox',
                                                   init_properties=DEFAULT_CANVAS_PROPERTIES)
 
 
 class LayerPropertiesBox(PropertiesBox):
 
-    def __init__(self, root):
+    def __init__(self,
+                 root,
+                 frame_row=0,
+                 frame_col=0,
+                 size_x=200,
+                 size_y=200,
+                 sticky='nsew'):
+
         super(LayerPropertiesBox, self).__init__(root,
+                                                 frame_row=frame_row,
+                                                 frame_col=frame_col,
+                                                 size_x=size_x,
+                                                 size_y=size_y,
+                                                 sticky=sticky,
                                                  label_name='LayerPropertiesBox',
-                                                 init_properties=DEFAULT_LAYER_PROPERTIES)
+                                                 init_properties=None)
+
+        self.prop_box.bind('<<Inherit>>', self.inherit_layer_type)
+        self.box_label.bind('<<Inherit>>', self.inherit_layer_type)
+        self.frame.bind('<<Inherit>>', self.inherit_layer_type)
+
+    def inherit_layer_type(self, event):
+        # global Layer_Type
+        # if Layer_Type != 'Blank':
+        #     self.layer_type = Layer_Type
+        #     Layer_Type = 'Blank'
+        #     self.box_label.config(text=Layer_Type)
+        # else:
+        #     #TODO This is where you will put the pop up call and function
+        #     pass
+        self.box_properties = {'testing': 'I WORK!!!'}
+        self.update_text()
+
 
 
 class DummyPropertiesEditor(object):
@@ -135,10 +189,7 @@ if __name__ == '__main__':
     root.columnconfigure(0, weight=1)
     root.columnconfigure(1, weight=1)
 
-    canvas_box_frame = tk.Frame(root, bg='green', height=200, width=200, pady=3, padx=3)
-    canvas_box_frame.grid(row=0, column=0, sticky='nsew')
-    canvas_box_frame.rowconfigure(0, weight=1)
-    canvas_box_frame.columnconfigure(0, weight=1)
+    CanvasPropertiesBox(root, frame_row=0, frame_col=0)
 
     blank_frame_1 = tk.Frame(root, bg='blue', height=200, width=200, pady=3, padx=3)
     blank_frame_1.grid(row=0, column=1, sticky='nsew')
@@ -146,12 +197,6 @@ if __name__ == '__main__':
     blank_frame_2 = tk.Frame(root, bg='cyan', height=200, width=200, pady=3, padx=3)
     blank_frame_2.grid(row=1, column=0, sticky='nsew')
 
-    layer_box_frame = tk.Frame(root, bg='yellow', height=200, width=200, pady=3, padx=3)
-    layer_box_frame.grid(row=1, column=1, sticky='nsew')
-    layer_box_frame.rowconfigure(0, weight=1)
-    layer_box_frame.columnconfigure(0, weight=1)
-
-    CanvasPropertiesBox(canvas_box_frame)
-    LayerPropertiesBox(layer_box_frame)
+    LayerPropertiesBox(root, frame_row=1, frame_col=1)
 
     root.mainloop()
