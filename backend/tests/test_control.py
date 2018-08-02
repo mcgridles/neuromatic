@@ -5,30 +5,12 @@ from unittest import mock
 from pandas.util.testing import assert_frame_equal, assert_series_equal
 
 from layers import DenseLayer, DropoutLayer
-from control import Controller
+from control import Control, NetworkException
 
 class TestControl(unittest.TestCase):
 
     def setUp(self):
-        self.controller = Controller()
-
-    @mock.patch('control.train_test_split')
-    @mock.patch('control.pd')
-    def test_read_csv(self, pd_mock, tts_mock):
-        # Arrange
-        df = pd.DataFrame(data={'Label': [0], 'Pixel1': [0], 'Pixel2': [255]})
-        pd_mock.read_csv.return_value = df
-        tts_mock.side_effect = lambda X, y, train_size, shuffle: (X, None, y, None)
-
-        file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'files/test.csv')
-        self.controller.canvas_properties['training_data_path'] = file_path
-
-        # Act
-        self.controller.read_csv()
-
-        # Assert
-        assert_frame_equal(self.controller.X_train, pd.DataFrame(data={'Pixel1': [0], 'Pixel2': [255]}))
-        assert_series_equal(self.controller.y_train, pd.Series(name='Label', data=[0]))
+        self.controller = Control()
 
     @mock.patch('control.shutil')
     @mock.patch('builtins.open')
@@ -46,18 +28,129 @@ class TestControl(unittest.TestCase):
             'size': 10,
             'activation': 'softmax'
         })
-        self.controller.canvas_properties['nn_path'] = file_path
         self.controller.canvas_properties['optimizer'] = 'adam'
         self.controller.canvas_properties['loss'] = 'sparse_categorical_crossentropy'
         self.controller.canvas_properties['metrics'] = ['accuracy']
         self.controller.canvas_properties['epochs'] = 5
-        self.controller.canvas_properties['model_path'] = '/path/to/directory'
+        self.controller.canvas_properties['output_path'] = '/path/to/directory'
         self.controller.layers = [layer1, layer2, layer3]
 
         # Act
         self.controller.generate_network()
 
         # Assert
-        print(mock_open.call_args)
-        self.assertEqual(mock_open.call_args, mock.call(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'generated_network.py'), 'w'))
+        self.assertEqual(mock_open.call_args, mock.call('/path/to/directory/neural_network.py', 'w'))
         self.assertEqual(mock_open.return_value.__enter__.return_value.write.call_count, 22)
+
+    @mock.patch('control.os')
+    def test_set_properties_success(self, mock_os):
+        # Arrange
+        mock_os.path.isfile.side_effect = [False, True]
+        mock_os.path.isdir.return_value = True
+        properties = {
+            'output_path': '/path/to/directory',
+            'training_data_path': '/path/to/file.csv',
+            'train_size': 0.8,
+            'optimizer': 'sgd',
+            'metrics': ['accuracy'],
+            'epochs': 5,
+            'layers': {
+                'input': {
+                    'size': 10,
+                    'activation': 'sigmoid',
+                    'batch_size': 100,
+                    'input_dim': 784
+                }
+            }
+        }
+
+        # Act
+        status = self.controller.set_properties(properties)
+
+        # Assert
+        self.assertTrue(status)
+
+    @mock.patch('control.os')
+    def test_set_properties_output_path_is_file(self, mock_os):
+        # Arrange
+        mock_os.path.isfile.side_effect = [True, True]
+        mock_os.path.isdir.return_value = True
+        mock_os.path.dirname.return_value = '/path/to'
+        properties = {
+            'output_path': '/path/to/directory',
+            'training_data_path': '/path/to/file.csv',
+            'train_size': 0.8,
+            'optimizer': 'sgd',
+            'metrics': ['accuracy'],
+            'epochs': 5,
+            'layers': {
+                'input': {
+                    'size': 10,
+                    'activation': 'sigmoid',
+                    'batch_size': 100,
+                    'input_dim': 784
+                }
+            }
+        }
+
+        # Act
+        status = self.controller.set_properties(properties)
+
+        # Assert
+        self.assertFalse(status)
+        self.assertEqual(self.controller.canvas_properties['output_path'], '/path/to')
+
+    @mock.patch('control.os')
+    def test_set_properties_output_path_does_not_exist(self, mock_os):
+        # Arrange
+        mock_os.path.isfile.side_effect = [False, True]
+        mock_os.path.isdir.return_value = False
+        properties = {
+            'output_path': '/path/to/directory',
+            'training_data_path': '/path/to/file.csv',
+            'train_size': 0.8,
+            'optimizer': 'sgd',
+            'metrics': ['accuracy'],
+            'epochs': 5,
+            'layers': {
+                'input': {
+                    'size': 10,
+                    'activation': 'sigmoid',
+                    'batch_size': 100,
+                    'input_dim': 784
+                }
+            }
+        }
+
+        # Act
+        status = self.controller.set_properties(properties)
+
+        # Assert
+        self.assertFalse(status)
+        self.assertEquals(mock_os.makedirs.call_args, mock.call('/path/to/directory'))
+
+    @mock.patch('control.os')
+    def test_set_properties_invalid_layer(self, mock_os):
+        mock_os.path.isfile.side_effect = [False, True]
+        mock_os.path.isdir.return_value = True
+        # Arrange
+        properties = {
+            'output_path': '/path/to/directory',
+            'training_data_path': '/path/to/file.csv',
+            'train_size': 0.8,
+            'optimizer': 'sgd',
+            'metrics': ['accuracy'],
+            'epochs': 5,
+            'layers': {
+                'bad_layer': {
+                    'size': 10,
+                    'activation': 'sigmoid',
+                    'batch_size': 100,
+                    'input_dim': 784
+                }
+            }
+        }
+
+        # Act/Assert
+        with self.assertRaises(NetworkException):
+            status = self.controller.set_properties(properties)
