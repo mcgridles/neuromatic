@@ -8,15 +8,20 @@ DEFAULT_CANVAS_PROPERTIES = {
     'project_directory': '~/Documents',
     'training_size': .5
 }
+DEFAULT_LAYER_PROPERTIES = {
+    'layer_type': 'DEFAULT',
+    'layer_size': 100,
+    'activation_function': 'sigmoid'
+}
 
 
 def callback(event):
     print("clicked at", event.x, event.y)
 
 
-class CanvasPropertiesBox(object):
+class PropertiesBox(object):
 
-    def __init__(self, root):
+    def __init__(self, root, label_name, init_properties):
         self.frame = tk.Frame(root, padx=3, pady=3)
         self.frame.grid(row=0, column=0, sticky='nsew')
         self.frame.rowconfigure(1, weight=1)
@@ -24,10 +29,10 @@ class CanvasPropertiesBox(object):
         self.frame.grid_propagate(0)
 
         # Box label attached to the box
-        self.box_label = tk.Label(self.frame, text='Canvas Properties', font='Helvetica 12 bold')
+        self.box_label = tk.Label(self.frame, text=label_name, font='Helvetica 12 bold')
         self.box_label.grid(row=0, column=0, sticky='w')
 
-        self.canvas_properties = DEFAULT_CANVAS_PROPERTIES
+        self.box_properties = init_properties
 
         self.prop_box = None
         self.prop_box_text = None
@@ -48,9 +53,9 @@ class CanvasPropertiesBox(object):
 
     def set_button_text(self):
         new_text = ''
-        for key in self.canvas_properties:
+        for key in self.box_properties:
             new_text += ('{}:\n'.format(key))
-            new_text += '   {}\n'.format(self.canvas_properties[key])
+            new_text += '   {}\n'.format(self.box_properties[key])
 
         self.prop_box_text.set(new_text)
 
@@ -74,11 +79,27 @@ class CanvasPropertiesBox(object):
         self.prop_box.config(state=tk.NORMAL)
         self.prop_box.delete('1.0', tk.END)
 
-        for key in self.canvas_properties:
+        for key in self.box_properties:
             self.prop_box.insert(tk.END, '{}:\n'.format(key), 'boldline')
-            self.prop_box.insert(tk.END, '   {}\n'.format(self.canvas_properties[key]))
+            self.prop_box.insert(tk.END, '   {}\n'.format(self.box_properties[key]))
 
         self.prop_box.config(state=tk.DISABLED)
+
+
+class CanvasPropertiesBox(PropertiesBox):
+
+    def __init__(self, root):
+        super(CanvasPropertiesBox, self).__init__(root,
+                                                  label_name='CanvasPropertiesBox',
+                                                  init_properties=DEFAULT_CANVAS_PROPERTIES)
+
+
+class LayerPropertiesBox(PropertiesBox):
+
+    def __init__(self, root):
+        super(LayerPropertiesBox, self).__init__(root,
+                                                 label_name='LayerPropertiesBox',
+                                                 init_properties=DEFAULT_LAYER_PROPERTIES)
 
 
 class DummyPropertiesEditor(object):
@@ -105,7 +126,7 @@ class DummyPropertiesEditor(object):
 
 if __name__ == '__main__':
     root = tk.Tk()
-    root.title('CanvasPropertiesBox Test')
+    root.title('PropertiesBox Test')
     root.geometry('400x400')
 
     root.rowconfigure(0, weight=1)
@@ -114,10 +135,10 @@ if __name__ == '__main__':
     root.columnconfigure(0, weight=1)
     root.columnconfigure(1, weight=1)
 
-    box_frame = tk.Frame(root, bg='green', height=200, width=200, pady=3, padx=3)
-    box_frame.grid(row=0, column=0, sticky='nsew')
-    box_frame.rowconfigure(0, weight=1)
-    box_frame.columnconfigure(0, weight=1)
+    canvas_box_frame = tk.Frame(root, bg='green', height=200, width=200, pady=3, padx=3)
+    canvas_box_frame.grid(row=0, column=0, sticky='nsew')
+    canvas_box_frame.rowconfigure(0, weight=1)
+    canvas_box_frame.columnconfigure(0, weight=1)
 
     blank_frame_1 = tk.Frame(root, bg='blue', height=200, width=200, pady=3, padx=3)
     blank_frame_1.grid(row=0, column=1, sticky='nsew')
@@ -125,9 +146,12 @@ if __name__ == '__main__':
     blank_frame_2 = tk.Frame(root, bg='cyan', height=200, width=200, pady=3, padx=3)
     blank_frame_2.grid(row=1, column=0, sticky='nsew')
 
-    blank_frame_3 = tk.Frame(root, bg='yellow', height=200, width=200, pady=3, padx=3)
-    blank_frame_3.grid(row=1, column=1, sticky='nsew')
+    layer_box_frame = tk.Frame(root, bg='yellow', height=200, width=200, pady=3, padx=3)
+    layer_box_frame.grid(row=1, column=1, sticky='nsew')
+    layer_box_frame.rowconfigure(0, weight=1)
+    layer_box_frame.columnconfigure(0, weight=1)
 
-    CanvasPropertiesBox(box_frame)
+    CanvasPropertiesBox(canvas_box_frame)
+    LayerPropertiesBox(layer_box_frame)
 
     root.mainloop()
