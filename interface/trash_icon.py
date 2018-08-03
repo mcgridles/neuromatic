@@ -33,6 +33,9 @@ class TrashIcon(object):
         self.trash_icon.bind('<Double-Button-1>', command)
 
 
+        # self.trash_icon.bind('<ButtonRelease-1>', command)
+
+
 if __name__ == '__main__':
     root = tk.Tk()
     root.title('TrashIcon Test')

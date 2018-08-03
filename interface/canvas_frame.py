@@ -51,10 +51,8 @@ class CanvasFrame(object):
 
         for slot_number in range(3):
             self.add_slot()
-        self.remove_slot()
 
     def add_slot(self):
-        self.log('Slot Added\n')
         new_col = len(self.slots) + 3
         new_layer_box = canvas_properites_box.LayerPropertiesBox(self.frame,
                                                                  frame_row=2,
@@ -67,9 +65,25 @@ class CanvasFrame(object):
         self.slots.append(new_layer_box)
 
     def remove_slot(self):
-        self.log('Deleted Slot')
         box = self.slots.pop()
-        del box
+        box.frame.destroy()
+
+    def get_all_slot_attributes(self):
+        slot_info_list = list()
+        for slot in self.slots:
+            slot_info_list.append(slot.get_attributes())
+        layer_information = {'layers':slot_info_list}
+        return layer_information
+
+    def get_all_project_properties(self):
+        props = self.canvas_properties_box.get_properties()
+        props.update(self.get_all_slot_attributes())
+        return props
+
+    def clear_slots(self):
+        for slot in self.slots:
+            slot.clear_slot_attributes()
+
 
 if __name__ == '__main__':
     root = tk.Tk()

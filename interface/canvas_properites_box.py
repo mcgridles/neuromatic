@@ -7,11 +7,6 @@ DEFAULT_CANVAS_PROPERTIES = {
     'project_directory': '~/Documents',
     'training_size': .5
 }
-DEFAULT_LAYER_PROPERTIES = {
-    'layer_type': 'Empty',
-    'layer_size': 1,
-    'activation_function': 'sigmoid'
-}
 
 
 def callback(event):
@@ -98,6 +93,9 @@ class PropertiesBox(object):
 
         self.prop_box.config(state=tk.DISABLED)
 
+    def get_properties(self):
+        return self.box_properties
+
 
 class CanvasPropertiesBox(PropertiesBox):
 
@@ -159,6 +157,37 @@ class LayerPropertiesBox(PropertiesBox):
         self.box_properties = self.get_slot_attributes_for_text()
         self.update_text()
 
+        self.frame.bind('<Button-1>', self.on_start)
+        self.box_label.bind('<Button-1>', self.on_start)
+        self.prop_box.bind('<Button-1>', self.on_start)
+
+        self.frame.configure(cursor='hand2')
+        self.box_label.configure(cursor='hand2')
+        self.prop_box.configure(cursor='hand2')
+
+        self.frame.bind('<B1-Motion>', self.on_drag)
+        self.box_label.bind('<B1-Motion>', self.on_drag)
+        self.prop_box.bind('<B1-Motion>', self.on_drag)
+
+        self.frame.bind('<ButtonRelease-1>', self.on_drop)
+        self.box_label.bind('<ButtonRelease-1>', self.on_drop)
+        self.prop_box.bind('<ButtonRelease-1>', self.on_drop)
+
+    def on_start(self,event):
+        pass
+
+    def on_drag(self,event):
+        pass
+
+    def on_drop(self, event):
+        x, y = self.frame.winfo_pointerx(), self.frame.winfo_pointery()
+        target = event.widget.winfo_containing(x, y)
+        print(str(target))
+        print('.!frame2.!frame.!label')
+        if str(target) == '.!frame2.!frame.!label':
+            print("Shit works yo")
+            self.clear_slot_attributes()
+
     def update_properties(self, event):
         #TODO: This is where the popup will go
         pass
@@ -204,6 +233,10 @@ class LayerPropertiesBox(PropertiesBox):
             self.box_label.config(text=clt + ' Layer')
             self.box_properties = self.get_slot_attributes_for_text()
             self.update_text()
+
+    def clear_slot_attributes(self):
+        self.box_label.config(text='Empty Layer')
+        self.edit_slot_attributes('Empty',1,'sigmoid',.5)
 
 
 

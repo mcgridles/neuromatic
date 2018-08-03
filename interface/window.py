@@ -54,8 +54,8 @@ class Window(object):
     def config_frames(self):
         self.root.grid_rowconfigure(0, weight=1)
         self.root.grid_rowconfigure(1, weight=9)
-        self.root.grid_columnconfigure(0, weight=8)
-        self.root.grid_columnconfigure(1, weight=3)
+        self.root.grid_columnconfigure(0, weight=16)
+        self.root.grid_columnconfigure(1, weight=7)
 
         self.top_frame = tkinter.Frame(self.root, bg='white', pady=3)
         self.top_frame.grid(row=0, columnspan=3, sticky="nsew")
@@ -68,9 +68,6 @@ class Window(object):
 
     def add_widgets(self):
         Menu(self.root)
-
-        # self.status_box = status_box.StatusBox(self.right_frame)
-        # self.status_box.frame.grid(row=4, column=0)
         self.right_frame.rowconfigure(4, weight=1)
         self.right_frame.columnconfigure(0, weight=1)
 
@@ -136,24 +133,28 @@ class Window(object):
         )
 
         self.generate_nn_script = lambda: (
-            print("Generating Neural Network Script"),
-            self.get_slots()
+            #TODO: Add the generation script here
+            self.log("Generating Neural Network Script"),
+            print(self.slots.get_all_project_properties())
         )
 
         self.train_model = lambda: (
-            print("Training Model")
+            #TODO: Add the training script call here
+            self.log("Training Model")
         )
 
         self.cancel_training = lambda: (
-            print("Canceling Training")
+            #TODO: Add the canceling functionality here
+            self.log("Canceling Training")
         )
 
         self.clear_canvas = lambda: (
-            self.slots
+            self.log('Clearing Slots'),
+            self.slots.clear_slots()
         )
 
         self.empty_funct = lambda: (
-            print("No Function")
+
         )
 
     def start(self):
@@ -186,7 +187,7 @@ class Menu(object):
 
 def main():
     width, height = get_screen_res()
-    window = Window('test', 800, 600)
+    window = Window('Neuromatic', 800, 600)
     window.start()
 
 
