@@ -1,5 +1,6 @@
 import os
 import shutil
+import signal
 import logging
 import multiprocessing
 import numpy as np
@@ -90,6 +91,7 @@ class Control(object):
         """
         Writes the Python file containing the Keras neural network
         """
+        signal.signal(signal.SIGTERM, self.safe_terminate)
         self.__thread_lock.acquire()
 
         with open(os.path.join(self.canvas_properties['output_path'], 'neural_network.py'), 'w') as fd:
@@ -137,16 +139,23 @@ class Control(object):
         """
         if not self.__can_train:
             raise NetworkException('Cannot train without a model')
+        signal.signal(signal.SIGTERM, self.safe_terminate)
         self.__thread_lock.acquire()
 
         from network import train_neural_network
 
         # Read in training data
         training_data = pd.read_csv(self.canvas_properties['training_data_path'])
-        y = training_data.ix[:,0]
-        X = training_data.ix[:,1:]
-        X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=self.canvas_properties['train_size'], shuffle=True)
+        y_data = training_data.ix[:,0]
+        X_data = training_data.ix[:,1:]
+        X_train, X_test, y_train, y_test = train_test_split(X_data, y_data, train_size=self.canvas_properties['train_size'], shuffle=True)
 
         train_neural_network(X_train, y_train, X_test, y_test)
 
         self.__thread_lock.release()
+
+    def safe_terminate(self, *args):
+        self.logger.warning('Process terminated')
+
+        if self.__thread_lock.locked():
+            self.__thread_lock.release()
