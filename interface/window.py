@@ -1,10 +1,5 @@
 import tkinter
-from interface import buttons, status_box, canvas_frame
-
-
-Layer_Type = 'Blank'
-Num_Layers = 3
-
+from interface import buttons, status_box, canvas_frame, canvas_properites_box
 
 def callback():
     print("called the callback!")
@@ -27,7 +22,7 @@ class Window(object):
         self.height = height
 
         #This will store which layer is selected
-        self.layer_type = None
+        self.current_layer_type = 'Empty'
 
         self.root = tkinter.Tk()
         # entry = tkinter.Entry(self.root)
@@ -59,28 +54,24 @@ class Window(object):
     def config_frames(self):
         self.root.grid_rowconfigure(0, weight=1)
         self.root.grid_rowconfigure(1, weight=9)
-        self.root.grid_columnconfigure(0, weight=3)
-        self.root.grid_columnconfigure(1, weight=8)
-        self.root.grid_columnconfigure(2, weight=3)
+        self.root.grid_columnconfigure(0, weight=8)
+        self.root.grid_columnconfigure(1, weight=3)
 
-        self.top_frame = tkinter.Frame(self.root, bg='cyan', pady=3)
+        self.top_frame = tkinter.Frame(self.root, bg='white', pady=3)
         self.top_frame.grid(row=0, columnspan=3, sticky="nsew")
 
-        self.left_frame = tkinter.Frame(self.root, bg='yellow', pady=3, padx=3)
+        self.left_frame = tkinter.Frame(self.root, bg='white', pady=3, padx=3)
         self.left_frame.grid(row=1, column=0, sticky='nsew')
 
-        # self.canvas_frame = tkinter.Frame(self.root, bg='orange', pady=3, padx=3)
-        # self.canvas_frame.grid(row=1, column=1, sticky='nsew')
-
-        self.right_frame = tkinter.Frame(self.root, bg='red', pady=3, padx=3)
-        self.right_frame.grid(row=1, column=2, sticky='nsew')
+        self.right_frame = tkinter.Frame(self.root, bg='white', pady=3, padx=3)
+        self.right_frame.grid(row=1, column=1, sticky='nsew')
 
     def add_widgets(self):
         Menu(self.root)
 
-        self.status_box = status_box.StatusBox(self.right_frame)
-        self.status_box.frame.grid(row=3, column=0)
-        self.right_frame.rowconfigure(3, weight=1)
+        # self.status_box = status_box.StatusBox(self.right_frame)
+        # self.status_box.frame.grid(row=4, column=0)
+        self.right_frame.rowconfigure(4, weight=1)
         self.right_frame.columnconfigure(0, weight=1)
 
         #TODO: Format buttons.py Locations
@@ -95,20 +86,26 @@ class Window(object):
         clear_button = buttons.GenericButton(self.top_frame, "Clear", self.clear_canvas)
         clear_button.f.grid(row=0, column=4)
 
-        input_layer_button = buttons.LayerButton(self.right_frame, "Input Layer", self.empty_funct, 'Input', 0)
+        input_layer_button = buttons.LayerButton(self.right_frame, "Input Layer", self.empty_funct, 'Input', 0, logger=self.log, main_window=self)
         input_layer_button.f.grid(row=0,column=0)
         input_layer_button.make_draggable()
-        hidden_layer_button = buttons.LayerButton(self.right_frame, "Hidden Layer", self.empty_funct, 'Hidden', 1)
+        hidden_layer_button = buttons.LayerButton(self.right_frame, "Hidden Layer", self.empty_funct, 'Hidden', 1, logger=self.log, main_window=self)
         hidden_layer_button.f.grid(row=1, column=0)
         hidden_layer_button.make_draggable()
-        output_layer_button = buttons.LayerButton(self.right_frame, "Output Layer", self.empty_funct, 'Output', 2)
-        output_layer_button.f.grid(row=2, column=0)
+        hidden_layer_button = buttons.LayerButton(self.right_frame, "Dropout Layer", self.empty_funct, 'Dropout', 2, logger=self.log, main_window=self)
+        hidden_layer_button.f.grid(row=2, column=0)
+        hidden_layer_button.make_draggable()
+        output_layer_button = buttons.LayerButton(self.right_frame, "Output Layer", self.empty_funct, 'Output', 3, logger=self.log, main_window=self)
+        output_layer_button.f.grid(row=3, column=0)
         output_layer_button.make_draggable()
-        # self.log("Box Created")
+        self.status_box = status_box.StatusBox(self.right_frame)
+        self.status_box.frame.grid(row=4, column=0)
 
-        canvas_frame.CanvasFrame(self.canvas_frame,
+        self.slots = canvas_frame.CanvasFrame(self.left_frame,
                                  frame_row=1,
-                                 frame_col=1)
+                                 frame_col=1,
+                                 logger=self.log,
+                                 main_window=self)
 
 
     def get_slots(self):
@@ -133,7 +130,9 @@ class Window(object):
         )
 
         self.create_new_canvas = lambda: (
-            print("Creating New Canvas")
+            print("Creating New Canvas"),
+            self.slots.add_slot()
+
         )
 
         self.generate_nn_script = lambda: (
@@ -150,7 +149,7 @@ class Window(object):
         )
 
         self.clear_canvas = lambda: (
-            print("Clearing Canvas")
+            self.slots
         )
 
         self.empty_funct = lambda: (

@@ -2,8 +2,8 @@ import tkinter as tk
 from interface import canvas_properites_box, trash_icon
 
 
+
 def callback(event):
-    # print('here')
     print("clicked at", event.x, event.y)
 
 
@@ -15,11 +15,15 @@ class CanvasFrame(object):
                  frame_col=0,
                  size_x=200,
                  size_y=200,
-                 sticky='nsew'):
-
+                 sticky='nsew',
+                 logger=None,
+                 main_window=None):
         self.canvas_properties_box = None
         self.trash_icon = None
         self.slots = list()
+        self.log = logger
+        self.root = root
+        self.main_window = main_window
 
         self.frame = tk.Frame(root, height=size_y, width=size_x, padx=3, pady=3)
         self.frame.grid(row=frame_row, column=frame_col, sticky=sticky)
@@ -47,17 +51,25 @@ class CanvasFrame(object):
 
         for slot_number in range(3):
             self.add_slot()
+        self.remove_slot()
 
     def add_slot(self):
+        self.log('Slot Added\n')
         new_col = len(self.slots) + 3
         new_layer_box = canvas_properites_box.LayerPropertiesBox(self.frame,
                                                                  frame_row=2,
                                                                  frame_col=new_col,
                                                                  size_x=100,
-                                                                 size_y=200)
+                                                                 size_y=200,
+                                                                 logger=self.log,
+                                                                 main_window=self.main_window)
 
         self.slots.append(new_layer_box)
 
+    def remove_slot(self):
+        self.log('Deleted Slot')
+        box = self.slots.pop()
+        del box
 
 if __name__ == '__main__':
     root = tk.Tk()

@@ -1,6 +1,5 @@
 import tkinter as tk
 
-
 DEFAULT_CANVAS_NAME = 'new_canvas_{}'.format(1)
 DEFAULT_CANVAS_PROPERTIES = {
     'canvas_name': DEFAULT_CANVAS_NAME,
@@ -9,8 +8,8 @@ DEFAULT_CANVAS_PROPERTIES = {
     'training_size': .5
 }
 DEFAULT_LAYER_PROPERTIES = {
-    'layer_type': 'DEFAULT',
-    'layer_size': 100,
+    'layer_type': 'Empty',
+    'layer_size': 1,
     'activation_function': 'sigmoid'
 }
 
@@ -29,9 +28,10 @@ class PropertiesBox(object):
                  frame_col=0,
                  size_x=200,
                  size_y=200,
-                 sticky='nsew'):
-
-        self.frame = tk.Frame(root, height=size_y, width=size_x, padx=3, pady=3)
+                 sticky='nsew',
+                 logger=None,
+                 main_window=None):
+        self.frame = tk.Frame(root, height=size_y, width=size_x, bg='gray', padx=3, pady=3)
         self.frame.grid(row=frame_row, column=frame_col, sticky=sticky)
         self.frame.rowconfigure(1, weight=1)
         self.frame.columnconfigure(0, weight=1)
@@ -107,7 +107,8 @@ class CanvasPropertiesBox(PropertiesBox):
                  frame_col=0,
                  size_x=200,
                  size_y=200,
-                 sticky='nsew'):
+                 sticky='nsew',
+                 logger=None):
 
         super(CanvasPropertiesBox, self).__init__(root,
                                                   frame_row=frame_row,
@@ -116,7 +117,9 @@ class CanvasPropertiesBox(PropertiesBox):
                                                   size_y=size_y,
                                                   sticky=sticky,
                                                   label_name='CanvasPropertiesBox',
-                                                  init_properties=DEFAULT_CANVAS_PROPERTIES)
+                                                  init_properties=DEFAULT_CANVAS_PROPERTIES,
+                                                  logger=None)
+
 
 
 class LayerPropertiesBox(PropertiesBox):
@@ -127,7 +130,9 @@ class LayerPropertiesBox(PropertiesBox):
                  frame_col=0,
                  size_x=200,
                  size_y=200,
-                 sticky='nsew'):
+                 sticky='nsew',
+                 logger=None,
+                 main_window=None):
 
         super(LayerPropertiesBox, self).__init__(root,
                                                  frame_row=frame_row,
@@ -135,24 +140,70 @@ class LayerPropertiesBox(PropertiesBox):
                                                  size_x=size_x,
                                                  size_y=size_y,
                                                  sticky=sticky,
-                                                 label_name='LayerPropertiesBox',
-                                                 init_properties=None)
+                                                 label_name='Empty Layer',
+                                                 init_properties=None ,
+                                                 logger=None,
+                                                 main_window=None)
 
         self.prop_box.bind('<<Inherit>>', self.inherit_layer_type)
         self.box_label.bind('<<Inherit>>', self.inherit_layer_type)
         self.frame.bind('<<Inherit>>', self.inherit_layer_type)
+        self.log = logger
+        self.main_window = main_window
+
+        self.layer_type = 'Empty'
+        self.size = 1
+        self.activation = 'sigmoid'
+        self.dropout = .5
+
+        self.box_properties = self.get_slot_attributes_for_text()
+        self.update_text()
+
+    def update_properties(self, event):
+        #TODO: This is where the popup will go
+        pass
+
+    def edit_slot_attributes(self, new_layer_type=None, new_size=None, new_activation=None, new_dropout=None):
+        if new_layer_type:
+            self.layer_type = new_layer_type
+        if new_size:
+            self.size = new_size
+        if new_activation:
+            self.activation = new_activation
+        if new_dropout:
+            self.dropout = new_dropout
+        if not self.layer_type:
+            self.layer_type = 'Empty'
+        self.box_properties = self.get_slot_attributes_for_text()
+        self.update_text()
+
+    def get_slot_attributes_for_text(self):
+
+        if self.layer_type == 'Empty':
+            return {}
+        elif self.layer_type == 'Dropout':
+            return {'percentage':self.dropout}
+        else:
+            return {'size':self.size,'activation':self.activation}
+
+
+    def get_attributes(self):
+        if self.layer_type == 'Empty':
+            return {'Empty'}
+        elif self.layer_type == 'Dropout':
+            return {'Dropout Layer':{'percentage':self.dropout}}
+        else:
+            return {self.layer_type:{'size':self.size,'activation':self.activation}}
 
     def inherit_layer_type(self, event):
-        # global Layer_Type
-        # if Layer_Type != 'Blank':
-        #     self.layer_type = Layer_Type
-        #     Layer_Type = 'Blank'
-        #     self.box_label.config(text=Layer_Type)
-        # else:
-        #     #TODO This is where you will put the pop up call and function
-        #     pass
-        self.box_properties = {'testing': 'I WORK!!!'}
-        self.update_text()
+        #Called when button is dropped
+        clt = self.main_window.current_layer_type
+        if clt != 'Empty':
+            self.layer_type = clt
+            self.main_window.current_layer_type = 'Empty'
+            self.box_label.config(text=clt + ' Layer')
+            self.box_properties = self.get_slot_attributes_for_text()
+            self.update_text()
 
 
 
@@ -172,6 +223,7 @@ class DummyPropertiesEditor(object):
         self.button.grid(row=1, column=1)
 
         root.wait_window(self.dummy)
+
 
     def get_text(self):
         self.data = self.text.get('1.0', tk.END)
