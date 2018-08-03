@@ -185,7 +185,6 @@ class LayerPropertiesBox(PropertiesBox):
         print(str(target))
         print('.!frame2.!frame.!label')
         if str(target) == '.!frame2.!frame.!label':
-            print("Shit works yo")
             self.clear_slot_attributes()
 
     def update_properties(self, event):
