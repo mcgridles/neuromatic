@@ -25,9 +25,6 @@ class Window(object):
         self.current_layer_type = 'Empty'
 
         self.root = tkinter.Tk()
-        # entry = tkinter.Entry(self.root)
-        # entry.pack()
-        # self.root.update_idletasks()
         self.root.title(title)
 
         self.set_size(self.width, self.height)
@@ -117,19 +114,17 @@ class Window(object):
         # that they can be passed into the buttons.py class as input arguments so the buttons.py class will remain
         # compact.
         #
-        # self.add_slot = lambda: (
-        #     self.slots.append(canvas_properites_box.LayerPropertiesBox(self.canvas_frame)),
-        #     self.slots[-1].frame.grid(row=0,column=len(self.slots)-1)
-        # )
+        self.add_slot = lambda: (
+            self.slots.append(canvas_properites_box.LayerPropertiesBox(self.canvas_frame)),
+            self.slots[-1].frame.grid(row=0,column=len(self.slots)-1)
+        )
 
         self.log = lambda message: (
             self._log(message)
         )
 
         self.create_new_canvas = lambda: (
-            print("Creating New Canvas"),
-            self.slots.add_slot()
-
+            print("Creating New Canvas")
         )
 
         self.generate_nn_script = lambda: (

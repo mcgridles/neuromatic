@@ -106,7 +106,8 @@ class CanvasPropertiesBox(PropertiesBox):
                  size_x=200,
                  size_y=200,
                  sticky='nsew',
-                 logger=None):
+                 logger=None,
+                 main_window=None):
 
         super(CanvasPropertiesBox, self).__init__(root,
                                                   frame_row=frame_row,
@@ -116,7 +117,8 @@ class CanvasPropertiesBox(PropertiesBox):
                                                   sticky=sticky,
                                                   label_name='CanvasPropertiesBox',
                                                   init_properties=DEFAULT_CANVAS_PROPERTIES,
-                                                  logger=None)
+                                                  logger=None,
+                                                  main_window=None)
 
 
 
@@ -260,6 +262,127 @@ class DummyPropertiesEditor(object):
     def get_text(self):
         self.data = self.text.get('1.0', tk.END)
         self.dummy.destroy()
+
+
+class CanvasProperties(object):
+    def __init__(self, title, canvas_name, slot_count, data_path, project_dir):
+        self.canvas_name = canvas_name
+        self.slot_count = slot_count
+        self.data_path = data_path
+        self.project_dir = project_dir
+
+        self.canvas_name_entry = None
+        self.slot_count_entry = None
+        self.data_path_entry = None
+        self.project_dir_entry = None
+
+        self.root = tk\
+            .Toplevel()
+        self.root.title(title)
+
+        self.top_frame = None
+
+        self.config_frames()
+        self.add_widgets()
+
+        self.FILE_PATH = os.path.dirname(os.path.realpath(__file__))
+        #self.USER_HOME = os.path.expanduser('~')
+
+        self.VALID_TYPES = {
+            'all': ('all files', '*'),
+            'csv': ('csv', '*.csv'),
+            'python': ('Python', '*.py'),
+            'h5py': ('h5py', '*.h5py')
+        }
+
+    def config_frames(self):
+        self.root.grid_rowconfigure(1, weight=1)
+        self.root.grid_columnconfigure(1, weight=1)
+
+        self.top_frame = tk.Frame(self.root, pady=1)
+        self.top_frame.grid(row=0, columnspan=2, sticky=(tk.N, tk.W, tk.E, tk.S))
+
+    def add_widgets(self):
+        tk.Label(self.top_frame, text="Canvas Name:").grid(row=0, column=0)
+        self.canvas_name_entry = tk.Entry(self.top_frame)
+        self.canvas_name_entry.grid(row=0, column=1)
+        self.canvas_name_entry.insert(10, self.canvas_name)
+
+        tk.Label(self.top_frame, text="Number of Component Slots:").grid(row=1, column=0)
+        self.slot_count_entry = tk.Entry(self.top_frame)
+        self.slot_count_entry.grid(row=1, column=1)
+        self.slot_count_entry.insert(10, self.slot_count)
+
+        tk.Label(self.top_frame, text="Training Data Path:").grid(row=2, column=0)
+        self.data_path_entry = tk.Entry(self.top_frame)
+        self.data_path_entry.grid(row=2, column=1)
+        self.data_path_entry.insert(10, self.data_path)
+        tk.Button(self.top_frame, text="Browse...", command=self.get_file).grid(row=2, column=2)
+
+        tk.Label(self.top_frame, text="Project Directory:").grid(row=3, column=0)
+        self.project_dir_entry = tk.Entry(self.top_frame)
+        self.project_dir_entry.grid(row=3, column=1)
+        self.project_dir_entry.insert(10, self.project_dir)
+        tk.Button(self.top_frame, text="Browse...", command=self.get_directory).grid(row=3, column=2)
+
+        tk.Button(self.top_frame, text="OK", command=self.save_configurations).grid(row=4, column=2,
+                                                                                               sticky=tk.W, pady=3)
+        tk.Button(self.top_frame, text="Cancel", command=self.root.destroy).grid(row=4, column=3,
+                                                                                        sticky=tk.E, pady=3)
+
+    def get_file(self):
+        file_type_list = 'csv'
+
+        if type(file_type_list) is not list or tuple:
+            file_type_list = [file_type_list]
+
+        file_types = list()
+
+        for file_type in file_type_list:
+            assert file_type in self.VALID_TYPES, '{} is not valid file type.'.format(file_type)
+            file_types.append(self.VALID_TYPES[file_type])
+
+        init_dir = os.path.dirname(self.data_path)
+
+        assert os.path.isdir(init_dir), '{} is not a valid directory.'.format(init_dir)
+
+        file_name = tk.filedialog.askopenfilename(initialdir=init_dir,
+                                                           title="Choose File...",
+                                                           filetypes=file_types)
+
+        self.data_path = file_name
+        self.data_path_entry.delete(0, 'end')
+        self.data_path_entry.insert(10, self.data_path)
+        self.root.lift()
+
+    def get_directory(self):
+        assert os.path.isdir(self.project_dir), '{} is not a valid directory.'.format(self.project_dir)
+
+        dir_name = tk.filedialog.askdirectory(title="Choose File...", initialdir=self.project_dir)
+
+        self.project_dir = dir_name
+        self.project_dir_entry.delete(0, 'end')
+        self.project_dir_entry.insert(10, self.project_dir)
+        self.root.lift()
+
+    def save_configurations(self):
+        self.canvas_name = self.canvas_name_entry.get()
+        self.slot_count = self.slot_count_entry.get()
+        self.data_path = self.data_path_entry.get()
+        self.project_dir = self.project_dir_entry.get()
+
+        self.root.destroy()
+
+    def start(self):
+        self.root.mainloop()
+
+    def set_size(self, width, height):
+        set_str = '{}x{}'.format(str(width), str(height))
+        self.root.geometry(set_str)
+
+
+
+
 
 
 if __name__ == '__main__':
