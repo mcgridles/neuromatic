@@ -381,6 +381,139 @@ class CanvasProperties(object):
         self.root.geometry(set_str)
 
 
+class LayerProperties(object):
+    def __init__(self, title, layer_size, layer_dimensions, layer_function, layer_percentage):
+
+        self.layer_size = layer_size
+        self.layer_dimensions = layer_dimensions
+        self.layer_function = layer_function
+        self.layer_percentage = layer_percentage
+
+        self.layer_size_entry = None
+        self.layer_dimensions_entry_x = None
+        self.layer_dimensions_entry_y = None
+        self.layer_function_entry = None
+        self.layer_percentage_entry = None
+
+        self.layer_functions = ['softmax', 'elu', 'selu', 'softplus', 'softsign', 'tanh', 'sigmoid', 'hard_sigmoid',
+                                'linear']
+
+        self.root = tk.Toplevel()
+        self.root.title(title)
+
+        self.top_frame = None
+
+        self.layer_function_selected = tk.StringVar(self.root)
+
+        self.config_frames()
+        self.add_widgets()
+
+    def config_frames(self):
+        self.root.grid_rowconfigure(1, weight=1)
+        self.root.grid_columnconfigure(1, weight=1)
+
+        self.top_frame = tk.Frame(self.root, pady=1)
+        self.top_frame.grid(row=0, columnspan=2, sticky=(tk.N, tk.W, tk.E, tk.S))
+
+    def add_widgets(self):
+        if self.layer_size:
+            tk.Label(self.top_frame, text="Layer Size:").grid(row=0, column=0)
+            self.layer_size_entry = tk.Entry(self.top_frame)
+            self.layer_size_entry.grid(row=0, column=1)
+            self.layer_size_entry.insert(10, self.layer_size)
+
+        if self.layer_dimensions:
+            tk.Label(self.top_frame, text="Layer Dimensions:").grid(row=1, column=0)
+            self.layer_dimensions_entry_x = tk.Entry(self.top_frame)
+            self.layer_dimensions_entry_x.grid(row=1, column=1)
+            self.layer_dimensions_entry_x.insert(10, self.layer_dimensions[0])
+            self.layer_dimensions_entry_y = tk.Entry(self.top_frame)
+            self.layer_dimensions_entry_y.grid(row=1, column=2)
+            self.layer_dimensions_entry_y.insert(10, self.layer_dimensions[1])
+
+        if self.layer_function:
+            tk.Label(self.top_frame, text="Activation Function:").grid(row=1, column=0)
+            self.layer_function_entry = tk.OptionMenu(self.top_frame, self.layer_function_selected,
+                                                           *self.layer_functions)
+            self.layer_function_selected.set(self.layer_function)
+            self.layer_function_entry.grid(row=1, column=1)
+
+        if self.layer_percentage:
+            tk.Label(self.top_frame, text="Percentage:").grid(row=0, column=0)
+            self.layer_percentage_entry = tk.Entry(self.top_frame)
+            self.layer_percentage_entry.grid(row=0, column=1)
+            self.layer_percentage_entry.insert(10, self.layer_percentage)
+            tk.Label(self.top_frame, text="%", sticky=tk.W).grid(row=0, column=2)
+
+        tk.Button(self.top_frame, text="OK", command=self.save_configurations).grid(row=2, column=2,
+                                                                                         sticky=tk.W, pady=3)
+        tk.Button(self.top_frame, text="Cancel", command=self.root.destroy).grid(row=2, column=3,
+                                                                                      sticky=tk.E, pady=3)
+
+    def start(self):
+        self.root.mainloop()
+
+    def set_size(self, width, height):
+        set_str = '{}x{}'.format(str(width), str(height))
+        self.root.geometry(set_str)
+
+    def save_configurations(self):
+        if self.layer_size:
+            self.layer_size = self.layer_size_entry.get()
+
+        if self.layer_dimensions:
+            self.layer_dimensions = [self.layer_dimensions_entry_x.get(), self.layer_dimensions_entry_y.get()]
+
+        if self.layer_function:
+            self.layer_function = self.layer_function_selected.get()
+
+        if self.layer_percentage:
+            self.layer_percentage = self.layer_percentage_entry.get()
+
+        self.root.destroy()
+
+
+class DropDown(object):
+    def __init__(self, root, choices):
+        self.f = tk.Frame(root)
+        self.f.grid(column=0, row=0, sticky=(tk.N, tk.W, tk.E, tk.S))
+        self.f.columnconfigure(0, weight=1)
+        self.f.rowconfigure(0, weight=1)
+        self.choices = choices
+        self.selected = tk.StringVar(root)
+        self.popup_menu = tk.OptionMenu(self.f, self.selected, *self.choices)
+        tk.Label(self.f, text="Choose a thing").grid(row=1, column=1)
+        self.popup_menu.grid(row=2, column=1)
+        self.selected.trace('w', self.change_dropdown)
+
+    def change_dropdown(self, *args):
+        print(self.selected.get())
+
+
+class TextBox(object):
+    def __init__(self, root, height=10, width=10):
+        frame = tk.Frame(root, bg='blue', height=100, pady=3, padx=3)
+        frame.grid(row=1, sticky='sew')
+
+        scroll = tk.Scrollbar(frame)
+        text = tk.Text(frame, height=height, width=width)
+        scroll.pack(side=tk.BOTTOM, fill=tk.Y)
+        text.pack(side=tk.BOTTOM, fill=tk.Y)
+        scroll.config(command=text.yview)
+        text.config(yscrollcommand=scroll.set)
+        quote = 'Here is some text'
+        text.insert(tk.END, quote)
+
+    def add_text(self, text, color):
+        """
+        Append text to the text box in a certain color.
+        -- RED for Error
+        :param text:
+        :param color:
+        :return:
+        """
+        pass
+
 
 
 
