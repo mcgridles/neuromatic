@@ -10,6 +10,22 @@ DEFAULT_CANVAS_PROPERTIES = {
     'training_size': .5
 }
 
+
+def is_integer(string_input):
+    try:
+        int(string_input)
+        return True
+    except ValueError:
+        return False
+
+
+def is_float(string_input):
+    try:
+        float(string_input)
+        return True
+    except ValueError:
+        return False
+
 class PropertiesBox(object):
     def __init__(self,
                  root,
@@ -413,7 +429,7 @@ class CanvasProperties(object):
         self.canvas_name = canvas_name
 
         slot_count = self.slot_count_entry.get()
-        if not self.is_integer(slot_count):
+        if not is_integer(slot_count):
             self.error_mes.set("Number of slots should be an int")
             return
         if int(slot_count)<3 or int(slot_count)>10:
@@ -434,7 +450,7 @@ class CanvasProperties(object):
         self.project_dir = project_dir
 
         training_size = self.training_size_entry.get()
-        if not self.is_float(training_size):
+        if not is_float(training_size):
             self.error_mes.set("Training size should be a float")
             return
         if float(training_size)<0 or float(training_size)>1:
@@ -449,20 +465,6 @@ class CanvasProperties(object):
                                         new_training_size=self.training_size,
                                         old_count=old_count)
         self.root.destroy()
-
-    def is_integer(self, string_input):
-        try:
-            int(string_input)
-            return True
-        except ValueError:
-            return False
-
-    def is_float(self, string_input):
-        try:
-            float(string_input)
-            return True
-        except ValueError:
-            return False
 
     def start(self):
         self.root.mainloop()
@@ -559,7 +561,7 @@ class LayerProperties(object):
     def save_configurations(self):
         if self.layer_size_entry:
             size = self.layer_size_entry.get()
-            if not self.is_integer(size):
+            if not is_integer(size):
                 self.error_mes.set("Layer Size should be an int")
                 return
             if int(size)<1 or int(size)>1000:
@@ -572,7 +574,7 @@ class LayerProperties(object):
 
         if self.layer_percentage_entry:
             dropout = self.layer_percentage_entry.get()
-            if not self.is_float(dropout):
+            if not is_float(dropout):
                 self.error_mes.set("Dropout Percentage should be a float")
                 return
             if float(dropout)<0 or float(dropout)>100:
@@ -580,8 +582,15 @@ class LayerProperties(object):
                 return
             self.dropout = dropout
 
-        if self.layer_dimensions_entry_x and self.layer_dimensions_entry_y:
-            self.layer_dimensions = self.layer_dimensions_entry.get()
+        if self.layer_dimensions_entry:
+            layer_dimensions = self.layer_dimensions_entry.get()
+            if not is_integer(layer_dimensions):
+                self.error_mes.set("Layer Dimensions should be an int")
+                return
+            if int(layer_dimensions)<1 or int(layer_dimensions)>100:
+                self.error_mes.set("Layer Dimensions should be 1 to 100")
+                return
+            self.layer_dimensions = layer_dimensions
 
         self.props.edit_slot_attributes(new_layer_type=self.layer_type,
                                         new_size=self.size,
