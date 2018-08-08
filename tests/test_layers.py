@@ -1,7 +1,7 @@
 import unittest
 from unittest import mock
 
-from layers import InputLayer, DenseLayer, DropoutLayer
+from backend.layers import InputLayer, DenseLayer, DropoutLayer
 
 @mock.patch('builtins.open')
 class TestLayers(unittest.TestCase):

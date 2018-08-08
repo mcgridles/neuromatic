@@ -2,6 +2,9 @@ import numpy as np
 import pandas as pd
 from keras.datasets import mnist
 
+(X_train, y_train), (X_test, y_test) = mnist.load_data()
+X_train, X_test = X_train / 255.0, X_test / 255.0
+
 X_train = np.reshape(X_train, (60000, 784))
 y_train = np.reshape(y_train, (60000, 1))
 X_test = np.reshape(X_test, (10000, 784))
