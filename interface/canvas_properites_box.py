@@ -263,13 +263,15 @@ class LayerPropertiesBox(PropertiesBox):
 
     def get_attributes(self):
         if self.layer_type == 'Empty':
-            return {'Empty'}
+            return {'type':'empty'}
         elif self.layer_type == 'Dropout':
-            return {self.layer_type: {'percentage':self.dropout}}
+            return {'type':'dropout','percentage':self.dropout}
         elif self.layer_type == 'Input':
-            return {self.layer_type: {'size': self.size, 'activation': self.activation, 'dimensions':self.layer_dimensions}}
-        else:
-            return {self.layer_type:{'size':self.size,'activation':self.activation}}
+            return {'type':'input','size': self.size, 'activation': self.activation, 'dimensions':self.layer_dimensions}
+        elif self.layer_type == 'Hidden':
+            return {'type':'hidden','size':self.size,'activation':self.activation}
+        elif self.layer_type == 'Output':
+            return {'type':'output','size':self.size,'activation':self.activation}
 
     def inherit_layer_type(self, event):
         #Called when button is dropped
