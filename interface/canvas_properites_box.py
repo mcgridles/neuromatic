@@ -1,10 +1,12 @@
 import tkinter as tk
+import os
 
 DEFAULT_CANVAS_NAME = 'new_canvas_{}'.format(1)
 DEFAULT_CANVAS_PROPERTIES = {
     'canvas_name': DEFAULT_CANVAS_NAME,
     'component_slots': 3,
-    'project_directory': '~/Desktop',
+    'data_path': 'None',
+    'project_directory': os.path.dirname(os.path.realpath(__file__)),
     'training_size': .5
 }
 
@@ -114,6 +116,23 @@ class CanvasPropertiesBox(PropertiesBox):
                                                   logger=None,
                                                   main_window=None)
 
+        self.log = logger
+        self.main_window = main_window
+
+        self.frame.bind('<Double-Button-1>', self.edit_popup)
+        self.box_label.bind('<Double-Button-1>', self.edit_popup)
+        self.prop_box.bind('<Double-Button-1>', self.edit_popup)
+
+    def edit_popup(self, event):
+        popup = CanvasProperties(self)
+
+    def edit_slot_attributes(self, new_canvas_name=None, new_slot_count=None, new_data_path=None, new_project_dir=None, new_training_size=None):
+        self.box_properties['canvas_name'] = new_canvas_name
+        self.box_properties['component_slots'] = new_slot_count
+        self.box_properties['data_path'] = new_data_path
+        self.box_properties['project_directory'] = new_project_dir
+        self.box_properties['training_size'] = new_training_size
+        self.update_text()
 
 
 class LayerPropertiesBox(PropertiesBox):
@@ -249,20 +268,23 @@ class LayerPropertiesBox(PropertiesBox):
 
 
 class CanvasProperties(object):
-    def __init__(self, title, canvas_name, slot_count, data_path, project_dir):
-        self.canvas_name = canvas_name
-        self.slot_count = slot_count
-        self.data_path = data_path
-        self.project_dir = project_dir
+    def __init__(self, props):
+        self.props = props
+        self.canvas_name = props.box_properties['canvas_name']
+        self.slot_count = props.box_properties['component_slots']
+        self.data_path = props.box_properties['data_path']
+        self.project_dir = props.box_properties['project_directory']
+        self.training_size = props.box_properties['training_size']
 
         self.canvas_name_entry = None
         self.slot_count_entry = None
         self.data_path_entry = None
         self.project_dir_entry = None
+        self.training_size_entry = None
 
         self.root = tk\
             .Toplevel()
-        self.root.title(title)
+        self.root.title("Edit Canvas Properties")
 
         self.top_frame = None
 
@@ -309,10 +331,15 @@ class CanvasProperties(object):
         self.project_dir_entry.insert(10, self.project_dir)
         tk.Button(self.top_frame, text="Browse...", command=self.get_directory).grid(row=3, column=2)
 
-        tk.Button(self.top_frame, text="OK", command=self.save_configurations).grid(row=4, column=2,
-                                                                                               sticky=tk.W, pady=3)
-        tk.Button(self.top_frame, text="Cancel", command=self.root.destroy).grid(row=4, column=3,
-                                                                                        sticky=tk.E, pady=3)
+        tk.Label(self.top_frame, text="Training Size:").grid(row=4, column=0)
+        self.training_size_entry = tk.Entry(self.top_frame)
+        self.training_size_entry.grid(row=4, column=1)
+        self.training_size_entry.insert(10, self.training_size)
+
+        tk.Button(self.top_frame, text="OK", command=self.save_configurations).grid(row=5, column=2,
+                                                                                               sticky=tk.E, pady=3)
+        tk.Button(self.top_frame, text="Cancel", command=self.root.destroy).grid(row=5, column=3,
+                                                                                        sticky=tk.W, pady=3)
 
     def get_file(self):
         file_type_list = 'csv'
@@ -328,7 +355,8 @@ class CanvasProperties(object):
 
         init_dir = os.path.dirname(self.data_path)
 
-        assert os.path.isdir(init_dir), '{} is not a valid directory.'.format(init_dir)
+        if not os.path.isdir(init_dir):
+            init_dir = self.FILE_PATH
 
         file_name = tk.filedialog.askopenfilename(initialdir=init_dir,
                                                            title="Choose File...",
@@ -354,6 +382,12 @@ class CanvasProperties(object):
         self.slot_count = self.slot_count_entry.get()
         self.data_path = self.data_path_entry.get()
         self.project_dir = self.project_dir_entry.get()
+        self.training_size = self.training_size_entry.get()
+        self.props.edit_slot_attributes(new_canvas_name=self.canvas_name,
+                                        new_slot_count=self.slot_count,
+                                        new_data_path=self.data_path,
+                                        new_project_dir=self.project_dir,
+                                        new_training_size=self.training_size)
 
         self.root.destroy()
 
@@ -368,6 +402,7 @@ class CanvasProperties(object):
 class LayerProperties(object):
     def __init__(self, props):
         self.props = props
+        print(props)
         self.layer_type = props.layer_type
         self.size = props.size
         self.layer_dimensions = props.layer_dimensions
