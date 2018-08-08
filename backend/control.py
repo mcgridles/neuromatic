@@ -3,15 +3,16 @@ import shutil
 import signal
 import logging
 import multiprocessing
-import numpy as np
 import pandas as pd
 
 from sklearn.model_selection import train_test_split
 
-from backend.layers import InputLayer, DenseLayer, DropoutLayer
+from backend import layers
+
 
 class NetworkException(Exception):
     pass
+
 
 class Control(object):
     """
@@ -29,10 +30,11 @@ class Control(object):
             same time
         add_text: (function) -> Status box "add_text" function for logging to the GUI
     """
+
     LAYER_TYPES = {
-        'input': InputLayer,
-        'dense': DenseLayer,
-        'dropout': DropoutLayer,
+        'input': layers.InputLayer,
+        'dense': layers.DenseLayer,
+        'dropout': layers.DropoutLayer,
     }
 
     def __init__(self, add_text):
@@ -165,7 +167,7 @@ class Control(object):
         signal.signal(signal.SIGTERM, self.safe_terminate)
         self.__thread_lock.acquire()
 
-        from backend.network import train_neural_network
+        from backend import network
 
         # Read in training data
         self.log_status('Reading data...', 'info')
@@ -175,7 +177,7 @@ class Control(object):
         X_train, X_test, y_train, y_test = train_test_split(X_data, y_data, train_size=self.canvas_properties['train_size'], shuffle=True)
 
         self.log_status('Training network...', 'debug')
-        score = train_neural_network(X_train, y_train, X_test, y_test)
+        score = network.train_neural_network(X_train, y_train, X_test, y_test)
 
         self.log_status('Network trained.', 'debug')
         self.log_status('Model accuracy: {0}'.format(round(score, 3)))

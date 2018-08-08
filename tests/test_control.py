@@ -2,7 +2,7 @@ import unittest
 from unittest import mock
 
 from backend.layers import DenseLayer, DropoutLayer
-from backend.control import Control, NetworkException
+from backend.control import Control
 
 
 class TestControl(unittest.TestCase):
