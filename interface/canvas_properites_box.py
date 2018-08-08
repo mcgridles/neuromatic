@@ -10,6 +10,22 @@ DEFAULT_CANVAS_PROPERTIES = {
     'training_size': .5
 }
 
+
+def is_integer(string_input):
+    try:
+        int(string_input)
+        return True
+    except ValueError:
+        return False
+
+
+def is_float(string_input):
+    try:
+        float(string_input)
+        return True
+    except ValueError:
+        return False
+
 class PropertiesBox(object):
     def __init__(self,
                  root,
@@ -187,7 +203,7 @@ class LayerPropertiesBox(PropertiesBox):
         self.size = 1
         self.activation = 'sigmoid'
         self.dropout = .5
-        self.layer_dimensions = [1,1]
+        self.layer_dimensions = 1
 
         self.box_properties = self.get_slot_attributes_for_text()
         self.update_text()
@@ -305,6 +321,9 @@ class CanvasProperties(object):
         self.data_path_entry = None
         self.project_dir_entry = None
         self.training_size_entry = None
+        self.error_entry = None
+
+        self.error_mes = tk.StringVar()
 
         self.root = tk\
             .Toplevel()
@@ -333,32 +352,34 @@ class CanvasProperties(object):
         self.top_frame.grid(row=0, columnspan=2, sticky=(tk.N, tk.W, tk.E, tk.S))
 
     def add_widgets(self):
-        tk.Label(self.top_frame, text="Canvas Name:").grid(row=0, column=0)
+        tk.Label(self.top_frame, text="Canvas Name:").grid(row=0, column=0, sticky=tk.E)
         self.canvas_name_entry = tk.Entry(self.top_frame)
         self.canvas_name_entry.grid(row=0, column=1)
         self.canvas_name_entry.insert(10, self.canvas_name)
 
-        tk.Label(self.top_frame, text="Number of Component Slots:").grid(row=1, column=0)
+        tk.Label(self.top_frame, text="Number of Component Slots:").grid(row=1, column=0, sticky=tk.E)
         self.slot_count_entry = tk.Entry(self.top_frame)
         self.slot_count_entry.grid(row=1, column=1)
         self.slot_count_entry.insert(10, self.slot_count)
 
-        tk.Label(self.top_frame, text="Training Data Path:").grid(row=2, column=0)
+        tk.Label(self.top_frame, text="Training Data Path:").grid(row=2, column=0, sticky=tk.E)
         self.data_path_entry = tk.Entry(self.top_frame)
         self.data_path_entry.grid(row=2, column=1)
         self.data_path_entry.insert(10, self.data_path)
         tk.Button(self.top_frame, text="Browse...", command=self.get_file).grid(row=2, column=2)
 
-        tk.Label(self.top_frame, text="Project Directory:").grid(row=3, column=0)
+        tk.Label(self.top_frame, text="Project Directory:").grid(row=3, column=0, sticky=tk.E)
         self.project_dir_entry = tk.Entry(self.top_frame)
         self.project_dir_entry.grid(row=3, column=1)
         self.project_dir_entry.insert(10, self.project_dir)
         tk.Button(self.top_frame, text="Browse...", command=self.get_directory).grid(row=3, column=2)
 
-        tk.Label(self.top_frame, text="Training Size:").grid(row=4, column=0)
+        tk.Label(self.top_frame, text="Training Size:").grid(row=4, column=0, sticky=tk.E)
         self.training_size_entry = tk.Entry(self.top_frame)
         self.training_size_entry.grid(row=4, column=1)
         self.training_size_entry.insert(10, self.training_size)
+
+        self.error_entry = tk.Label(self.top_frame, textvariable=self.error_mes, fg="red").grid(row=5, column=0, sticky=tk.W, columnspan=2)
 
         tk.Button(self.top_frame, text="OK", command=self.save_configurations).grid(row=5, column=2,
                                                                                                sticky=tk.E, pady=3)
@@ -402,13 +423,44 @@ class CanvasProperties(object):
         self.root.lift()
 
     def save_configurations(self):
-        old_count = self.slot_count
-        self.canvas_name = self.canvas_name_entry.get()
-        self.slot_count = self.slot_count_entry.get()
-        self.data_path = self.data_path_entry.get()
-        self.project_dir = self.project_dir_entry.get()
-        self.training_size = self.training_size_entry.get()
-        self.props.edit_canvas_attributes(new_canvas_name=self.canvas_name,
+
+        canvas_name = self.canvas_name_entry.get()
+        if len(canvas_name)<1 or len(canvas_name)>32:
+            self.error_mes.set("Canvas Name should be 1 to 32 char")
+            return
+        self.canvas_name = canvas_name
+
+        slot_count = self.slot_count_entry.get()
+        if not is_integer(slot_count):
+            self.error_mes.set("Number of slots should be an int")
+            return
+        if int(slot_count)<3 or int(slot_count)>10:
+            self.error_mes.set("Number of slots should be 3 to 10")
+            return
+        self.slot_count = slot_count
+
+        data_path = self.data_path_entry.get()
+        if not os.path.isfile(data_path):
+            self.error_mes.set("Training data does not have valid filepath")
+            return
+        self.data_path = data_path
+
+        project_dir = self.project_dir_entry.get()
+        if not os.path.isdir(project_dir):
+            self.error_mes.set("Project directory does not have a valid path")
+            return
+        self.project_dir = project_dir
+
+        training_size = self.training_size_entry.get()
+        if not is_float(training_size):
+            self.error_mes.set("Training size should be a float")
+            return
+        if float(training_size)<0 or float(training_size)>1:
+            self.error_mes.set("Training size should be 0 to 1")
+            return
+        self.training_size = training_size
+
+        self.props.edit_slot_attributes(new_canvas_name=self.canvas_name,
                                         new_slot_count=self.slot_count,
                                         new_data_path=self.data_path,
                                         new_project_dir=self.project_dir,
@@ -435,10 +487,10 @@ class LayerProperties(object):
         self.dropout = props.dropout
 
         self.layer_size_entry=None
-        self.layer_dimensions_entry_x = None
-        self.layer_dimensions_entry_y = None
+        self.layer_dimensions_entry = None
         self.layer_function_entry = None
         self.layer_percentage_entry = None
+        self.error_entry = None
 
         self.layer_functions = ['softmax', 'elu', 'selu', 'softplus', 'softsign', 'tanh', 'sigmoid', 'hard_sigmoid',
                                 'linear']
@@ -449,6 +501,7 @@ class LayerProperties(object):
         self.top_frame = None
 
         self.layer_function_selected = tk.StringVar(self.root)
+        self.error_mes = tk.StringVar()
 
         self.config_frames()
         self.add_widgets()
@@ -464,24 +517,21 @@ class LayerProperties(object):
         self.widget_row = 0
 
         if self.layer_type != 'Dropout':
-            tk.Label(self.top_frame, text="Layer Size:").grid(row=self.widget_row , column=0)
+            tk.Label(self.top_frame, text="Layer Size:").grid(row=self.widget_row , column=0, sticky=tk.E)
             self.layer_size_entry = tk.Entry(self.top_frame)
             self.layer_size_entry.grid(row=self.widget_row , column=1)
             self.layer_size_entry.insert(10, self.size)
             self.widget_row = self.widget_row + 1
 
         if self.layer_type == 'Input':
-            tk.Label(self.top_frame, text="Layer Dimensions:").grid(row=self.widget_row , column=0)
-            self.layer_dimensions_entry_x = tk.Entry(self.top_frame)
-            self.layer_dimensions_entry_x.grid(row=self.widget_row , column=1)
-            self.layer_dimensions_entry_x.insert(10, self.layer_dimensions[0])
-            self.layer_dimensions_entry_y = tk.Entry(self.top_frame)
-            self.layer_dimensions_entry_y.grid(row=self.widget_row , column=2)
-            self.layer_dimensions_entry_y.insert(10, self.layer_dimensions[1])
+            tk.Label(self.top_frame, text="Layer Dimensions:").grid(row=self.widget_row , column=0, sticky=tk.E)
+            self.layer_dimensions_entry = tk.Entry(self.top_frame)
+            self.layer_dimensions_entry.grid(row=self.widget_row , column=1)
+            self.layer_dimensions_entry.insert(10, self.layer_dimensions)
             self.widget_row = self.widget_row + 1
 
         if self.layer_type != 'Dropout':
-            tk.Label(self.top_frame, text="Activation Function:").grid(row=self.widget_row , column=0)
+            tk.Label(self.top_frame, text="Activation Function:").grid(row=self.widget_row , column=0, sticky=tk.E)
             self.layer_function_entry = tk.OptionMenu(self.top_frame, self.layer_function_selected,
                                                            *self.layer_functions)
             self.layer_function_selected.set(self.activation)
@@ -489,17 +539,20 @@ class LayerProperties(object):
             self.widget_row = self.widget_row + 1
 
         if self.layer_type == 'Dropout':
-            tk.Label(self.top_frame, text="Percentage:").grid(row=self.widget_row , column=0)
+            tk.Label(self.top_frame, text="Dropout Percentage:").grid(row=self.widget_row , column=0, sticky=tk.E)
             self.layer_percentage_entry = tk.Entry(self.top_frame)
             self.layer_percentage_entry.grid(row=self.widget_row , column=1)
             self.layer_percentage_entry.insert(10, self.dropout)
             tk.Label(self.top_frame, text="%").grid(row=self.widget_row , column=2)
             self.widget_row = self.widget_row + 1
 
-        tk.Button(self.top_frame, text="OK", command=self.save_configurations).grid(row=self.widget_row , column=0,
-                                                                                        sticky=tk.W, pady=3)
-        tk.Button(self.top_frame, text="Cancel", command=self.root.destroy).grid(row=self.widget_row , column=1,
-                                                                       sticky=tk.E, pady=3)
+        self.error_entry = tk.Label(self.top_frame, textvariable=self.error_mes, fg="red").grid(row=self.widget_row, column=0,
+                                                                                                sticky=tk.W,
+                                                                                                columnspan=2)
+        tk.Button(self.top_frame, text="OK", command=self.save_configurations).grid(row=self.widget_row , column=2,
+                                                                                        sticky=tk.E, pady=3)
+        tk.Button(self.top_frame, text="Cancel", command=self.root.destroy).grid(row=self.widget_row , column=3,
+                                                                       sticky=tk.W, pady=3)
     def start(self):
         self.root.mainloop()
 
@@ -509,19 +562,58 @@ class LayerProperties(object):
 
     def save_configurations(self):
         if self.layer_size_entry:
-            self.size = self.layer_size_entry.get()
+            size = self.layer_size_entry.get()
+            if not is_integer(size):
+                self.error_mes.set("Layer Size should be an int")
+                return
+            if int(size)<1 or int(size)>1000:
+                self.error_mes.set("Layer Size should be 1 to 1000")
+                return
+            self.size = size
+
         if self.layer_function_selected:
             self.activation = self.layer_function_selected.get()
+
         if self.layer_percentage_entry:
-            self.dropout = self.layer_percentage_entry.get()
-        if self.layer_dimensions_entry_x and self.layer_dimensions_entry_y:
-            self.layer_dimensions = [self.layer_dimensions_entry_x.get(), self.layer_dimensions_entry_y.get()]
+            dropout = self.layer_percentage_entry.get()
+            if not is_float(dropout):
+                self.error_mes.set("Dropout Percentage should be a float")
+                return
+            if float(dropout)<0 or float(dropout)>100:
+                self.error_mes.set("Dropout Percentage should be 0 to 100")
+                return
+            self.dropout = dropout
+
+        if self.layer_dimensions_entry:
+            layer_dimensions = self.layer_dimensions_entry.get()
+            if not is_integer(layer_dimensions):
+                self.error_mes.set("Layer Dimensions should be an int")
+                return
+            if int(layer_dimensions)<1 or int(layer_dimensions)>100:
+                self.error_mes.set("Layer Dimensions should be 1 to 100")
+                return
+            self.layer_dimensions = layer_dimensions
+
         self.props.edit_slot_attributes(new_layer_type=self.layer_type,
                                         new_size=self.size,
                                         new_activation=self.activation,
                                         new_dropout=self.dropout,
                                         new_layer_dimensions=self.layer_dimensions)
         self.root.destroy()
+
+    def is_integer(self, string_input):
+        try:
+            int(string_input)
+            return True
+        except ValueError:
+            return False
+
+    def is_float(self, string_input):
+        try:
+            float(string_input)
+            return True
+        except ValueError:
+            return False
 
 
 if __name__ == '__main__':
