@@ -131,13 +131,27 @@ class CanvasPropertiesBox(PropertiesBox):
     def edit_popup(self, event):
         popup = CanvasProperties(self,main_window=self.main_window, logger=self.log,canvas_frame=self.canvas_frame)
 
-    def edit_slot_attributes(self, new_canvas_name=None, new_slot_count=None, new_data_path=None, new_project_dir=None, new_training_size=None):
+    def edit_canvas_attributes(self, new_canvas_name=None, new_slot_count=None, new_data_path=None, new_project_dir=None, new_training_size=None,old_count=None):
         self.box_properties['canvas_name'] = new_canvas_name
         self.box_properties['component_slots'] = new_slot_count
         self.box_properties['data_path'] = new_data_path
         self.box_properties['project_directory'] = new_project_dir
         self.box_properties['training_size'] = new_training_size
         self.update_text()
+        self.update_slots(old_count)
+
+    def update_slots(self,old_count):
+        new_count = self.box_properties['component_slots']
+        print(old_count, new_count)
+        if int(old_count) > int(new_count):
+            for x in range(0, int(old_count)-int(new_count)):
+                self.canvas_frame.remove_slot()
+        elif int(old_count) < int(new_count):
+            for x in range(0, int(new_count)-int(old_count)):
+                print('here')
+                self.canvas_frame.add_slot()
+
+
 
 
 class LayerPropertiesBox(PropertiesBox):
@@ -392,19 +406,12 @@ class CanvasProperties(object):
         self.data_path = self.data_path_entry.get()
         self.project_dir = self.project_dir_entry.get()
         self.training_size = self.training_size_entry.get()
-        self.props.edit_slot_attributes(new_canvas_name=self.canvas_name,
+        self.props.edit_canvas_attributes(new_canvas_name=self.canvas_name,
                                         new_slot_count=self.slot_count,
                                         new_data_path=self.data_path,
                                         new_project_dir=self.project_dir,
-                                        new_training_size=self.training_size)
-        print(old_count)
-        print(self.slot_count)
-        if int(old_count) > int(self.slot_count):
-            for x in range(0, int(old_count-int(self.slot_count))):
-                self.canvas_frame.remove_slot()
-        elif int(old_count) < int(self.slot_count):
-            for x in range(0, int(self.slot_count)-int(old_count)):
-                self.canvas_frame.add_slot()
+                                        new_training_size=self.training_size,
+                                        old_count=old_count)
         self.root.destroy()
 
     def start(self):

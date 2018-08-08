@@ -150,11 +150,26 @@ class Window(object):
 
     def overwrite_properties(self,new_properties):
         # TODO: update canvas properties, insert the correct number of blocks
+        print(new_properties)
+        old_count = self.slots.canvas_properties_box.box_properties['component_slots']
+        name = new_properties['canvas_name']
+        number = new_properties['component_slots']
+        path = new_properties['data_path']
+        dir = new_properties['project_directory']
+        train = new_properties['training_size']
+        self.slots.canvas_properties_box.edit_canvas_attributes(
+                                            new_canvas_name=name,
+                                            new_slot_count=number,
+                                            new_data_path=path,
+                                            new_project_dir=dir,
+                                            new_training_size=train,
+                                            old_count=old_count
+        )
 
-        # self.slots.canvas_properties_box.update_text()
+        self.slots.canvas_properties_box.update_slots(number)
 
         num_slots = new_properties['component_slots']
-        for x in range(0,num_slots):
+        for x in range(0,int(num_slots)):
             layer = new_properties['layers'][x]
             if 'Hidden' in layer:
                 layer = layer['Hidden']
@@ -202,6 +217,7 @@ class Window(object):
         )
 
         self.create_new_canvas = lambda: (
+            #TODO: Create New Canvas
             self.log("Creating New Canvas")
         )
 
