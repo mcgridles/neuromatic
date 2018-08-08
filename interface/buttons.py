@@ -56,7 +56,7 @@ class LayerButton(GenericButton):
         self.b.bind('<Button-1>', self.on_start)
         self.b.bind('<B1-Motion>', self.on_drag)
         self.b.bind('<ButtonRelease-1>', self.on_drop)
-        self.b.configure(cursor='hand2')
+        self.b.configure(cursor='hand1')
 
     def button_callback(self):
         pass
@@ -73,7 +73,6 @@ class LayerButton(GenericButton):
         try:
             target.event_generate('<<Inherit>>', when='tail')
         except:
-            print("Didn't work")
             pass
 
 def main():

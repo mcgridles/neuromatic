@@ -4,17 +4,11 @@ DEFAULT_CANVAS_NAME = 'new_canvas_{}'.format(1)
 DEFAULT_CANVAS_PROPERTIES = {
     'canvas_name': DEFAULT_CANVAS_NAME,
     'component_slots': 3,
-    'project_directory': '~/Documents',
+    'project_directory': '~/Desktop',
     'training_size': .5
 }
 
-
-def callback(event):
-    print("clicked at", event.x, event.y)
-
-
 class PropertiesBox(object):
-
     def __init__(self,
                  root,
                  label_name,
@@ -76,8 +70,8 @@ class PropertiesBox(object):
         self.prop_box.bind('<Double-Button-1>', self.update_properties)
 
     def update_properties(self, event):
-        self.editor = DummyPropertiesEditor(self.frame)
-        print(self.editor.data)
+        # self.editor = DummyPropertiesEditor(self.frame)
+        pass
 
     def update_text(self):
         self.prop_box.config(state=tk.NORMAL)
@@ -155,6 +149,7 @@ class LayerPropertiesBox(PropertiesBox):
         self.size = 1
         self.activation = 'sigmoid'
         self.dropout = .5
+        self.layer_dimensions = [1,1]
 
         self.box_properties = self.get_slot_attributes_for_text()
         self.update_text()
@@ -175,6 +170,16 @@ class LayerPropertiesBox(PropertiesBox):
         self.box_label.bind('<ButtonRelease-1>', self.on_drop)
         self.prop_box.bind('<ButtonRelease-1>', self.on_drop)
 
+        self.frame.bind('<Double-Button-1>', self.edit_popup)
+        self.box_label.bind('<Double-Button-1>', self.edit_popup)
+        self.prop_box.bind('<Double-Button-1>', self.edit_popup)
+
+    def edit_popup(self, event):
+        if self.layer_type == 'Empty':
+            self.log('Cannot Edit Empty Layer\n')
+        else:
+            popup = LayerProperties(self)
+
     def on_start(self,event):
         pass
 
@@ -184,8 +189,6 @@ class LayerPropertiesBox(PropertiesBox):
     def on_drop(self, event):
         x, y = self.frame.winfo_pointerx(), self.frame.winfo_pointery()
         target = event.widget.winfo_containing(x, y)
-        print(str(target))
-        print('.!frame2.!frame.!label')
         if str(target) == '.!frame2.!frame.!label':
             self.clear_slot_attributes()
 
@@ -193,7 +196,7 @@ class LayerPropertiesBox(PropertiesBox):
         #TODO: This is where the popup will go
         pass
 
-    def edit_slot_attributes(self, new_layer_type=None, new_size=None, new_activation=None, new_dropout=None):
+    def edit_slot_attributes(self, new_layer_type=None, new_size=None, new_activation=None, new_dropout=None, new_layer_dimensions=None):
         if new_layer_type:
             self.layer_type = new_layer_type
         if new_size:
@@ -202,17 +205,20 @@ class LayerPropertiesBox(PropertiesBox):
             self.activation = new_activation
         if new_dropout:
             self.dropout = new_dropout
+        if new_layer_dimensions:
+            self.layer_dimensions = new_layer_dimensions
         if not self.layer_type:
             self.layer_type = 'Empty'
         self.box_properties = self.get_slot_attributes_for_text()
         self.update_text()
 
     def get_slot_attributes_for_text(self):
-
         if self.layer_type == 'Empty':
             return {}
         elif self.layer_type == 'Dropout':
             return {'percentage':self.dropout}
+        elif self.layer_type == 'Input':
+            return {'size':self.size,'activation':self.activation, 'dimensions':self.layer_dimensions}
         else:
             return {'size':self.size,'activation':self.activation}
 
@@ -221,7 +227,9 @@ class LayerPropertiesBox(PropertiesBox):
         if self.layer_type == 'Empty':
             return {'Empty'}
         elif self.layer_type == 'Dropout':
-            return {'Dropout Layer':{'percentage':self.dropout}}
+            return {self.layer_type: {'percentage':self.dropout}}
+        elif self.layer_type == 'Input':
+            return {self.layer_type: {'size': self.size, 'activation': self.activation, 'dimensions':self.layer_dimensions}}
         else:
             return {self.layer_type:{'size':self.size,'activation':self.activation}}
 
@@ -238,30 +246,6 @@ class LayerPropertiesBox(PropertiesBox):
     def clear_slot_attributes(self):
         self.box_label.config(text='Empty Layer')
         self.edit_slot_attributes('Empty',1,'sigmoid',.5)
-
-
-
-class DummyPropertiesEditor(object):
-
-    def __init__(self, root):
-        self.data = 'DEFAULT'
-
-        self.dummy = tk.Toplevel(root)
-        self.dummy.rowconfigure(0, weight=1)
-        self.dummy.columnconfigure(0, weight=1)
-        self.text = tk.Text(self.dummy, height=1, width=10)
-        self.text.grid(row=0, column=0, sticky='nsew')
-        self.text.insert(tk.END, self.data)
-
-        self.button = tk.Button(self.dummy, command=self.get_text, text='OK')
-        self.button.grid(row=1, column=1)
-
-        root.wait_window(self.dummy)
-
-
-    def get_text(self):
-        self.data = self.text.get('1.0', tk.END)
-        self.dummy.destroy()
 
 
 class CanvasProperties(object):
@@ -382,14 +366,15 @@ class CanvasProperties(object):
 
 
 class LayerProperties(object):
-    def __init__(self, title, layer_size, layer_dimensions, layer_function, layer_percentage):
+    def __init__(self, props):
+        self.props = props
+        self.layer_type = props.layer_type
+        self.size = props.size
+        self.layer_dimensions = props.layer_dimensions
+        self.activation = props.activation
+        self.dropout = props.dropout
 
-        self.layer_size = layer_size
-        self.layer_dimensions = layer_dimensions
-        self.layer_function = layer_function
-        self.layer_percentage = layer_percentage
-
-        self.layer_size_entry = None
+        self.layer_size_entry=None
         self.layer_dimensions_entry_x = None
         self.layer_dimensions_entry_y = None
         self.layer_function_entry = None
@@ -399,7 +384,7 @@ class LayerProperties(object):
                                 'linear']
 
         self.root = tk.Toplevel()
-        self.root.title(title)
+        self.root.title(self.layer_type)
 
         self.top_frame = None
 
@@ -416,40 +401,45 @@ class LayerProperties(object):
         self.top_frame.grid(row=0, columnspan=2, sticky=(tk.N, tk.W, tk.E, tk.S))
 
     def add_widgets(self):
-        if self.layer_size:
-            tk.Label(self.top_frame, text="Layer Size:").grid(row=0, column=0)
-            self.layer_size_entry = tk.Entry(self.top_frame)
-            self.layer_size_entry.grid(row=0, column=1)
-            self.layer_size_entry.insert(10, self.layer_size)
+        self.widget_row = 0
 
-        if self.layer_dimensions:
-            tk.Label(self.top_frame, text="Layer Dimensions:").grid(row=1, column=0)
+        if self.layer_type != 'Dropout':
+            tk.Label(self.top_frame, text="Layer Size:").grid(row=self.widget_row , column=0)
+            self.layer_size_entry = tk.Entry(self.top_frame)
+            self.layer_size_entry.grid(row=self.widget_row , column=1)
+            self.layer_size_entry.insert(10, self.size)
+            self.widget_row = self.widget_row + 1
+
+        if self.layer_type == 'Input':
+            tk.Label(self.top_frame, text="Layer Dimensions:").grid(row=self.widget_row , column=0)
             self.layer_dimensions_entry_x = tk.Entry(self.top_frame)
-            self.layer_dimensions_entry_x.grid(row=1, column=1)
+            self.layer_dimensions_entry_x.grid(row=self.widget_row , column=1)
             self.layer_dimensions_entry_x.insert(10, self.layer_dimensions[0])
             self.layer_dimensions_entry_y = tk.Entry(self.top_frame)
-            self.layer_dimensions_entry_y.grid(row=1, column=2)
+            self.layer_dimensions_entry_y.grid(row=self.widget_row , column=2)
             self.layer_dimensions_entry_y.insert(10, self.layer_dimensions[1])
+            self.widget_row = self.widget_row + 1
 
-        if self.layer_function:
-            tk.Label(self.top_frame, text="Activation Function:").grid(row=1, column=0)
+        if self.layer_type != 'Dropout':
+            tk.Label(self.top_frame, text="Activation Function:").grid(row=self.widget_row , column=0)
             self.layer_function_entry = tk.OptionMenu(self.top_frame, self.layer_function_selected,
                                                            *self.layer_functions)
-            self.layer_function_selected.set(self.layer_function)
-            self.layer_function_entry.grid(row=1, column=1)
+            self.layer_function_selected.set(self.activation)
+            self.layer_function_entry.grid(row=self.widget_row , column=1)
+            self.widget_row = self.widget_row + 1
 
-        if self.layer_percentage:
-            tk.Label(self.top_frame, text="Percentage:").grid(row=0, column=0)
+        if self.layer_type == 'Dropout':
+            tk.Label(self.top_frame, text="Percentage:").grid(row=self.widget_row , column=0)
             self.layer_percentage_entry = tk.Entry(self.top_frame)
-            self.layer_percentage_entry.grid(row=0, column=1)
-            self.layer_percentage_entry.insert(10, self.layer_percentage)
-            tk.Label(self.top_frame, text="%", sticky=tk.W).grid(row=0, column=2)
+            self.layer_percentage_entry.grid(row=self.widget_row , column=1)
+            self.layer_percentage_entry.insert(10, self.dropout)
+            tk.Label(self.top_frame, text="%").grid(row=self.widget_row , column=2)
+            self.widget_row = self.widget_row + 1
 
-        tk.Button(self.top_frame, text="OK", command=self.save_configurations).grid(row=2, column=2,
-                                                                                         sticky=tk.W, pady=3)
-        tk.Button(self.top_frame, text="Cancel", command=self.root.destroy).grid(row=2, column=3,
-                                                                                      sticky=tk.E, pady=3)
-
+        tk.Button(self.top_frame, text="OK", command=self.save_configurations).grid(row=self.widget_row , column=0,
+                                                                                        sticky=tk.W, pady=3)
+        tk.Button(self.top_frame, text="Cancel", command=self.root.destroy).grid(row=self.widget_row , column=1,
+                                                                       sticky=tk.E, pady=3)
     def start(self):
         self.root.mainloop()
 
@@ -458,64 +448,20 @@ class LayerProperties(object):
         self.root.geometry(set_str)
 
     def save_configurations(self):
-        if self.layer_size:
-            self.layer_size = self.layer_size_entry.get()
-
-        if self.layer_dimensions:
+        if self.layer_size_entry:
+            self.size = self.layer_size_entry.get()
+        if self.layer_function_selected:
+            self.activation = self.layer_function_selected.get()
+        if self.layer_percentage_entry:
+            self.dropout = self.layer_percentage_entry.get()
+        if self.layer_dimensions_entry_x and self.layer_dimensions_entry_y:
             self.layer_dimensions = [self.layer_dimensions_entry_x.get(), self.layer_dimensions_entry_y.get()]
-
-        if self.layer_function:
-            self.layer_function = self.layer_function_selected.get()
-
-        if self.layer_percentage:
-            self.layer_percentage = self.layer_percentage_entry.get()
-
+        self.props.edit_slot_attributes(new_layer_type=self.layer_type,
+                                        new_size=self.size,
+                                        new_activation=self.activation,
+                                        new_dropout=self.dropout,
+                                        new_layer_dimensions=self.layer_dimensions)
         self.root.destroy()
-
-
-class DropDown(object):
-    def __init__(self, root, choices):
-        self.f = tk.Frame(root)
-        self.f.grid(column=0, row=0, sticky=(tk.N, tk.W, tk.E, tk.S))
-        self.f.columnconfigure(0, weight=1)
-        self.f.rowconfigure(0, weight=1)
-        self.choices = choices
-        self.selected = tk.StringVar(root)
-        self.popup_menu = tk.OptionMenu(self.f, self.selected, *self.choices)
-        tk.Label(self.f, text="Choose a thing").grid(row=1, column=1)
-        self.popup_menu.grid(row=2, column=1)
-        self.selected.trace('w', self.change_dropdown)
-
-    def change_dropdown(self, *args):
-        print(self.selected.get())
-
-
-class TextBox(object):
-    def __init__(self, root, height=10, width=10):
-        frame = tk.Frame(root, bg='blue', height=100, pady=3, padx=3)
-        frame.grid(row=1, sticky='sew')
-
-        scroll = tk.Scrollbar(frame)
-        text = tk.Text(frame, height=height, width=width)
-        scroll.pack(side=tk.BOTTOM, fill=tk.Y)
-        text.pack(side=tk.BOTTOM, fill=tk.Y)
-        scroll.config(command=text.yview)
-        text.config(yscrollcommand=scroll.set)
-        quote = 'Here is some text'
-        text.insert(tk.END, quote)
-
-    def add_text(self, text, color):
-        """
-        Append text to the text box in a certain color.
-        -- RED for Error
-        :param text:
-        :param color:
-        :return:
-        """
-        pass
-
-
-
 
 
 if __name__ == '__main__':
