@@ -3,6 +3,9 @@ import pickle
 import os
 import buttons, status_box, canvas_frame, canvas_properites_box
 import tkinter.filedialog
+import multiprocessing as mp
+
+from backend import control
 
 def get_screen_res():
     root = tkinter.Tk()
@@ -47,6 +50,9 @@ class Window(object):
         self.config_frames()
         self.create_lambdas()
         self.add_widgets()
+
+        self.control = control.Control(self.status_box.add_text)
+        self.current_threads = []
 
     def config_frames(self):
         self.root.grid_rowconfigure(1, weight=1)
@@ -223,18 +229,20 @@ class Window(object):
 
         self.generate_nn_script = lambda: (
             #TODO: Add the generation script here
-            self.log("Generating Neural Network Script"),
-            print(self.slots.get_all_project_properties())
+            self.control.set_properties(self.slots.get_all_project_properties()),
+            self.control.generate_network()
+            # self.current_threads.append(mp.Process(target=self.control.generate_network()))
         )
 
         self.train_model = lambda: (
             #TODO: Add the training script call here
-            self.log("Training Model")
+            self.current_threads.append(mp.Process(target=self.control.train_network()))
         )
 
         self.cancel_training = lambda: (
             #TODO: Add the canceling functionality here
-            self.log("Canceling Training\n")
+            self.log("Canceling Training\n"),
+            self.current_threads[0].terminate()
         )
 
         self.clear_canvas = lambda: (

@@ -263,7 +263,7 @@ class LayerPropertiesBox(PropertiesBox):
 
     def get_attributes(self):
         if self.layer_type == 'Empty':
-            return {'Empty'}
+            return {'Empty': None}
         elif self.layer_type == 'Dropout':
             return {self.layer_type: {'percentage':self.dropout}}
         elif self.layer_type == 'Input':
