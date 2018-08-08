@@ -1,5 +1,6 @@
 import tkinter as tk
 import canvas_properites_box, trash_icon
+import copy
 
 
 
@@ -81,7 +82,8 @@ class CanvasFrame(object):
         return layer_information
 
     def get_all_project_properties(self):
-        props = self.canvas_properties_box.get_properties()
+        props = copy.deepcopy(self.canvas_properties_box.get_properties())
+
         props.update(self.get_all_slot_attributes())
         return props
 
