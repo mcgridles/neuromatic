@@ -21,7 +21,8 @@ class PropertiesBox(object):
                  size_y=200,
                  sticky='nsew',
                  logger=None,
-                 main_window=None):
+                 main_window=None,
+                 canvas_frame=None):
         self.frame = tk.Frame(root, height=size_y, width=size_x, bg='gray', padx=3, pady=3)
         self.frame.grid(row=frame_row, column=frame_col, sticky=sticky)
         self.frame.rowconfigure(1, weight=1)
@@ -103,7 +104,8 @@ class CanvasPropertiesBox(PropertiesBox):
                  size_y=200,
                  sticky='nsew',
                  logger=None,
-                 main_window=None):
+                 main_window=None,
+                 canvas_frame=None):
 
         super(CanvasPropertiesBox, self).__init__(root,
                                                   frame_row=frame_row,
@@ -114,25 +116,42 @@ class CanvasPropertiesBox(PropertiesBox):
                                                   label_name='CanvasPropertiesBox',
                                                   init_properties=DEFAULT_CANVAS_PROPERTIES,
                                                   logger=None,
-                                                  main_window=None)
+                                                  main_window=None,
+                                                  canvas_frame=None)
 
         self.log = logger
         self.main_window = main_window
+        if canvas_frame:
+            self.canvas_frame = canvas_frame
 
         self.frame.bind('<Double-Button-1>', self.edit_popup)
         self.box_label.bind('<Double-Button-1>', self.edit_popup)
         self.prop_box.bind('<Double-Button-1>', self.edit_popup)
 
     def edit_popup(self, event):
-        popup = CanvasProperties(self)
+        popup = CanvasProperties(self,main_window=self.main_window, logger=self.log,canvas_frame=self.canvas_frame)
 
-    def edit_slot_attributes(self, new_canvas_name=None, new_slot_count=None, new_data_path=None, new_project_dir=None, new_training_size=None):
+    def edit_canvas_attributes(self, new_canvas_name=None, new_slot_count=None, new_data_path=None, new_project_dir=None, new_training_size=None,old_count=None):
         self.box_properties['canvas_name'] = new_canvas_name
         self.box_properties['component_slots'] = new_slot_count
         self.box_properties['data_path'] = new_data_path
         self.box_properties['project_directory'] = new_project_dir
         self.box_properties['training_size'] = new_training_size
         self.update_text()
+        self.update_slots(old_count)
+
+    def update_slots(self,old_count):
+        new_count = self.box_properties['component_slots']
+        print(old_count, new_count)
+        if int(old_count) > int(new_count):
+            for x in range(0, int(old_count)-int(new_count)):
+                self.canvas_frame.remove_slot()
+        elif int(old_count) < int(new_count):
+            for x in range(0, int(new_count)-int(old_count)):
+                print('here')
+                self.canvas_frame.add_slot()
+
+
 
 
 class LayerPropertiesBox(PropertiesBox):
@@ -268,8 +287,11 @@ class LayerPropertiesBox(PropertiesBox):
 
 
 class CanvasProperties(object):
-    def __init__(self, props):
+    def __init__(self, props,logger=None, main_window=None, canvas_frame=None):
         self.props = props
+        self.logger = logger
+        self.main_window = main_window
+        self.canvas_frame = canvas_frame
         self.canvas_name = props.box_properties['canvas_name']
         self.slot_count = props.box_properties['component_slots']
         self.data_path = props.box_properties['data_path']
@@ -378,17 +400,18 @@ class CanvasProperties(object):
         self.root.lift()
 
     def save_configurations(self):
+        old_count = self.slot_count
         self.canvas_name = self.canvas_name_entry.get()
         self.slot_count = self.slot_count_entry.get()
         self.data_path = self.data_path_entry.get()
         self.project_dir = self.project_dir_entry.get()
         self.training_size = self.training_size_entry.get()
-        self.props.edit_slot_attributes(new_canvas_name=self.canvas_name,
+        self.props.edit_canvas_attributes(new_canvas_name=self.canvas_name,
                                         new_slot_count=self.slot_count,
                                         new_data_path=self.data_path,
                                         new_project_dir=self.project_dir,
-                                        new_training_size=self.training_size)
-
+                                        new_training_size=self.training_size,
+                                        old_count=old_count)
         self.root.destroy()
 
     def start(self):

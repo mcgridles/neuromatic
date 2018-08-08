@@ -43,7 +43,10 @@ class CanvasFrame(object):
     def init_default_cavnas(self):
         self.canvas_properties_box = canvas_properites_box.CanvasPropertiesBox(self.frame,
                                                                                frame_row=1,
-                                                                               frame_col=1)
+                                                                               frame_col=1,
+                                                                               logger=self.log,
+                                                                               main_window=self.main_window,
+                                                                               canvas_frame = self)
         self.trash_icon = trash_icon.TrashIcon(self.frame,
                                                callback,
                                                frame_row=3,
@@ -52,7 +55,9 @@ class CanvasFrame(object):
         for slot_number in range(3):
             self.add_slot()
 
+
     def add_slot(self):
+        print('called')
         new_col = len(self.slots) + 3
         new_layer_box = canvas_properites_box.LayerPropertiesBox(self.frame,
                                                                  frame_row=2,
