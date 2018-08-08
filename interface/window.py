@@ -33,7 +33,7 @@ class Window(object):
 
         self.top_frame = None
         self.right_frame = None
-        self.canvas_frame = None
+        self.left_frame = None
 
         self.add_slot = None
         self.log = None
@@ -49,57 +49,101 @@ class Window(object):
         self.add_widgets()
 
     def config_frames(self):
-        self.root.grid_rowconfigure(0, weight=1)
-        self.root.grid_rowconfigure(1, weight=9)
-        self.root.grid_columnconfigure(0, weight=16)
-        self.root.grid_columnconfigure(1, weight=7)
+        self.root.grid_rowconfigure(1, weight=1)
+        self.root.grid_columnconfigure(0, weight=2)
+        self.root.grid_columnconfigure(1, weight=1)
 
-        self.top_frame = tkinter.Frame(self.root, bg='white', pady=3)
-        self.top_frame.grid(row=0, columnspan=3, sticky="nsew")
+        self.top_frame = tkinter.Frame(self.root, pady=3)
+        self.top_frame.grid(row=0, columnspan=2, sticky="nsew")
 
-        self.left_frame = tkinter.Frame(self.root, bg='white', pady=3, padx=3)
+        self.left_frame = tkinter.Frame(self.root, pady=3, padx=3, relief='sunken', borderwidth=5)
         self.left_frame.grid(row=1, column=0, sticky='nsew')
+        self.left_frame.grid_columnconfigure(0, weight=1)
+        self.left_frame.grid_rowconfigure(0, weight=1)
 
-        self.right_frame = tkinter.Frame(self.root, bg='white', pady=3, padx=3)
+        self.right_frame = tkinter.Frame(self.root, pady=3, padx=3)
         self.right_frame.grid(row=1, column=1, sticky='nsew')
+        self.right_frame.grid_rowconfigure(4, weight=1)
+        self.right_frame.grid_columnconfigure(0, weight=1)
 
     def add_widgets(self):
         Menu(self.root, self)
-        self.right_frame.rowconfigure(4, weight=1)
-        self.right_frame.columnconfigure(0, weight=1)
 
-        #TODO: Format buttons.py Locations
-        new_button = buttons.GenericButton(self.top_frame, "New", self.create_new_canvas, logger=self.log)
-        new_button.f.grid(row=0,column=0)
-        generate_button = buttons.GenericButton(self.top_frame, "Generate", self.generate_nn_script)
-        generate_button.f.grid(row=0, column=1)
-        train_button = buttons.GenericButton(self.top_frame, "Train", self.train_model)
-        train_button.f.grid(row=0, column=2)
-        cancel_button = buttons.GenericButton(self.top_frame, "Cancel", self.cancel_training)
-        cancel_button.f.grid(row=0, column=3)
-        clear_button = buttons.GenericButton(self.top_frame, "Clear", self.clear_canvas)
-        clear_button.f.grid(row=0, column=4)
+        # TODO: Format buttons.py Locations
+        buttons.GenericButton(root=self.top_frame,
+                              button_label="New",
+                              passed_function=self.create_new_canvas,
+                              assigned_row=0,
+                              assigned_col=0,
+                              sticky='nsew',
+                              logger=self.log)
+        buttons.GenericButton(root=self.top_frame,
+                              button_label="Generate",
+                              passed_function=self.generate_nn_script,
+                              assigned_row=0,
+                              assigned_col=1,
+                              sticky='nsew')
+        buttons.GenericButton(root=self.top_frame,
+                              button_label="Train",
+                              passed_function=self.train_model,
+                              assigned_row=0,
+                              assigned_col=2,
+                              sticky='nsew')
+        buttons.GenericButton(root=self.top_frame,
+                              button_label="Cancel",
+                              passed_function=self.cancel_training,
+                              assigned_row=0,
+                              assigned_col=3,
+                              sticky='nsew')
+        buttons.GenericButton(root=self.top_frame,
+                              button_label="Clear",
+                              passed_function=self.clear_canvas,
+                              assigned_row=0,
+                              assigned_col=4,
+                              sticky='nsew')
 
-        input_layer_button = buttons.LayerButton(self.right_frame, "Input Layer", self.empty_funct, 'Input', 0, logger=self.log, main_window=self)
-        input_layer_button.f.grid(row=0,column=0)
-        input_layer_button.make_draggable()
-        hidden_layer_button = buttons.LayerButton(self.right_frame, "Hidden Layer", self.empty_funct, 'Hidden', 1, logger=self.log, main_window=self)
-        hidden_layer_button.f.grid(row=1, column=0)
-        hidden_layer_button.make_draggable()
-        hidden_layer_button = buttons.LayerButton(self.right_frame, "Dropout Layer", self.empty_funct, 'Dropout', 2, logger=self.log, main_window=self)
-        hidden_layer_button.f.grid(row=2, column=0)
-        hidden_layer_button.make_draggable()
-        output_layer_button = buttons.LayerButton(self.right_frame, "Output Layer", self.empty_funct, 'Output', 3, logger=self.log, main_window=self)
-        output_layer_button.f.grid(row=3, column=0)
-        output_layer_button.make_draggable()
+        buttons.LayerButton(root=self.right_frame,
+                            button_label="Input Layer",
+                            passed_function=self.empty_funct,
+                            layer_type='Input',
+                            assigned_row=0,
+                            assigned_col=0,
+                            sticky='ew',
+                            logger=self.log,
+                            main_window=self)
+        buttons.LayerButton(root=self.right_frame,
+                            button_label="Hidden Layer",
+                            passed_function=self.empty_funct,
+                            layer_type='Hidden',
+                            assigned_row=1,
+                            assigned_col=0,
+                            sticky='ew',
+                            logger=self.log,
+                            main_window=self)
+        buttons.LayerButton(root=self.right_frame,
+                            button_label="Dropout Layer",
+                            passed_function=self.empty_funct,
+                            layer_type='Dropout',
+                            assigned_row=2,
+                            assigned_col=0,
+                            sticky='ew',
+                            logger=self.log,
+                            main_window=self)
+        buttons.LayerButton(root=self.right_frame,
+                            button_label="Output Layer",
+                            passed_function=self.empty_funct,
+                            layer_type='Output',
+                            assigned_row=3,
+                            assigned_col=0,
+                            sticky='ew',
+                            logger=self.log,
+                            main_window=self)
         self.status_box = status_box.StatusBox(self.right_frame)
         self.status_box.frame.grid(row=4, column=0)
 
         self.slots = canvas_frame.CanvasFrame(self.left_frame,
-                                 frame_row=1,
-                                 frame_col=1,
-                                 logger=self.log,
-                                 main_window=self)
+                                              logger=self.log,
+                                              main_window=self)
 
     def _log(self,message):
         self.status_box.add_text(message)

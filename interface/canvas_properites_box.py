@@ -30,7 +30,7 @@ class PropertiesBox(object):
 
         # Box label attached to the box
         self.box_label = tk.Label(self.frame, text=label_name, font='Helvetica 12 bold')
-        self.box_label.grid(row=0, column=0, sticky='w')
+        self.box_label.grid(row=0, column=0, sticky='ew')
 
         self.box_properties = init_properties
 
