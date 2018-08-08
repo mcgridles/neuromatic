@@ -40,10 +40,9 @@ class InputLayer(GenericLayer):
         super(InputLayer, self).__init__(properties)
 
     def write_lines(self, fd):
-        line = '\tmodel.add(Dense({0}, activation={1}, input_shape=({2},{3})))'.format(self.layer_properties['size'],
-                                                                                       self.layer_properties['activation'],
-                                                                                       self.layer_properties['batch_size'],
-                                                                                       self.layer_properties['input_dim'])
+        line = '\tmodel.add(Dense({0}, activation=\'{1}\', input_shape=({2},)))\n'.format(self.layer_properties['size'],
+                                                                                          self.layer_properties['activation'],
+                                                                                          self.layer_properties['input_dim'])
         fd.write(line)
 
 class DenseLayer(GenericLayer):
