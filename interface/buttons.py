@@ -9,18 +9,16 @@ class GenericButton(object):
                  root,
                  button_label,
                  passed_function,
-                 layer_type='Empty',
                  assigned_row=0,
                  assigned_col=0,
+                 sticky='nsew',
                  logger=None,
                  main_window=None):
-        self.f = tkinter.Frame(root, height=HEIGHT)
-        self.f.grid(sticky='nesw')
+
         self.root = root
         self.passed_function = passed_function
-        self.layer_type = layer_type
-        self.b = tkinter.Button(self.f, text=button_label, command=self.button_callback)
-        self.b.grid(sticky='nesw')
+        self.b = tkinter.Button(self.root, text=button_label, command=self.button_callback)
+        self.b.grid(row=assigned_row, column=assigned_col, sticky=sticky)
         self.log = logger
         self.main_window = main_window
 
@@ -37,19 +35,23 @@ class LayerButton(GenericButton):
                  layer_type='Blank',
                  assigned_row=0,
                  assigned_col=0,
+                 sticky='nsew',
                  logger=None,
                  main_window=None):
 
-        super(LayerButton, self).__init__(root,
-                                          button_label,
-                                          passed_function,
-                                          layer_type,
-                                          assigned_row,
-                                          assigned_col,
+        super(LayerButton, self).__init__(root=root,
+                                          button_label=button_label,
+                                          passed_function=passed_function,
+                                          assigned_row=assigned_row,
+                                          assigned_col=assigned_col,
+                                          sticky=sticky,
                                           logger=None,
                                           main_window=None)
         self.log = logger
         self.main_window = main_window
+        self.layer_type = layer_type
+
+        self.make_draggable()
 
     def make_draggable(self):
 
