@@ -1,7 +1,7 @@
 import tkinter
 import pickle
 import os
-from interface import buttons, status_box, canvas_frame, canvas_properites_box
+import buttons, status_box, canvas_frame, canvas_properites_box
 import tkinter.filedialog
 
 def get_screen_res():
