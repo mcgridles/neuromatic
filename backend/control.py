@@ -1,4 +1,5 @@
 import os
+import time
 import shutil
 import signal
 import logging
@@ -8,6 +9,17 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from backend import layers
+
+# Configure logging
+log_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'logs')
+if not os.path.isdir(log_dir):
+    os.makedirs(log_dir)
+log_file = 'neuromatic_{0}.log'.format(time.strftime('%m%d%Y_%H%M%S'))
+logging.basicConfig(level=logging.DEBUG,
+                    format='[%(asctime)s][%(name)-12s][%(levelname)-8s] %(message)s',
+                    datefmt='%H%M%S',
+                    filename=os.path.join(log_dir, log_file),
+                    filemode='w')
 
 
 class NetworkException(Exception):
@@ -101,9 +113,11 @@ class Control(object):
             layer_type = list(layer.keys())[0]
             layer_properties = list(layer.values())[0]
 
-            if not layer_type in self.LAYER_TYPES:
+            if not layer_type in self.LAYER_TYPES and layer_type != 'Empty':
                 self.log_status('Invalid layer type: {0}'.format(layer_type), 'debug')
                 status = False
+                continue
+            elif layer_type == 'Empty':
                 continue
             if index == 0 and layer_type != 'Input':
                 self.log_status('Invalid network configuration: network must start with Input Layer', 'error')
@@ -128,15 +142,13 @@ class Control(object):
         """
         Writes the Python file containing the Keras neural network
         """
-        signal.signal(signal.SIGTERM, self.safe_terminate)
-        self.__thread_lock.acquire()
-
         self.log_status('Generating network...', 'info')
         with open(os.path.join(self.canvas_properties['project_directory'], 'neural_network.py'), 'w') as fd:
             # Imports
             fd.write('import h5py\n')
             fd.write('from keras.models import Sequential\n')
-            fd.write('from keras.layers import Input, Dense, Dropout\n\n')
+            fd.write('from keras.layers import Input, Dense, Dropout\n')
+            fd.write('from keras.utils import to_categorical\n\n')
 
             fd.write('def train_neural_network(X_train, y_train, X_test, y_test):\n')
 
@@ -153,7 +165,10 @@ class Control(object):
             fd.write('metrics=[')
             for metric in self.canvas_properties['metrics']:
                 fd.write('\'{0}\','.format(metric))
-            fd.write('])\n')
+            fd.write('])\n\n')
+
+            if self.canvas_properties['loss'] != 'sparse_categorical_crossentropy':
+                fd.write('\ty_train = to_categorical(y_train)\n')
             fd.write('\tmodel.fit(X_train, y_train, epochs={0})\n'.format(self.canvas_properties['epochs']))
             fd.write('\tscore = model.evaluate(X_test, y_test, batch_size=128)\n\n')
 
@@ -176,7 +191,6 @@ class Control(object):
 
         self.log_status('Network generated.', 'info')
         self.__can_train = True
-        self.__thread_lock.release()
 
     def train_network(self):
         """
@@ -234,10 +248,9 @@ class Control(object):
             'error': self.logger.error,
             'critical': self.logger.critical
         }
+        logger_level[level](msg)
 
         if msg[-1] != '\n':
             msg += '\n'
-
-        logger_level[level](msg)
         if not suppress:
             self.__add_text(msg)
