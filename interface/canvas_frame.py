@@ -19,39 +19,65 @@ class CanvasFrame(object):
                  sticky='nsew',
                  logger=None,
                  main_window=None):
+
         self.canvas_properties_box = None
         self.trash_icon = None
+        self.h_scroll = None
         self.slots = list()
+
         self.log = logger
-        self.root = root
         self.main_window = main_window
 
-        self.frame = tk.Frame(root, height=size_y, width=size_x, padx=3, pady=3)
-        self.frame.grid(row=frame_row, column=frame_col, sticky=sticky)
-        self.frame.rowconfigure(1, weight=1)
-        self.frame.rowconfigure(2, weight=1)
+        self.top_frame = tk.Frame(root, height=size_y, width=size_x, padx=3, pady=3)
+        self.top_frame.grid(row=frame_row, column=frame_col, sticky=sticky)
+        self.top_frame.grid_rowconfigure(0, weight=1)
+        self.top_frame.grid_columnconfigure(0, weight=1)
 
-        self.frame.columnconfigure(1, weight=0)
-        self.frame.columnconfigure(1, weight=1)
-        self.frame.columnconfigure(2, weight=1)
-        self.frame.columnconfigure(3, weight=1)
-        self.frame.columnconfigure(4, weight=1)
-        self.frame.columnconfigure(5, weight=1)
-        self.frame.columnconfigure(6, weight=1)
+        self.canvas = tk.Canvas(self.top_frame)
+        self.canvas.grid(row=0, column=0, sticky='nsew')
+
+        self.h_scroll = tk.Scrollbar(self.top_frame, orient=tk.HORIZONTAL, command=self.canvas.xview)
+        self.h_scroll.grid(row=1, column=0, sticky='ew')
+
+        self.canvas.config(xscrollcommand=self.h_scroll.set)
+        self.canvas.grid_rowconfigure(0, weight=1)
+        self.canvas.grid_columnconfigure(0, weight=1)
+
+        self.scrollable_frame = tk.Frame(self.canvas, padx=3, pady=3)
+
+        self.scrollable_frame.rowconfigure(1, weight=1)
+        self.scrollable_frame.rowconfigure(2, weight=1)
+
+        self.scrollable_frame.columnconfigure(1, weight=1)
+        self.scrollable_frame.columnconfigure(5, weight=1)
+
+        self.scrollable_frame.bind('<Configure>', self._on_frame_configure)
+        self.canvas.bind('<Configure>', self._resize_frame)
+
+        self.canvas_frame = self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor='nw')
 
         self.init_default_cavnas()
 
+    def _resize_frame(self, event):
+        canvas_width = event.width
+        canvas_height = event.height
+        self.canvas.itemconfig(self.canvas_frame, height=canvas_height, width=canvas_width)
+
+    def _on_frame_configure(self, event):
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"), width=200, height=200)
+
     def init_default_cavnas(self):
-        self.canvas_properties_box = canvas_properites_box.CanvasPropertiesBox(self.frame,
+        self.canvas_properties_box = canvas_properites_box.CanvasPropertiesBox(self.scrollable_frame,
                                                                                frame_row=1,
-                                                                               frame_col=1,
+                                                                               frame_col=0,
                                                                                logger=self.log,
                                                                                main_window=self.main_window,
                                                                                canvas_frame = self)
-        self.trash_icon = trash_icon.TrashIcon(self.frame,
+        self.trash_icon = trash_icon.TrashIcon(self.scrollable_frame,
                                                callback,
                                                frame_row=3,
-                                               frame_col=0)
+                                               frame_col=0,
+                                               sticky='sw')
 
         for slot_number in range(3):
             self.add_slot()
@@ -59,17 +85,23 @@ class CanvasFrame(object):
 
     def add_slot(self):
         new_col = len(self.slots) + 3
-        new_layer_box = canvas_properites_box.LayerPropertiesBox(self.frame,
+        new_layer_box = canvas_properites_box.LayerPropertiesBox(self.scrollable_frame,
                                                                  frame_row=2,
                                                                  frame_col=new_col,
-                                                                 size_x=100,
-                                                                 size_y=200,
+                                                                 # size_x=100,
+                                                                 # size_y=200,
                                                                  logger=self.log,
                                                                  main_window=self.main_window)
+
+        self.scrollable_frame.columnconfigure(new_col, weight=0)
+        self.scrollable_frame.columnconfigure(new_col+1, weight=1)
 
         self.slots.append(new_layer_box)
 
     def remove_slot(self):
+        slot_number = len(self.slots) - 1
+        self.scrollable_frame.columnconfigure(slot_number, weight=1)
+        self.scrollable_frame.columnconfigure(slot_number + 1, weight=0)
         box = self.slots.pop()
         box.frame.destroy()
 
@@ -102,10 +134,12 @@ class CanvasFrame(object):
                                                           new_epochs=1,
                                                           old_count=old_count)
         self.clear_slots()
+
+
 if __name__ == '__main__':
     root = tk.Tk()
     root.title('CanvasFrame Test')
-    root.geometry('400x400')
+    root.geometry('800x800')
 
     # root.rowconfigure(0, weight=0)
     root.rowconfigure(1, weight=1)
@@ -119,6 +153,6 @@ if __name__ == '__main__':
     blank_frame_2 = tk.Frame(root, bg='cyan', width=200, pady=3, padx=3)
     blank_frame_2.grid(row=1, column=1, sticky='nsew')
 
-    CanvasFrame(root, frame_row=1, frame_col=1)
+    CanvasFrame(root, frame_row=1, frame_col=0)
 
     root.mainloop()
