@@ -71,32 +71,32 @@ class Window(object):
 
         # TODO: Format buttons.py Locations
         buttons.GenericButton(root=self.top_frame,
-                              button_label="New",
+                              button_label="New Canvas",
                               passed_function=self.create_new_canvas,
                               assigned_row=0,
                               assigned_col=0,
                               sticky='nsew',
                               logger=self.log)
         buttons.GenericButton(root=self.top_frame,
-                              button_label="Generate",
+                              button_label="Generate Script",
                               passed_function=self.generate_nn_script,
                               assigned_row=0,
                               assigned_col=1,
                               sticky='nsew')
         buttons.GenericButton(root=self.top_frame,
-                              button_label="Train",
+                              button_label="Train Model",
                               passed_function=self.train_model,
                               assigned_row=0,
                               assigned_col=2,
                               sticky='nsew')
         buttons.GenericButton(root=self.top_frame,
-                              button_label="Cancel",
+                              button_label="Cancel Training",
                               passed_function=self.cancel_training,
                               assigned_row=0,
                               assigned_col=3,
                               sticky='nsew')
         buttons.GenericButton(root=self.top_frame,
-                              button_label="Clear",
+                              button_label="Clear Slots",
                               passed_function=self.clear_canvas,
                               assigned_row=0,
                               assigned_col=4,
@@ -229,11 +229,11 @@ class Window(object):
 
         self.cancel_training = lambda: (
             #TODO: Add the canceling functionality here
-            self.log("Canceling Training\n")
+            self.log("Canceling Training")
         )
 
         self.clear_canvas = lambda: (
-            self.log('Clearing Slots\n'),
+            self.log('Clearing Slots'),
             self.slots.clear_slots(),
         )
 

@@ -248,6 +248,7 @@ class LayerPropertiesBox(PropertiesBox):
         x, y = self.frame.winfo_pointerx(), self.frame.winfo_pointery()
         target = event.widget.winfo_containing(x, y)
         if str(target) == '.!frame2.!frame.!label':
+            self.log(self.layer_type + ' Layer Deleted')
             self.clear_slot_attributes()
 
     def update_properties(self, event):
@@ -298,6 +299,7 @@ class LayerPropertiesBox(PropertiesBox):
         clt = self.main_window.current_layer_type
         if clt != 'Empty':
             self.layer_type = clt
+            self.log(clt + ' Layer Added')
             self.main_window.current_layer_type = 'Empty'
             self.box_label.config(text=clt + ' Layer')
             self.box_properties = self.get_slot_attributes_for_text()
@@ -407,22 +409,30 @@ class CanvasProperties(object):
 
         if not os.path.isdir(init_dir):
             init_dir = self.FILE_PATH
+        old_file = self.data_path
 
         file_name = tk.filedialog.askopenfilename(initialdir=init_dir,
                                                            title="Choose File...",
                                                            filetypes=file_types)
-
-        self.data_path = file_name
+        if file_name:
+            self.data_path = file_name
+        else:
+            self.data_path = 'None'
         self.data_path_entry.delete(0, 'end')
         self.data_path_entry.insert(10, self.data_path)
         self.root.lift()
 
     def get_directory(self):
-        assert os.path.isdir(self.project_dir), '{} is not a valid directory.'.format(self.project_dir)
-
-        dir_name = tk.filedialog.askdirectory(title="Choose File...", initialdir=self.project_dir)
-
-        self.project_dir = dir_name
+        old_dir = self.project_dir
+        if self.project_dir:
+            assert os.path.isdir(self.project_dir), '{} is not a valid directory.'.format(self.project_dir)
+            dir_name = tk.filedialog.askdirectory(title="Choose File...", initialdir=self.project_dir)
+        else:
+            dir_name = tk.filedialog.askdirectory(title="Choose File...", initialdir=os.path.realpath('~'))
+        if dir_name:
+            self.project_dir = dir_name
+        else:
+            self.project_dir = old_dir
         self.project_dir_entry.delete(0, 'end')
         self.project_dir_entry.insert(10, self.project_dir)
         self.root.lift()
