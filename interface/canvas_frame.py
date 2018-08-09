@@ -97,6 +97,9 @@ class CanvasFrame(object):
                                                           new_data_path='None',
                                                           new_project_dir=os.path.dirname(os.path.realpath(__file__)),
                                                           new_training_size=.5,
+                                                          new_optimizer='sgd',
+                                                          new_loss='mean_squared_error',
+                                                          new_epochs=1,
                                                           old_count=old_count)
         self.clear_slots()
 if __name__ == '__main__':
