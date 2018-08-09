@@ -58,7 +58,7 @@ class LayerButton(GenericButton):
         self.b.bind('<Button-1>', self.on_start)
         self.b.bind('<B1-Motion>', self.on_drag)
         self.b.bind('<ButtonRelease-1>', self.on_drop)
-        self.b.configure(cursor='hand1')
+        self.b.configure(cursor='hand2')
 
     def button_callback(self):
         pass
@@ -67,9 +67,11 @@ class LayerButton(GenericButton):
         self.main_window.current_layer_type = self.layer_type
 
     def on_drag(self, event):
+        self.b.configure(cursor='middlebutton')
         pass
 
     def on_drop(self, event):
+        self.b.configure(cursor='hand2')
         x,y = self.root.winfo_pointerx(), self.root.winfo_pointery()
         target = event.widget.winfo_containing(x,y)
         try:

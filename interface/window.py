@@ -67,7 +67,7 @@ class Window(object):
         self.right_frame.grid_columnconfigure(0, weight=1)
 
     def add_widgets(self):
-        Menu(self.root, self)
+        Menu(self.root, self, self.log)
 
         # TODO: Format buttons.py Locations
         buttons.GenericButton(root=self.top_frame,
@@ -146,11 +146,10 @@ class Window(object):
                                               main_window=self)
 
     def _log(self,message):
-        self.status_box.add_text(message)
+        self.status_box.add_text(message+'\n')
 
     def overwrite_properties(self,new_properties):
         # TODO: update canvas properties, insert the correct number of blocks
-        print(new_properties)
         old_count = self.slots.canvas_properties_box.box_properties['component_slots']
         name = new_properties['canvas_name']
         number = new_properties['component_slots']
@@ -171,32 +170,26 @@ class Window(object):
         num_slots = new_properties['component_slots']
         for x in range(0,int(num_slots)):
             layer = new_properties['layers'][x]
-            if 'Hidden' in layer:
-                layer = layer['Hidden']
+            if layer['type'] == 'hidden':
                 self.slots.slots[x].edit_slot_attributes(
                                     new_layer_type='Hidden',
                                     new_size=layer['size'],
                                     new_activation=layer['activation'])
                 self.slots.slots[x].box_label.config(text='Hidden Layer')
 
-            if 'Output' in layer:
-                layer = layer['Output']
+            if layer['type'] == 'output':
                 self.slots.slots[x].edit_slot_attributes(
                                     new_layer_type='Output',
                                     new_size=layer['size'],
                                     new_activation=layer['activation'])
                 self.slots.slots[x].box_label.config(text='Output Layer')
 
-            if 'Input' in layer:
-                layer = layer['Input']
+            if layer['type'] == 'input':
                 self.slots.slots[x].edit_slot_attributes(
                                     new_layer_type='Input',
-                                    new_size=layer['size'],
-                                    new_activation=layer['activation'],
                                     new_layer_dimensions=layer['dimensions'])
                 self.slots.slots[x].box_label.config(text='Input Layer')
-            if 'Dropout' in layer:
-                layer = layer['Dropout']
+            if layer['type'] == 'dropout':
                 self.slots.slots[x].edit_slot_attributes(
                                     new_layer_type='Dropout',
                                     new_dropout=layer['percentage'])
@@ -218,13 +211,15 @@ class Window(object):
 
         self.create_new_canvas = lambda: (
             #TODO: Create New Canvas
-            self.log("Creating New Canvas")
+            self.slots.clear_canvas(),
+            self.log("Creating New Canvas"),
+            self.status_box.clear()
         )
 
         self.generate_nn_script = lambda: (
             #TODO: Add the generation script here
             self.log("Generating Neural Network Script"),
-            print(self.slots.get_all_project_properties())
+            self.log(str(self.slots.get_all_project_properties()))
         )
 
         self.train_model = lambda: (
@@ -239,7 +234,7 @@ class Window(object):
 
         self.clear_canvas = lambda: (
             self.log('Clearing Slots\n'),
-            self.slots.clear_slots()
+            self.slots.clear_slots(),
         )
 
         self.empty_funct = lambda: (
@@ -256,11 +251,12 @@ class Window(object):
 
 class Menu(object):
 
-    def __init__(self, root, main_window):
+    def __init__(self, root, main_window, logger):
         self.menu = tkinter.Menu(root)
         root.config(menu=self.menu)
         self.add()
         self.main_window = main_window
+        self.log = logger
 
     def add(self):
         file_menu = tkinter.Menu(self.menu)
@@ -279,23 +275,22 @@ class Menu(object):
         save_location = str(data['project_directory'])
         file_name = str(data['canvas_name'])
         full_path = save_location+ '/'+ file_name + '.txt'
-        print (data)
         with open(os.path.expanduser(full_path),'wb') as file:
             pickle.dump(data, file, protocol=pickle.HIGHEST_PROTOCOL)
 
     def open(self):
-        popup = OpenPopup(self.main_window)
+        popup = OpenPopup(self.main_window, self.log)
 
 
 
 class OpenPopup(object):
-    def __init__(self, main_window):
+    def __init__(self, main_window,logger):
         self.FILE_PATH = os.path.dirname(os.path.realpath(__file__))
         self.root = tkinter.Toplevel()
         self.root.title('Title')
         self.data_path = os.path.expanduser('~')
         self.main_window = main_window
-
+        self.log = logger
         self.config_frames()
         self.add_widgets()
 
@@ -342,6 +337,7 @@ class OpenPopup(object):
     def save_configurations(self):
         self.data_path = self.data_path_entry.get()
         with open(self.data_path,'rb') as file:
+            self.log('Opened ' + str(self.data_path))
             info = pickle.load(file)
             self.main_window.overwrite_properties(info)
         self.root.destroy()

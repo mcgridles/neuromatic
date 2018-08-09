@@ -52,6 +52,10 @@ class StatusBox(object):
             self.text.see(tk.END)
             self.h_scroll.set(x_position[0], x_position[1])
 
+    def clear(self):
+        print('here')
+        self.text.delete("1.0", 'End')
+
 
 if __name__ == '__main__':
     root = tk.Tk()
