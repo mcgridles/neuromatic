@@ -1,5 +1,6 @@
 import tkinter as tk
 import os
+from abc import ABC, abstractmethod
 
 DEFAULT_CANVAS_NAME = 'new_canvas_{}'.format(1)
 DEFAULT_CANVAS_PROPERTIES = {
@@ -7,7 +8,10 @@ DEFAULT_CANVAS_PROPERTIES = {
     'component_slots': 3,
     'data_path': 'None',
     'project_directory': os.path.dirname(os.path.realpath(__file__)),
-    'training_size': .5
+    'training_size': .5,
+    'optimizer': 'sgd',
+    'loss': 'mean_squared_error',
+    'epochs': 1
 }
 
 
@@ -147,12 +151,16 @@ class CanvasPropertiesBox(PropertiesBox):
     def edit_popup(self, event):
         popup = CanvasProperties(self,main_window=self.main_window, logger=self.log,canvas_frame=self.canvas_frame)
 
-    def edit_canvas_attributes(self, new_canvas_name=None, new_slot_count=None, new_data_path=None, new_project_dir=None, new_training_size=None,old_count=None):
+    def edit_canvas_attributes(self, new_canvas_name=None, new_slot_count=None, new_data_path=None,
+                               new_project_dir=None, new_training_size=None, new_optimizer=None, new_loss=None, new_epochs=None, old_count=None):
         self.box_properties['canvas_name'] = new_canvas_name
         self.box_properties['component_slots'] = new_slot_count
         self.box_properties['data_path'] = new_data_path
         self.box_properties['project_directory'] = new_project_dir
         self.box_properties['training_size'] = new_training_size
+        self.box_properties['optimizer'] = new_optimizer
+        self.box_properties['loss'] = new_loss
+        self.box_properties['epochs'] = new_epochs
         self.update_text()
         self.update_slots(old_count)
 
@@ -164,8 +172,6 @@ class CanvasPropertiesBox(PropertiesBox):
         elif int(old_count) < int(new_count):
             for x in range(0, int(new_count)-int(old_count)):
                 self.canvas_frame.add_slot()
-
-
 
 
 class LayerPropertiesBox(PropertiesBox):
@@ -310,38 +316,73 @@ class LayerPropertiesBox(PropertiesBox):
         self.edit_slot_attributes('Empty',1,'sigmoid',.5)
 
 
-class CanvasProperties(object):
-    def __init__(self, props,logger=None, main_window=None, canvas_frame=None):
+class PropertiesEditor(ABC):
+    def __init__(self, props, logger=None, main_window=None, canvas_frame=None):
         self.props = props
         self.logger = logger
         self.main_window = main_window
         self.canvas_frame = canvas_frame
+
+        self.error_entry = None
+        self.error_mes = tk.StringVar()
+
+        self.top_frame = None
+
+        self.root = tk \
+            .Toplevel()
+        self.root.title("Edit Properties")
+
+        self.config_frames()
+        self.add_widgets()
+
+        super().__init__()
+
+    def config_frames(self):
+        self.root.grid_rowconfigure(1, weight=1)
+        self.root.grid_columnconfigure(1, weight=1)
+
+        self.top_frame = tk.Frame(self.root, pady=1)
+        self.top_frame.grid(row=0, columnspan=2, sticky=(tk.N, tk.W, tk.E, tk.S))
+
+    @abstractmethod
+    def add_widgets(self):
+        pass
+
+    @abstractmethod
+    def save_configurations(self):
+        pass
+
+
+class CanvasProperties(PropertiesEditor):
+    def __init__(self, props, logger=None, main_window=None, canvas_frame=None):
+
         self.canvas_name = props.box_properties['canvas_name']
         self.slot_count = props.box_properties['component_slots']
         self.data_path = props.box_properties['data_path']
         self.project_dir = props.box_properties['project_directory']
         self.training_size = props.box_properties['training_size']
+        self.optimizer = props.box_properties['optimizer']
+        self.loss = props.box_properties['loss']
+        self.epochs = props.box_properties['epochs']
 
         self.canvas_name_entry = None
         self.slot_count_entry = None
         self.data_path_entry = None
         self.project_dir_entry = None
         self.training_size_entry = None
-        self.error_entry = None
+        self.optimizer_entry = None
+        self.loss_entry = None
+        self.epochs_entry = None
 
-        self.error_mes = tk.StringVar()
-
-        self.root = tk\
-            .Toplevel()
-        self.root.title("Edit Canvas Properties")
-
-        self.top_frame = None
-
-        self.config_frames()
-        self.add_widgets()
+        self.optimizers = ['sgd', 'adam', 'adagrad', 'rmsprop', 'adadelta', 'adamax', 'nadam']
+        self.optimizer_selected = tk.StringVar()
+        self.losses = ['mean_squared_error', 'mean_absolute_error', 'mean_absolute_percentage_error',
+                       'mean_squared_logarithmic_error', 'squared_hinge', 'hinge', 'categorical_hinge', 'logcosh',
+                       'categorical_crossentropy', 'sparse_categorical_crossentropy', 'binary_crossentropy',
+                       'kullback_leibler_divergence', 'poisson', 'cosine_proximity']
+        self.loss_selected = tk.StringVar()
 
         self.FILE_PATH = os.path.dirname(os.path.realpath(__file__))
-        #self.USER_HOME = os.path.expanduser('~')
 
         self.VALID_TYPES = {
             'all': ('all files', '*'),
@@ -350,12 +391,7 @@ class CanvasProperties(object):
             'h5py': ('h5py', '*.h5py')
         }
 
-    def config_frames(self):
-        self.root.grid_rowconfigure(1, weight=1)
-        self.root.grid_columnconfigure(1, weight=1)
-
-        self.top_frame = tk.Frame(self.root, pady=1)
-        self.top_frame.grid(row=0, columnspan=2, sticky=(tk.N, tk.W, tk.E, tk.S))
+        super().__init__(props, logger, main_window, canvas_frame)
 
     def add_widgets(self):
         tk.Label(self.top_frame, text="Canvas Name:").grid(row=0, column=0, sticky=tk.E)
@@ -385,11 +421,28 @@ class CanvasProperties(object):
         self.training_size_entry.grid(row=4, column=1)
         self.training_size_entry.insert(10, self.training_size)
 
-        self.error_entry = tk.Label(self.top_frame, textvariable=self.error_mes, fg="red").grid(row=5, column=0, sticky=tk.W, columnspan=2)
+        tk.Label(self.top_frame, text="Optimizer:").grid(row=5, column=0, sticky=tk.E)
+        self.optimizer_entry = tk.OptionMenu(self.top_frame, self.optimizer_selected,
+                                                  *self.optimizers)
+        self.optimizer_selected.set(self.optimizer)
+        self.optimizer_entry.grid(row=5, column=1)
 
-        tk.Button(self.top_frame, text="OK", command=self.save_configurations).grid(row=5, column=2,
+        tk.Label(self.top_frame, text="Loss:").grid(row=6, column=0, sticky=tk.E)
+        self.loss_entry = tk.OptionMenu(self.top_frame, self.loss_selected,
+                                             *self.losses)
+        self.loss_selected.set(self.loss)
+        self.loss_entry.grid(row=6, column=1)
+
+        tk.Label(self.top_frame, text="Epochs:").grid(row=7, column=0, sticky=tk.E)
+        self.epochs_entry = tk.Entry(self.top_frame)
+        self.epochs_entry.grid(row=7, column=1)
+        self.epochs_entry.insert(10, self.epochs)
+
+        self.error_entry = tk.Label(self.top_frame, textvariable=self.error_mes, fg="red").grid(row=8, column=0, sticky=tk.W, columnspan=2)
+
+        tk.Button(self.top_frame, text="OK", command=self.save_configurations).grid(row=8, column=2,
                                                                                                sticky=tk.E, pady=3)
-        tk.Button(self.top_frame, text="Cancel", command=self.root.destroy).grid(row=5, column=3,
+        tk.Button(self.top_frame, text="Cancel", command=self.root.destroy).grid(row=8, column=3,
                                                                                         sticky=tk.W, pady=3)
 
     def get_file(self):
@@ -473,28 +526,35 @@ class CanvasProperties(object):
         if float(training_size)<0 or float(training_size)>1:
             self.error_mes.set("Training size should be 0 to 1")
             return
-
         self.training_size = training_size
+
+        self.optimizer = self.optimizer_selected.get()
+
+        self.loss = self.loss_selected.get()
+
+        epochs = self.epochs_entry.get()
+        if not is_integer(epochs):
+            self.error_mes.set("Epochs should be an int")
+            return
+        if int(epochs) < 1 or int(epochs) > 50:
+            self.error_mes.set("Epochs should be 1 to 50")
+            return
+        self.epochs = epochs
 
         self.props.edit_canvas_attributes(new_canvas_name=self.canvas_name,
                                         new_slot_count=self.slot_count,
                                         new_data_path=self.data_path,
                                         new_project_dir=self.project_dir,
                                         new_training_size=self.training_size,
+                                        new_optimizer=self.optimizer,
+                                        new_loss=self.loss,
+                                        new_epochs=self.epochs,
                                         old_count=old_count)
         self.root.destroy()
 
-    def start(self):
-        self.root.mainloop()
 
-    def set_size(self, width, height):
-        set_str = '{}x{}'.format(str(width), str(height))
-        self.root.geometry(set_str)
-
-
-class LayerProperties(object):
+class LayerProperties(PropertiesEditor):
     def __init__(self, props):
-        self.props = props
         self.layer_type = props.layer_type
         self.size = props.size
         self.layer_dimensions = props.layer_dimensions
@@ -509,24 +569,9 @@ class LayerProperties(object):
 
         self.layer_functions = ['softmax', 'elu', 'selu', 'softplus', 'softsign', 'tanh', 'sigmoid', 'hard_sigmoid',
                                 'linear']
+        self.layer_function_selected = tk.StringVar()
 
-        self.root = tk.Toplevel()
-        self.root.title(self.layer_type)
-
-        self.top_frame = None
-
-        self.layer_function_selected = tk.StringVar(self.root)
-        self.error_mes = tk.StringVar()
-
-        self.config_frames()
-        self.add_widgets()
-
-    def config_frames(self):
-        self.root.grid_rowconfigure(1, weight=1)
-        self.root.grid_columnconfigure(1, weight=1)
-
-        self.top_frame = tk.Frame(self.root, pady=1)
-        self.top_frame.grid(row=0, columnspan=2, sticky=(tk.N, tk.W, tk.E, tk.S))
+        super().__init__(props)
 
     def add_widgets(self):
         self.widget_row = 0
@@ -566,12 +611,6 @@ class LayerProperties(object):
                                                                                         sticky=tk.E, pady=3)
         tk.Button(self.top_frame, text="Cancel", command=self.root.destroy).grid(row=self.widget_row , column=3,
                                                                        sticky=tk.W, pady=3)
-    def start(self):
-        self.root.mainloop()
-
-    def set_size(self, width, height):
-        set_str = '{}x{}'.format(str(width), str(height))
-        self.root.geometry(set_str)
 
     def save_configurations(self):
         if self.layer_size_entry:
@@ -613,20 +652,6 @@ class LayerProperties(object):
                                         new_dropout=self.dropout,
                                         new_layer_dimensions=self.layer_dimensions)
         self.root.destroy()
-
-    def is_integer(self, string_input):
-        try:
-            int(string_input)
-            return True
-        except ValueError:
-            return False
-
-    def is_float(self, string_input):
-        try:
-            float(string_input)
-            return True
-        except ValueError:
-            return False
 
 
 if __name__ == '__main__':
