@@ -60,10 +60,10 @@ class Control(object):
         layers: (list[Layers]) -> Stores ordered list of Layers
 
         PRIVATE
-        can_train: (boolean) -> Determines if a model has been generated and can be trained
-        thread_lock: (threading.Lock) -> Thread lock to prevent conflicting functions from being called at the
-            same time
-        add_text: (function) -> Status box "add_text" function for logging to the GUI
+        __can_generate: (boolean) -> Determines if a network script can be generated
+        __can_train: (boolean) -> Determines if a model has been generated and can be trained
+        __training_process: (multiprocessing.Process) -> Current training process
+        __add_text: (function) -> Status box "add_text" function for logging to the GUI
     """
 
     LAYER_TYPES = {
@@ -82,6 +82,7 @@ class Control(object):
         self.canvas_properties = {}
         self.layers = []
 
+        self.__can_generate = False
         self.__can_train = False
         self.__training_process = ControlProcess(target=self.__train_network)
 
@@ -101,38 +102,38 @@ class Control(object):
         """
         self.canvas_properties = properties
         self.layers = []
-        status = True
+        self.__can_generate = True
+        self.__can_train = True
 
         # Check properties
-        # TODO Some of these are already covered by the GUI
-        # if os.path.isfile(self.canvas_properties['project_directory']):
-        #     file_path = self.canvas_properties['project_directory']
-        #     self.canvas_properties['project_directory'] = os.path.dirname(self.canvas_properties['project_directory'])
-        #     self.log_status('{0} is a file, setting output path to {1}'.format(file_path, self.canvas_properties['project_directory']), 'warning')
-        #     status = False
-        # if not os.path.isdir(self.canvas_properties['project_directory']):
-        #     self.log_status('{0} does not exist - creating'.format(self.canvas_properties['project_directory']), 'warning')
-        #     os.makedirs(self.canvas_properties['project_directory'])
-        #     status = False
+        # TODO figure out which checks are already covered by the GUI
+        # TODO add more checks
+        if os.path.isfile(self.canvas_properties['project_directory']):
+            self.canvas_properties['project_directory'] = os.path.dirname(self.canvas_properties['project_directory'])
+            self.__log_status('Setting output path to {0}'.format(self.canvas_properties['project_directory']), 'debug', suppress=True)
+            self.__can_generate = False
+        if not os.path.isdir(self.canvas_properties['project_directory']):
+            self.__log_status('Creating {0}'.format(self.canvas_properties['project_directory']), 'debug', suppress=True)
+            os.makedirs(self.canvas_properties['project_directory'])
+            self.__can_generate = False
         if not os.path.isfile(self.canvas_properties['data_path']):
-            self.log_status('{0} is not a file or does not exist'.format(self.canvas_properties['data_path']), 'error')
+            self.__log_status('{0} is not a file or does not exist'.format(self.canvas_properties['data_path']), 'error')
+            self.__can_train = False
+        if os.path.splitext(self.canvas_properties['data_path'])[1] != 'csv':
+            self.__log_status('Invalid data file type', 'error')
             self.__can_train = False
 
-        self.canvas_properties['training_size'] = float(self.canvas_properties['training_size'])
-        if self.canvas_properties['training_size'] <= 0 or self.canvas_properties['training_size'] >= 1:
-            self.log_status('Training size must be between 0 and 1', 'error')
-            status = False
-
+        # Set defaults
         if 'optimizer' not in self.canvas_properties:
             self.canvas_properties['optimizer'] = 'sgd'
         if 'loss' not in self.canvas_properties:
-            self.canvas_properties['loss'] = 'sparse_categorical_crossentropy'
+            self.canvas_properties['loss'] = 'mean_squared_error'
         if 'metrics' not in self.canvas_properties:
             self.canvas_properties['metrics'] = ['accuracy']
         if 'epochs' not in self.canvas_properties:
             self.canvas_properties['epochs'] = 5
         elif self.canvas_properties['epochs'] <= 0:
-            self.log_status('Epochs must be > 0', 'warning')
+            self.__log_status('Epochs must be > 0', 'warning')
             self.canvas_properties['epochs'] = 1
 
         # Initialize layers
@@ -142,36 +143,31 @@ class Control(object):
             layer_properties = list(layer.values())[0]
 
             if not layer_type in self.LAYER_TYPES and layer_type != 'Empty':
-                self.log_status('Invalid layer type: {0}'.format(layer_type), 'debug')
-                status = False
+                self.__log_status('Invalid layer type: {0}'.format(layer_type), 'debug')
+                self.__can_generate = False
                 continue
             elif layer_type == 'Empty':
+                self.__log_status('Ignoring empty layer', 'debug', suppress=True)
                 continue
             if index == 0 and layer_type != 'Input':
-                self.log_status('Invalid network configuration: network must start with Input Layer', 'error')
-                status = False
-
-            # if not layer['type'] in self.LAYER_TYPES:
-            #     self.log_status('Invalid layer type: {0}'.format(layer['type']), 'debug')
-            #     status = False
-            #     continue
-            # if layer['type'] == 'input':
-            #     input_seen = True
-
-            # new_layer = self.LAYER_TYPES[layer['type']](layer)
+                self.__log_status('Invalid network configuration: network must start with Input Layer', 'error')
+                self.__can_generate = False
 
             new_layer = self.LAYER_TYPES[layer_type](layer_properties)
             self.layers.append(new_layer)
 
-        if not status:
-            self.log_status('Some parameters were invalid', 'warning')
-
     def generate_network(self):
         """
-        Writes the Python file containing the Keras neural network
+        Write the Python file containing the Keras neural network
         """
-        self.log_status('Generating network...', 'info')
-        with open(os.path.join(self.canvas_properties['project_directory'], 'neural_network.py'), 'w') as fd:
+        if not self.__can_generate:
+            self.__log_status('Generation error.', 'error')
+            return
+        self.__log_status('Generating network...', 'info')
+
+        file_name = os.path.join(self.canvas_properties['project_directory'],
+                                 '{0}_network.py'.format(self.canvas_properties['canvas_name']))
+        with open(file_name, 'w') as fd:
             # Imports
             fd.write('import h5py\n')
             fd.write('from keras.models import Sequential\n')
@@ -187,7 +183,6 @@ class Control(object):
             fd.write('\n')
 
             # Model compilation and training
-            fd.write('\tprint(\'Training model...\')\n')
             fd.write('\tmodel.compile(optimizer=\'{0}\', '.format(self.canvas_properties['optimizer']))
             fd.write('loss=\'{0}\', '.format(self.canvas_properties['loss']))
             fd.write('metrics=[')
@@ -197,11 +192,11 @@ class Control(object):
 
             if self.canvas_properties['loss'] != 'sparse_categorical_crossentropy':
                 fd.write('\ty_train = to_categorical(y_train)\n')
+                fd.write('\ty_test = to_categorical(y_test)\n')
             fd.write('\tmodel.fit(X_train, y_train, epochs={0})\n'.format(self.canvas_properties['epochs']))
             fd.write('\tscore = model.evaluate(X_test, y_test, batch_size=128)\n\n')
 
             # Saving model
-            fd.write('\tprint(\'Saving model to disk...\')\n')
             fd.write('\tmodel.save(\'{0}\')\n'.format(os.path.join(self.canvas_properties['project_directory'],
                                                                    self.canvas_properties['canvas_name'] + '_model.h5')))
             fd.write('\tmodel.save_weights(\'{0}\')\n'.format(os.path.join(self.canvas_properties['project_directory'],
@@ -214,22 +209,22 @@ class Control(object):
             fd.write('\treturn score[1]')
 
         # Create local copy of network to import when training
-        shutil.copy(os.path.join(self.canvas_properties['project_directory'], 'neural_network.py'),
-                    os.path.join(os.path.dirname(os.path.abspath(__file__)), 'network.py'))
+        shutil.copy(file_name, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'network.py'))
 
-        self.log_status('Network generated.', 'info')
-        self.__can_train = True
+        self.__log_status('Network generated.', 'info')
 
-    def train_network(self):
+    def __train_network(self):
         """
-        Trains the created neural network
+        Train the created neural network
         """
-        if not self.__can_train:
-            self.log_status('Cannot train without a model', 'error')
+        try:
+            from backend import network
+        except ImportError:
+            self.__log_status('Cannot train without a model', 'error')
             return
 
         # Read in training data
-        self.log_status('Reading data...', 'info')
+        self.__log_status('Reading data...', 'info')
         training_data = pd.read_csv(self.canvas_properties['data_path'])
         y_data = training_data.ix[:,0]
         X_data = training_data.ix[:,1:]
@@ -238,13 +233,11 @@ class Control(object):
                                                             train_size=self.canvas_properties['training_size'],
                                                             shuffle=True)
 
-        self.log_status('Training network...', 'debug')
+        self.__log_status('Training network...', 'debug')
         score = network.train_neural_network(X_train, y_train, X_test, y_test)
 
-        self.log_status('Network trained.', 'debug')
-        self.log_status('Model accuracy: {0}'.format(round(score, 3)))
-
-        self.__thread_lock.release()
+        self.__log_status('Network trained.', 'debug')
+        self.__log_status('Model accuracy: {0}'.format(round(score, 3)))
 
     def train_in_new_thread(self):
         """
