@@ -1,10 +1,9 @@
 import os
 import time
 import shutil
-import signal
 import logging
-import threading
 import pandas as pd
+import multiprocessing
 
 from sklearn.model_selection import train_test_split
 
@@ -24,6 +23,30 @@ logging.basicConfig(level=logging.DEBUG,
 
 class NetworkException(Exception):
     pass
+
+
+class ControlProcess(multiprocessing.Process):
+
+    def __init__(self, target):
+        super(ControlProcess, self).__init__(target=target)
+        self.daemon = True
+
+    def start(self):
+        """
+        Override Process.start() to prevent exceptions when attempting to start a process twice
+        """
+        try:
+            super(ControlProcess, self).start()
+        except AssertionError as error:
+            if str(error) != 'cannot start a process twice':
+                raise error
+
+    def terminate(self):
+        """
+        Override Process.terminate() to prevent exceptions if stopped process is terminated
+        """
+        if self.is_alive():
+            super(ControlProcess, self).terminate()
 
 
 class Control(object):
@@ -50,10 +73,9 @@ class Control(object):
         'Output': layers.DenseLayer,
     }
 
-    def __init__(self, add_text):
+    def __init__(self):
         """
         Control initialization
-        :param add_text: (function) -> Status box "add_text" function for logging to the GUI
         """
         self.logger = logging.getLogger('control')
 
@@ -61,13 +83,20 @@ class Control(object):
         self.layers = []
 
         self.__can_train = False
-        self.__thread_lock = threading.Lock()
+        self.__training_process = ControlProcess(target=self.__train_network)
 
+        self.__add_text = None
+
+    def init_status(self, add_text):
+        """
+        Assign status box "add_text" function for logging to the GUI
+        :param add_text: (function) -> Status box "add_text" function
+        """
         self.__add_text = add_text
 
     def set_properties(self, properties):
         """
-        Stores and performs checks on properties passed from the GUI
+        Store properties passed from the GUI and perform checks checks
         :param properties: (dict{'string': dict}) -> All canvas and layer properties passed from the GUI
         """
         self.canvas_properties = properties
@@ -88,7 +117,6 @@ class Control(object):
         if not os.path.isfile(self.canvas_properties['data_path']):
             self.log_status('{0} is not a file or does not exist'.format(self.canvas_properties['data_path']), 'error')
             self.__can_train = False
-            status = False
 
         self.canvas_properties['training_size'] = float(self.canvas_properties['training_size'])
         if self.canvas_properties['training_size'] <= 0 or self.canvas_properties['training_size'] >= 1:
@@ -199,10 +227,6 @@ class Control(object):
         if not self.__can_train:
             self.log_status('Cannot train without a model', 'error')
             return
-        signal.signal(signal.SIGTERM, self.safe_terminate)
-        self.__thread_lock.acquire()
-
-        from backend import network
 
         # Read in training data
         self.log_status('Reading data...', 'info')
@@ -222,19 +246,42 @@ class Control(object):
 
         self.__thread_lock.release()
 
-    def safe_terminate(self, sig_num, frame):
+    def train_in_new_thread(self):
         """
-        Safely terminate thread and release lock
-        :param sig_num: (int) -> Signal number
-        :param frame: (frame) -> Current stack frame
+        Start a training process. This prevents the main process (GUI) from stalling while training
+        happens
         """
-        self.log_status('Terminating...'.format(sig_num), 'warning')
-        self.log_status('Process terminated with signal {0}'.format(sig_num), 'warning', True)
+        if not self.__can_train:
+            self.__log_status('Training error.', 'error')
+            return
 
-        if self.__thread_lock.locked():
-            self.__thread_lock.release()
+        if not self.training_process.is_alive():
+            try:
+                # Create a new process if one has already been run
+                self.training_process.join()
+                self.__create_new_process()
+                self.__training_process.start()
+            except AssertionError as error:
+                if str(error) == 'can only join a started process':
+                    self.__training_process.start()
 
-    def log_status(self, msg, level='info', suppress=False):
+    def terminate_training(self):
+        """
+        Terminate the current training process if there is one running
+        """
+        if self.training_process.is_alive():
+            self.__log_status('Training canceled.', 'debug')
+            self.__training_process.terminate()
+            self.__create_new_process()
+
+    def __create_new_process(self):
+        """
+        Create a new training process to replace ones that have already been used
+        """
+        self.__log_status('Creating new process', 'debug', suppress=True)
+        self.training_process = ControlProcess(target=self.__train_network)
+
+    def __log_status(self, msg, level='info', suppress=False):
         """
         Log status to status box and logger
         :param msg: (string) -> Message to log
