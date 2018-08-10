@@ -1,10 +1,11 @@
 import tkinter
 import pickle
 import os
-import buttons, status_box, canvas_frame, canvas_properites_box
 import tkinter.filedialog
 
 from backend import control
+from interface import buttons, status_box, canvas_frame, canvas_properites_box
+
 
 def get_screen_res():
     root = tkinter.Tk()
@@ -15,8 +16,10 @@ def get_screen_res():
 
     return width, height
 
+
 def callback():
     pass
+
 
 class Window(object):
 
@@ -24,7 +27,7 @@ class Window(object):
         self.width = width
         self.height = height
 
-        #This will store which layer is selected
+        # This will store which layer is selected
         self.current_layer_type = 'Empty'
 
         self.root = tkinter.Tk()
@@ -228,10 +231,8 @@ class Window(object):
         )
 
         self.generate_nn_script = lambda: (
-            #TODO: Add the generation script here
             self.control.set_properties(self.slots.get_all_project_properties()),
             self.control.generate_network()
-            # self.current_threads.append(mp.Process(target=self.control.generate_network()))
         )
 
         self.train_model = lambda: (
@@ -244,9 +245,7 @@ class Window(object):
             self.slots.clear_slots()
         )
 
-        self.empty_funct = lambda: (
-
-        )
+        self.empty_funct = lambda: ()
 
     def start(self):
         self.root.mainloop()
@@ -287,7 +286,6 @@ class Menu(object):
 
     def open(self):
         popup = OpenPopup(self.main_window)
-
 
 
 class OpenPopup(object):

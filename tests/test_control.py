@@ -9,7 +9,8 @@ class TestControl(unittest.TestCase):
 
     def setUp(self):
         add_text = lambda msg: msg
-        self.controller = Control(add_text)
+        self.controller = Control()
+        self.controller.init_status(add_text)
 
     @mock.patch('backend.control.shutil')
     @mock.patch('builtins.open')
@@ -48,9 +49,10 @@ class TestControl(unittest.TestCase):
         mock_os.path.isfile.side_effect = [False, True]
         mock_os.path.isdir.return_value = True
         properties = {
-            'output_path': '/path/to/directory',
-            'training_data_path': '/path/to/file.csv',
-            'train_size': 0.8,
+            'canvas_name': 'neuromatic',
+            'project_directory': '/path/to/directory',
+            'data_path': '/path/to/file.csv',
+            'training_size': 0.8,
             'optimizer': 'sgd',
             'loss': 'categorical_crossentropy',
             'metrics': ['accuracy'],
@@ -89,9 +91,10 @@ class TestControl(unittest.TestCase):
         mock_os.path.isdir.return_value = True
         mock_os.path.dirname.return_value = '/path/to'
         properties = {
-            'output_path': '/path/to/directory',
-            'training_data_path': '/path/to/file.csv',
-            'train_size': 0.8,
+            'canvas_name': 'neuromatic',
+            'project_directory': '/path/to/directory',
+            'data_path': '/path/to/file.csv',
+            'training_size': 0.8,
             'optimizer': 'sgd',
             'loss': 'categorical_crossentropy',
             'metrics': ['accuracy'],
@@ -124,9 +127,10 @@ class TestControl(unittest.TestCase):
         mock_os.path.isfile.side_effect = [False, True]
         mock_os.path.isdir.return_value = False
         properties = {
-            'output_path': '/path/to/directory',
-            'training_data_path': '/path/to/file.csv',
-            'train_size': 0.8,
+            'canvas_name': 'neuromatic',
+            'project_directory': '/path/to/directory',
+            'data_path': '/path/to/file.csv',
+            'training_size': 0.8,
             'optimizer': 'sgd',
             'loss': 'categorical_crossentropy',
             'metrics': ['accuracy'],
@@ -160,9 +164,10 @@ class TestControl(unittest.TestCase):
         mock_os.path.isdir.return_value = True
         # Arrange
         properties = {
-            'output_path': '/path/to/directory',
-            'training_data_path': '/path/to/file.csv',
-            'train_size': 0.8,
+            'canvas_name': 'neuromatic',
+            'project_directory': '/path/to/directory',
+            'data_path': '/path/to/file.csv',
+            'training_size': 0.8,
             'optimizer': 'sgd',
             'loss': 'categorical_crossentropy',
             'metrics': ['accuracy'],
@@ -196,9 +201,10 @@ class TestControl(unittest.TestCase):
         mock_os.path.isdir.return_value = True
         # Arrange
         properties = {
-            'output_path': '/path/to/directory',
-            'training_data_path': '/path/to/file.csv',
-            'train_size': 0.8,
+            'canvas_name': 'neuromatic',
+            'project_directory': '/path/to/directory',
+            'data_path': '/path/to/file.csv',
+            'training_size': 0.8,
             'epochs': 5,
             'layers': [
                 {
