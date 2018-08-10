@@ -41,7 +41,7 @@ class InputLayer(GenericLayer):
 
     def write_lines(self, fd):
         # TODO dimsensions should not be indexed
-        line = '\tmodel(Input(shape=({0},)))\n'.format(self.layer_properties['dimensions'][0])
+        line = '\tmodel(Input(shape=({0},)))\n'.format(self.layer_properties['dimensions'])
         fd.write(line)
 
 class DenseLayer(GenericLayer):

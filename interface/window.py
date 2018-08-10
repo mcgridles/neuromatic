@@ -232,7 +232,7 @@ class Window(object):
         )
 
         self.train_model = lambda: (
-            self.log("Training Model")
+            self.log("Training Model"),
             self.control.set_properties(self.slots.get_all_project_properties()),
             self.control.train_in_new_thread()
         )

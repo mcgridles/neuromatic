@@ -10,15 +10,20 @@ from sklearn.model_selection import train_test_split
 from backend import layers
 
 # Configure logging
+LOG_TO_FILE = True
 log_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'logs')
+log_file = 'neuromatic_{0}.log'.format(time.strftime('%m%d%Y_%H%M%S'))
+
 if not os.path.isdir(log_dir):
     os.makedirs(log_dir)
-log_file = 'neuromatic_{0}.log'.format(time.strftime('%m%d%Y_%H%M%S'))
-logging.basicConfig(level=logging.DEBUG,
-                    format='[%(asctime)s][%(name)-12s][%(levelname)-8s] %(message)s',
-                    datefmt='%H%M%S',
-                    filename=os.path.join(log_dir, log_file),
-                    filemode='w')
+if LOG_TO_FILE:
+    logging.basicConfig(level=logging.DEBUG,
+                        format='[%(asctime)s][%(name)-12s][%(levelname)-8s] %(message)s',
+                        datefmt='%H%M%S',
+                        filename=os.path.join(log_dir, log_file),
+                        filemode='w')
+else:
+    logging.basicConfig(level=logging.DEBUG)
 
 
 class NetworkException(Exception):
@@ -67,10 +72,10 @@ class Control(object):
     """
 
     LAYER_TYPES = {
-        'Input': layers.InputLayer,
-        'Hidden': layers.DenseLayer,
-        'Dropout': layers.DropoutLayer,
-        'Output': layers.DenseLayer,
+        'input': layers.InputLayer,
+        'hidden': layers.DenseLayer,
+        'dropout': layers.DropoutLayer,
+        'output': layers.DenseLayer,
     }
 
     def __init__(self):
@@ -87,6 +92,30 @@ class Control(object):
         self.__training_process = ControlProcess(target=self.__train_network)
 
         self.__add_text = None
+
+    @property
+    def can_generate(self):
+        return self.__can_generate
+
+    @can_generate.setter
+    def can_generate(self, status):
+        """
+        Set private variable to status
+        :param status: (boolean) -> Updated control status
+        """
+        self.__can_generate = status
+
+    @property
+    def can_train(self):
+        return self.__can_generate
+
+    @can_train.setter
+    def can_train(self, status):
+        """
+        Set private variable to status
+        :param status: (boolean) -> Updated control status
+        """
+        self.__can_train = status
 
     def init_status(self, add_text):
         """
@@ -131,30 +160,33 @@ class Control(object):
         if 'metrics' not in self.canvas_properties:
             self.canvas_properties['metrics'] = ['accuracy']
         if 'epochs' not in self.canvas_properties:
-            self.canvas_properties['epochs'] = 5
-        elif self.canvas_properties['epochs'] <= 0:
+            self.canvas_properties['epochs'] = '1'
+        elif int(self.canvas_properties['epochs']) <= 0:
             self.__log_status('Epochs must be > 0', 'warning')
-            self.canvas_properties['epochs'] = 1
+            self.canvas_properties['epochs'] = '1'
 
         # Initialize layers
         for index, layer in enumerate(self.canvas_properties['layers']):
-            # TODO establish correct dict layout
-            layer_type = list(layer.keys())[0]
-            layer_properties = list(layer.values())[0]
+            layer_type = layer['type']
+            layer_properties = layer
 
-            if not layer_type in self.LAYER_TYPES and layer_type != 'Empty':
+            if not layer_type in self.LAYER_TYPES and layer_type != 'empty':
                 self.__log_status('Invalid layer type: {0}'.format(layer_type), 'debug')
                 self.__can_generate = False
                 continue
-            elif layer_type == 'Empty':
+            elif layer_type == 'empty':
                 self.__log_status('Ignoring empty layer', 'debug', suppress=True)
                 continue
-            if index == 0 and layer_type != 'Input':
-                self.__log_status('Invalid network configuration: network must start with Input Layer', 'error')
-                self.__can_generate = False
 
             new_layer = self.LAYER_TYPES[layer_type](layer_properties)
             self.layers.append(new_layer)
+
+        # TODO test this
+        if not self.layers:
+            self.__can_generate = False
+        elif type(self.layers[0]) != layers.InputLayer:
+            self.__log_status('Invalid network configuration: network must start with input Layer', 'error')
+            self.__can_generate = False
 
     def generate_network(self):
         """

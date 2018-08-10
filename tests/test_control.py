@@ -1,46 +1,49 @@
 import unittest
 from unittest import mock
 
-from backend.layers import DenseLayer, DropoutLayer
-from backend.control import Control
+from backend import layers
+from backend import control
 
 
 class TestControl(unittest.TestCase):
 
     def setUp(self):
         add_text = lambda msg: msg
-        self.controller = Control()
+        self.controller = control.Control()
         self.controller.init_status(add_text)
 
     @mock.patch('backend.control.shutil')
     @mock.patch('builtins.open')
-    def test_generate_network(self, mock_open, mock_shutil):
+    @mock.patch('backend.control.os')
+    def test_generate_network(self, mock_os, mock_open, mock_shutil):
         # Arrange
-        layer1 = DenseLayer({
-            'size': 512,
-            'activation': 'relu'
+        mock_os.path.join.return_value = '/path/to/directory/neuromatic_network.py'
+        layer1 = layers.InputLayer({
+            'dimensions': 512
         })
-        layer2 = DropoutLayer({
-            'percentage': 0.8,
+        layer2 = layers.DropoutLayer({
+            'percentage': 0.8
         })
-        layer3 = DenseLayer({
+        layer3 = layers.DenseLayer({
             'size': 10,
             'activation': 'softmax'
         })
+        self.controller.canvas_properties['canvas_name'] = 'neuromatic'
         self.controller.canvas_properties['optimizer'] = 'adam'
         self.controller.canvas_properties['loss'] = 'sparse_categorical_crossentropy'
         self.controller.canvas_properties['metrics'] = ['accuracy']
         self.controller.canvas_properties['epochs'] = 5
-        self.controller.canvas_properties['output_path'] = '/path/to/directory'
+        self.controller.canvas_properties['project_directory'] = '/path/to/directory'
         self.controller.layers = [layer1, layer2, layer3]
+        self.controller.can_generate = True
 
         # Act
         with self.assertLogs('control', level='DEBUG') as log:
             self.controller.generate_network()
 
         # Assert
-        self.assertEqual(mock_open.call_args, mock.call('/path/to/directory/neural_network.py', 'w'))
-        self.assertEqual(mock_open.return_value.__enter__.return_value.write.call_count, 24)
+        self.assertEqual(mock_open.call_args, mock.call('/path/to/directory/neuromatic_network.py', 'w'))
+        self.assertEqual(mock_open.return_value.__enter__.return_value.write.call_count, 23)
         self.assertEquals(log.output, ['INFO:control:Generating network...', 'INFO:control:Network generated.'])
 
     @mock.patch('backend.control.os')
@@ -48,6 +51,7 @@ class TestControl(unittest.TestCase):
         # Arrange
         mock_os.path.isfile.side_effect = [False, True]
         mock_os.path.isdir.return_value = True
+        mock_os.path.splitext.return_value = ['filename', 'csv']
         properties = {
             'canvas_name': 'neuromatic',
             'project_directory': '/path/to/directory',
@@ -62,15 +66,13 @@ class TestControl(unittest.TestCase):
                     'type': 'input',
                     'size': 10,
                     'activation': 'sigmoid',
-                    'batch_size': 100,
-                    'input_dim': 784
+                    'dimensions': 784
                 },
                 {
-                    'type': 'dense',
+                    'type': 'hidden',
                     'size': 10,
                     'activation': 'sigmoid',
-                    'batch_size': 100,
-                    'input_dim': 784
+                    'dimensions': 784
                 }
             ]
         }
@@ -85,11 +87,12 @@ class TestControl(unittest.TestCase):
         self.assertEqual(len(self.controller.layers), 2)
 
     @mock.patch('backend.control.os')
-    def test_set_properties_output_path_is_file(self, mock_os):
+    def test_set_properties_project_directory_is_file(self, mock_os):
         # Arrange
         mock_os.path.isfile.side_effect = [True, True]
         mock_os.path.isdir.return_value = True
         mock_os.path.dirname.return_value = '/path/to'
+        mock_os.path.splitext.return_value = ['filename', 'csv']
         properties = {
             'canvas_name': 'neuromatic',
             'project_directory': '/path/to/directory',
@@ -115,17 +118,15 @@ class TestControl(unittest.TestCase):
             self.controller.set_properties(properties)
 
         # Assert
-        self.assertEqual(self.controller.canvas_properties['output_path'], '/path/to')
-        self.assertEqual(log.output, [
-            'WARNING:control:/path/to/directory is a file, setting output path to /path/to',
-            'WARNING:control:Some parameters were invalid'
-        ])
+        self.assertEqual(self.controller.canvas_properties['project_directory'], '/path/to')
+        self.assertEqual(log.output, ['DEBUG:control:Setting output path to /path/to'])
 
     @mock.patch('backend.control.os')
-    def test_set_properties_output_path_does_not_exist(self, mock_os):
+    def test_set_properties_project_directory_does_not_exist(self, mock_os):
         # Arrange
         mock_os.path.isfile.side_effect = [False, True]
         mock_os.path.isdir.return_value = False
+        mock_os.path.splitext.return_value = ['filename', 'csv']
         properties = {
             'canvas_name': 'neuromatic',
             'project_directory': '/path/to/directory',
@@ -154,14 +155,14 @@ class TestControl(unittest.TestCase):
         self.assertEquals(mock_os.makedirs.call_args, mock.call('/path/to/directory'))
         self.assertEqual(len(self.controller.layers), 1)
         self.assertEqual(log.output, [
-            'WARNING:control:/path/to/directory does not exist - creating',
-            'WARNING:control:Some parameters were invalid'
+            'DEBUG:control:Creating /path/to/directory',
         ])
 
     @mock.patch('backend.control.os')
     def test_set_properties_invalid_layer(self, mock_os):
         mock_os.path.isfile.side_effect = [False, True]
         mock_os.path.isdir.return_value = True
+        mock_os.path.splitext.return_value = ['filename', 'csv']
         # Arrange
         properties = {
             'canvas_name': 'neuromatic',
@@ -191,21 +192,19 @@ class TestControl(unittest.TestCase):
         self.assertEqual(self.controller.layers, [])
         self.assertEqual(log.output, [
             'DEBUG:control:Invalid layer type: bad_layer',
-            'ERROR:control:Invalid network configuration',
-            'WARNING:control:Some parameters were invalid'
         ])
 
     @mock.patch('backend.control.os')
     def test_set_missing_properties(self, mock_os):
         mock_os.path.isfile.side_effect = [False, True]
         mock_os.path.isdir.return_value = True
+        mock_os.path.splitext.return_value = ['filename', 'csv']
         # Arrange
         properties = {
             'canvas_name': 'neuromatic',
             'project_directory': '/path/to/directory',
             'data_path': '/path/to/file.csv',
             'training_size': 0.8,
-            'epochs': 5,
             'layers': [
                 {
                     'type': 'input',
@@ -215,7 +214,7 @@ class TestControl(unittest.TestCase):
                     'input_dim': 784
                 },
                 {
-                    'type': 'dense',
+                    'type': 'hidden',
                     'size': 10,
                     'activation': 'sigmoid',
                     'batch_size': 100,
@@ -231,5 +230,6 @@ class TestControl(unittest.TestCase):
 
         # Assert
         self.assertEqual(self.controller.canvas_properties['optimizer'], 'sgd')
-        self.assertEqual(self.controller.canvas_properties['loss'], 'sparse_categorical_crossentropy')
+        self.assertEqual(self.controller.canvas_properties['loss'], 'mean_squared_error')
         self.assertEqual(self.controller.canvas_properties['metrics'], ['accuracy'])
+        self.assertEqual(self.controller.canvas_properties['epochs'], '1')
