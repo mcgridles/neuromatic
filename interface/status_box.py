@@ -37,7 +37,7 @@ class StatusBox(object):
             raise TypeError('Value passed to add_text must be a string.')
 
         # Enable text edit
-        self.text.config(state=tk.NORMAL)
+        self.text.config(state=tk.NORMAL, font='Helvetica 10')
         # Add new text to the bottom
         self.text.insert(tk.END, text)
         # Disable text edit
@@ -51,6 +51,9 @@ class StatusBox(object):
             # Scroll to the end of the text box
             self.text.see(tk.END)
             self.h_scroll.set(x_position[0], x_position[1])
+
+    def clear(self):
+        self.text.delete("1.0", 'End')
 
 
 if __name__ == '__main__':

@@ -1,10 +1,11 @@
 import tkinter as tk
 import canvas_properites_box, trash_icon
-
+import copy
+import os
 
 
 def callback(event):
-    print("clicked at", event.x, event.y)
+    pass
 
 
 class CanvasFrame(object):
@@ -57,7 +58,6 @@ class CanvasFrame(object):
 
 
     def add_slot(self):
-        print('called')
         new_col = len(self.slots) + 3
         new_layer_box = canvas_properites_box.LayerPropertiesBox(self.frame,
                                                                  frame_row=2,
@@ -81,7 +81,8 @@ class CanvasFrame(object):
         return layer_information
 
     def get_all_project_properties(self):
-        props = self.canvas_properties_box.get_properties()
+        props = copy.deepcopy(self.canvas_properties_box.get_properties())
+
         props.update(self.get_all_slot_attributes())
         return props
 
@@ -89,7 +90,18 @@ class CanvasFrame(object):
         for slot in self.slots:
             slot.clear_slot_attributes()
 
-
+    def clear_canvas(self):
+        old_count = self.canvas_properties_box.box_properties['component_slots']
+        self.canvas_properties_box.edit_canvas_attributes(new_canvas_name='new_canvas_{}'.format(1),
+                                                          new_slot_count=3,
+                                                          new_data_path='None',
+                                                          new_project_dir=os.path.dirname(os.path.realpath(__file__)),
+                                                          new_training_size=.5,
+                                                          new_optimizer='sgd',
+                                                          new_loss='mean_squared_error',
+                                                          new_epochs=1,
+                                                          old_count=old_count)
+        self.clear_slots()
 if __name__ == '__main__':
     root = tk.Tk()
     root.title('CanvasFrame Test')
