@@ -1,4 +1,5 @@
 import os
+import re
 import time
 import shutil
 import logging
@@ -32,8 +33,8 @@ class NetworkException(Exception):
 
 class ControlProcess(multiprocessing.Process):
 
-    def __init__(self, target):
-        super(ControlProcess, self).__init__(target=target)
+    def __init__(self, target, args):
+        super(ControlProcess, self).__init__(target=target, args=args)
         self.daemon = True
 
     def start(self):
@@ -89,7 +90,9 @@ class Control(object):
 
         self.__can_generate = False
         self.__can_train = False
-        self.__training_process = ControlProcess(target=self.__train_network)
+
+        self.__training_process = None
+        self.__create_new_process()
 
         self.__add_text = None
 
@@ -107,7 +110,7 @@ class Control(object):
 
     @property
     def can_train(self):
-        return self.__can_generate
+        return self.__can_train
 
     @can_train.setter
     def can_train(self, status):
@@ -129,6 +132,11 @@ class Control(object):
         Store properties passed from the GUI and perform checks checks
         :param properties: (dict{'string': dict}) -> All canvas and layer properties passed from the GUI
         """
+        # Sanitize potentially dangerous inputs
+        properties['canvas_name'] = self.sanitize_input(properties['canvas_name'])
+        properties['project_directory'] = self.sanitize_input(properties['project_directory'])
+        properties['data_path'] = self.sanitize_input(properties['data_path'])
+
         self.canvas_properties = properties
         self.layers = []
         self.__can_generate = True
@@ -140,15 +148,13 @@ class Control(object):
         if os.path.isfile(self.canvas_properties['project_directory']):
             self.canvas_properties['project_directory'] = os.path.dirname(self.canvas_properties['project_directory'])
             self.__log_status('Setting output path to {0}'.format(self.canvas_properties['project_directory']), 'debug', suppress=True)
-            self.__can_generate = False
         if not os.path.isdir(self.canvas_properties['project_directory']):
             self.__log_status('Creating {0}'.format(self.canvas_properties['project_directory']), 'debug', suppress=True)
             os.makedirs(self.canvas_properties['project_directory'])
-            self.__can_generate = False
         if not os.path.isfile(self.canvas_properties['data_path']):
-            self.__log_status('{0} is not a file or does not exist'.format(self.canvas_properties['data_path']), 'error')
+            self.__log_status('{0} is not a file'.format(self.canvas_properties['data_path']), 'error')
             self.__can_train = False
-        if os.path.splitext(self.canvas_properties['data_path'])[1] != 'csv':
+        if os.path.splitext(self.canvas_properties['data_path'])[1] != '.csv':
             self.__log_status('Invalid data file type', 'error')
             self.__can_train = False
 
@@ -181,7 +187,6 @@ class Control(object):
             new_layer = self.LAYER_TYPES[layer_type](layer_properties)
             self.layers.append(new_layer)
 
-        # TODO test this
         if not self.layers:
             self.__can_generate = False
         elif type(self.layers[0]) != layers.InputLayer:
@@ -243,33 +248,38 @@ class Control(object):
         # Create local copy of network to import when training
         shutil.copy(file_name, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'network.py'))
 
-        self.__log_status('Network generated.', 'info')
+        self.__log_status('Network generated', 'info')
 
-    def __train_network(self):
+    def __train_network(self, connection):
         """
         Train the created neural network
+        :param connection: (multiprocess.Pipe) -> Child connection to the parent process
         """
         try:
             from backend import network
         except ImportError:
-            self.__log_status('Cannot train without a model', 'error')
+            connection.send('Cannot train without a model\n')
             return
 
         # Read in training data
-        self.__log_status('Reading data...', 'info')
+        connection.send('Reading data...\n')
         training_data = pd.read_csv(self.canvas_properties['data_path'])
         y_data = training_data.ix[:,0]
         X_data = training_data.ix[:,1:]
         X_train, X_test, y_train, y_test = train_test_split(X_data,
                                                             y_data,
-                                                            train_size=self.canvas_properties['training_size'],
+                                                            train_size=float(self.canvas_properties['training_size']),
                                                             shuffle=True)
 
-        self.__log_status('Training network...', 'debug')
+        connection.send('Training network...\n')
         score = network.train_neural_network(X_train, y_train, X_test, y_test)
 
-        self.__log_status('Network trained.', 'debug')
-        self.__log_status('Model accuracy: {0}'.format(round(score, 3)))
+        # Test network
+        connection.send('Network trained\n\n')
+        connection.send('Model accuracy: {0}\n'.format(round(score, 3)))
+        connection.close()
+
+        return score
 
     def train_in_new_thread(self):
         """
@@ -277,13 +287,14 @@ class Control(object):
         happens
         """
         if not self.__can_train:
-            self.__log_status('Training error.', 'error')
+            self.__log_status('Training error', 'error')
             return
 
-        if not self.training_process.is_alive():
+        if not self.__training_process.is_alive():
+            self.__log_status('Starting training process', 'debug')
             try:
                 # Create a new process if one has already been run
-                self.training_process.join()
+                self.__training_process.join()
                 self.__create_new_process()
                 self.__training_process.start()
             except AssertionError as error:
@@ -294,17 +305,31 @@ class Control(object):
         """
         Terminate the current training process if there is one running
         """
-        if self.training_process.is_alive():
-            self.__log_status('Training canceled.', 'debug')
+        if self.__training_process.is_alive():
+            # Terminate process and create a new one
+            self.__log_status('Training canceled\n\n', 'debug')
             self.__training_process.terminate()
             self.__create_new_process()
 
     def __create_new_process(self):
         """
-        Create a new training process to replace ones that have already been used
+        Create a new training process to replace one that have already been used
         """
-        self.__log_status('Creating new process', 'debug', suppress=True)
-        self.training_process = ControlProcess(target=self.__train_network)
+        self.__log_status('Creating new process.', 'debug', suppress=True)
+        self.parent_conn, child_conn = multiprocessing.Pipe()
+        self.__training_process = ControlProcess(target=self.__train_network, args=(child_conn,))
+
+    def check_pipe(self):
+        """
+        Checks the pipe between the main process and the training process for any messages.
+        :return: (string) -> Status message if one has been sent
+        """
+        if self.parent_conn.poll():
+            try:
+                status = self.parent_conn.recv()
+                return status
+            except EOFError:
+                pass
 
     def __log_status(self, msg, level='info', suppress=False):
         """
@@ -326,3 +351,13 @@ class Control(object):
             msg += '\n'
         if not suppress:
             self.__add_text(msg)
+
+    @staticmethod
+    def sanitize_input(text):
+        """
+        Remove potentially dangerous characters from a string
+        :param text: (string) -> String to remove characters from
+        :return: (string) -> Sanitized string
+        """
+        bad_chars = '[;\'\"`|#\n\t]'
+        return re.sub(bad_chars, '', text)

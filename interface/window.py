@@ -226,13 +226,11 @@ class Window(object):
         )
 
         self.generate_nn_script = lambda: (
-            self.log("Generating Neural Network Script"),
             self.control.set_properties(self.slots.get_all_project_properties()),
             self.control.generate_network()
         )
 
         self.train_model = lambda: (
-            self.log("Training Model"),
             self.control.set_properties(self.slots.get_all_project_properties()),
             self.control.train_in_new_thread()
         )
@@ -245,11 +243,21 @@ class Window(object):
         self.empty_funct = lambda: ()
 
     def start(self):
+        self.__get_status_updates()
         self.root.mainloop()
 
     def set_size(self, width, height):
         set_str = '{}x{}'.format(str(width), str(height))
         self.root.geometry(set_str)
+
+    def __get_status_updates(self):
+        """
+        Checks for updates to the status box from the training process every 500ms.
+        """
+        status = self.control.check_pipe()
+        if status:
+            self.status_box.add_text(status)
+        self.root.after(500, self.__get_status_updates)
 
 
 class Menu(object):
