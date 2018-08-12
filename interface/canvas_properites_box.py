@@ -16,6 +16,14 @@ DEFAULT_CANVAS_PROPERTIES = {
 
 
 def is_integer(string_input):
+    '''
+    Simple function that determines if a value in the form of a string is a integer or not.
+    Used in property editing to determine valid input.
+    Works by trying to convert it to an int using a native conversion function through python, and returning true if it
+    works and false if it doesn't
+    :param string_input:
+    :return:
+    '''
     try:
         int(string_input)
         return True
@@ -24,6 +32,14 @@ def is_integer(string_input):
 
 
 def is_float(string_input):
+    '''
+    Simple function that determines if a value in the form of a string is a float or not.
+    Used in property editing to determine valid input.
+    Works by trying to convert it to an float using a native conversion function through python, and returning true if it
+    works and false if it doesn't
+    :param string_input:
+    :return:
+    '''
     try:
         float(string_input)
         return True
@@ -316,26 +332,43 @@ class LayerPropertiesBox(PropertiesBox):
 
 class PropertiesEditor(ABC):
     def __init__(self, props, logger=None, main_window=None, canvas_frame=None):
+        '''
+        Abstract class to represent a generic property editor popup.
+        :param props:
+        :param logger:
+        :param main_window:
+        :param canvas_frame:
+        '''
+
+        # Constructs props, the dictionary of all the properties, as well as logger, main_window, and canvas_frame for some information relating to the canvas state.
         self.props = props
         self.logger = logger
         self.main_window = main_window
         self.canvas_frame = canvas_frame
 
+        #Creates the error entry sections as it is common for layer and canvas properties
         self.error_entry = None
         self.error_mes = tk.StringVar()
 
+        #Constructs the frame and the window root used
         self.top_frame = None
-
         self.root = tk \
             .Toplevel()
         self.root.title("Edit Properties")
 
+        #Launch the functions to configure the window and frame and add the elements on the window
         self.config_frames()
         self.add_widgets()
 
+        #Launch the abstract base class' constructor
         super().__init__()
 
     def config_frames(self):
+        '''
+        Configure the grid used to place the frame on the window, and create the frame and the grid on the frame used to
+        place the elements on the frame
+        :return:
+        '''
         self.root.grid_rowconfigure(1, weight=1)
         self.root.grid_columnconfigure(1, weight=1)
 
@@ -344,16 +377,29 @@ class PropertiesEditor(ABC):
 
     @abstractmethod
     def add_widgets(self):
+        '''
+        Declare an abstract method that will add the widgets to the frame
+        '''
         pass
 
     @abstractmethod
     def save_configurations(self):
+        '''Declare an abstract method that will save the new properties and close the window'''
         pass
 
 
 class CanvasProperties(PropertiesEditor):
     def __init__(self, props, logger=None, main_window=None, canvas_frame=None):
+        '''
+        A child class of Properties Editor for editing canvas properties. This builds the widgets related to canvas
+        properties, including the error notfication bar and save and close buttons.
+        :param props:
+        :param logger:
+        :param main_window:
+        :param canvas_frame:
+        '''
 
+        #Retrieve the following canvas properties from the class' dictonary passed
         self.canvas_name = props.box_properties['canvas_name']
         self.slot_count = props.box_properties['component_slots']
         self.data_path = props.box_properties['data_path']
@@ -363,6 +409,7 @@ class CanvasProperties(PropertiesEditor):
         self.loss = props.box_properties['loss']
         self.epochs = props.box_properties['epochs']
 
+        #Declare all the entry widgets used in the window
         self.canvas_name_entry = None
         self.slot_count_entry = None
         self.data_path_entry = None
@@ -372,6 +419,7 @@ class CanvasProperties(PropertiesEditor):
         self.loss_entry = None
         self.epochs_entry = None
 
+        #As optimizer and loss are dropdowns, the available choices must be defined as lists and variables made for the current selection
         self.optimizers = ['sgd', 'adam', 'adagrad', 'rmsprop', 'adadelta', 'adamax', 'nadam']
         self.optimizer_selected = tk.StringVar()
         self.losses = ['mean_squared_error', 'mean_absolute_error', 'mean_absolute_percentage_error',
@@ -380,8 +428,10 @@ class CanvasProperties(PropertiesEditor):
                        'kullback_leibler_divergence', 'poisson', 'cosine_proximity']
         self.loss_selected = tk.StringVar()
 
+        #Define a file path for the program to fall back on if the browser is launched without a valid path
         self.FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 
+        #Define the configurations available to the browser selection tool
         self.VALID_TYPES = {
             'all': ('all files', '*'),
             'csv': ('csv', '*.csv'),
@@ -389,83 +439,113 @@ class CanvasProperties(PropertiesEditor):
             'h5py': ('h5py', '*.h5py')
         }
 
+        #Call the constructor of the properties editor class
         super().__init__(props, logger, main_window, canvas_frame)
 
     def add_widgets(self):
+        '''
+        This function adds all the widgets to the frame; the labels, the various entry forms, the error notification,
+        and the confirm and close buttons
+        :return:
+        '''
+
+        #Construct the canvas name label and the text entry widget. Insert the current canvas name into the entry widget
         tk.Label(self.top_frame, text="Canvas Name:").grid(row=0, column=0, sticky=tk.E)
         self.canvas_name_entry = tk.Entry(self.top_frame)
         self.canvas_name_entry.grid(row=0, column=1)
         self.canvas_name_entry.insert(10, self.canvas_name)
 
+        #Construct the component slots label and the text entry widget. Insert the component slot number into the entry widget
         tk.Label(self.top_frame, text="Number of Component Slots:").grid(row=1, column=0, sticky=tk.E)
         self.slot_count_entry = tk.Entry(self.top_frame)
         self.slot_count_entry.grid(row=1, column=1)
         self.slot_count_entry.insert(10, self.slot_count)
 
+        #Construct the training data label, the text entry, and the browse button widget. Insert the path into the entry widget
         tk.Label(self.top_frame, text="Training Data Path:").grid(row=2, column=0, sticky=tk.E)
         self.data_path_entry = tk.Entry(self.top_frame)
         self.data_path_entry.grid(row=2, column=1)
         self.data_path_entry.insert(10, self.data_path)
         tk.Button(self.top_frame, text="Browse...", command=self.get_file).grid(row=2, column=2)
 
+        #Construct the project dir label, the text entry, and the browse button widget, Insert the path into the entry widget
         tk.Label(self.top_frame, text="Project Directory:").grid(row=3, column=0, sticky=tk.E)
         self.project_dir_entry = tk.Entry(self.top_frame)
         self.project_dir_entry.grid(row=3, column=1)
         self.project_dir_entry.insert(10, self.project_dir)
         tk.Button(self.top_frame, text="Browse...", command=self.get_directory).grid(row=3, column=2)
 
+        #Construct the training size label and the text entry widget. Insert the size into the entry widget
         tk.Label(self.top_frame, text="Training Size:").grid(row=4, column=0, sticky=tk.E)
         self.training_size_entry = tk.Entry(self.top_frame)
         self.training_size_entry.grid(row=4, column=1)
         self.training_size_entry.insert(10, self.training_size)
 
+        #Construct the optimizer label and the dropdown widget. Give the dropdown the list of options and the variable used to track what is selected.
         tk.Label(self.top_frame, text="Optimizer:").grid(row=5, column=0, sticky=tk.E)
         self.optimizer_entry = tk.OptionMenu(self.top_frame, self.optimizer_selected,
                                                   *self.optimizers)
         self.optimizer_selected.set(self.optimizer)
         self.optimizer_entry.grid(row=5, column=1)
 
+        #Construct the loss lable and the dropdown widget. Give the dropdown the list of options and the variable used to track what is selected
         tk.Label(self.top_frame, text="Loss:").grid(row=6, column=0, sticky=tk.E)
         self.loss_entry = tk.OptionMenu(self.top_frame, self.loss_selected,
                                              *self.losses)
         self.loss_selected.set(self.loss)
         self.loss_entry.grid(row=6, column=1)
 
+        #Construct the epochs label and entry widget. Set the epochs to the current entry.
         tk.Label(self.top_frame, text="Epochs:").grid(row=7, column=0, sticky=tk.E)
         self.epochs_entry = tk.Entry(self.top_frame)
         self.epochs_entry.grid(row=7, column=1)
         self.epochs_entry.insert(10, self.epochs)
 
+        #Construct the error widget with a variable to represent the displayed text
         self.error_entry = tk.Label(self.top_frame, textvariable=self.error_mes, fg="red").grid(row=8, column=0, sticky=tk.W, columnspan=2)
 
+        #Construct the Ok and cancel button. Bind the special save configurations function to the OK, and bind the close function to cancel button
         tk.Button(self.top_frame, text="OK", command=self.save_configurations).grid(row=8, column=2,
                                                                                                sticky=tk.E, pady=3)
         tk.Button(self.top_frame, text="Cancel", command=self.root.destroy).grid(row=8, column=3,
                                                                                         sticky=tk.W, pady=3)
 
     def get_file(self):
+        '''
+        This function initializes a browse file window and lets the user select a csv file
+        :return:
+        '''
+
+        #Set the available filetypes to just csv
         file_type_list = 'csv'
 
+        #Change the filetype into a list if applicable
         if type(file_type_list) is not list or tuple:
             file_type_list = [file_type_list]
 
         file_types = list()
 
-        # Will be checked in generate script, not necessary to build net
+        #Will be checked in generate script, not necessary to build net
         for file_type in file_type_list:
             assert file_type in self.VALID_TYPES, '{} is not valid file type.'.format(file_type)
             file_types.append(self.VALID_TYPES[file_type])
 
+        #Set the inital directory to whatever was initally selected by the user
         init_dir = os.path.dirname(self.data_path)
 
+        #If the intially selected path is not valid, default to FILE_PATH defined in the construct
         if not os.path.isdir(init_dir):
             init_dir = self.FILE_PATH
 
+        #Launch the tkinter file browse window with the inital directory
         file_name = tk.filedialog.askopenfilename(initialdir=init_dir,
                                                            title="Choose File...",
                                                            filetypes=file_types)
 
+        #Set the new file selected into the saved filepath
         self.data_path = file_name
+
+        #Clear the filepath entry, insert the new one into the in the entry tool, and bring back the properties editor to the top.
         self.data_path_entry.delete(0, 'end')
         self.data_path_entry.insert(10, self.data_path)
         self.root.lift()

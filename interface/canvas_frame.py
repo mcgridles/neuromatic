@@ -56,7 +56,6 @@ class CanvasFrame(object):
         for slot_number in range(3):
             self.add_slot()
 
-
     def add_slot(self):
         new_col = len(self.slots) + 3
         new_layer_box = canvas_properites_box.LayerPropertiesBox(self.frame,
