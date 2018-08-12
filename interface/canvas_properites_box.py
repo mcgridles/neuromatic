@@ -257,7 +257,7 @@ class LayerPropertiesBox(PropertiesBox):
         self.prop_box.configure(cursor='hand2')
         x, y = self.frame.winfo_pointerx(), self.frame.winfo_pointery()
         target = event.widget.winfo_containing(x, y)
-        if str(target) == '.!frame2.!frame.!label':
+        if str(target) == '.!frame2.!frame.!frame3.!label':
             self.log(self.layer_type + ' Layer Deleted')
             self.clear_slot_attributes()
 
