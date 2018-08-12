@@ -134,29 +134,11 @@ class Control(object):
         """
         # Sanitize potentially dangerous inputs
         properties['canvas_name'] = self.sanitize_input(properties['canvas_name'])
-        properties['project_directory'] = self.sanitize_input(properties['project_directory'])
-        properties['data_path'] = self.sanitize_input(properties['data_path'])
 
         self.canvas_properties = properties
         self.layers = []
         self.__can_generate = True
         self.__can_train = True
-
-        # Check properties
-        # TODO figure out which checks are already covered by the GUI
-        # TODO add more checks
-        if os.path.isfile(self.canvas_properties['project_directory']):
-            self.canvas_properties['project_directory'] = os.path.dirname(self.canvas_properties['project_directory'])
-            self.__log_status('Setting output path to {0}'.format(self.canvas_properties['project_directory']), 'debug', suppress=True)
-        if not os.path.isdir(self.canvas_properties['project_directory']):
-            self.__log_status('Creating {0}'.format(self.canvas_properties['project_directory']), 'debug', suppress=True)
-            os.makedirs(self.canvas_properties['project_directory'])
-        if not os.path.isfile(self.canvas_properties['data_path']):
-            self.__log_status('{0} is not a file'.format(self.canvas_properties['data_path']), 'error')
-            self.__can_train = False
-        if os.path.splitext(self.canvas_properties['data_path'])[1] != '.csv':
-            self.__log_status('Invalid data file type', 'error')
-            self.__can_train = False
 
         # Set defaults
         if 'optimizer' not in self.canvas_properties:
@@ -187,7 +169,8 @@ class Control(object):
             new_layer = self.LAYER_TYPES[layer_type](layer_properties)
             self.layers.append(new_layer)
 
-        if not self.layers:
+        if len(self.layers) < 2:
+            self.__log_status('Not enough layers', 'debug', suppress=True)
             self.__can_generate = False
         elif type(self.layers[0]) != layers.InputLayer:
             self.__log_status('Invalid network configuration: network must start with input Layer', 'error')
