@@ -34,7 +34,7 @@ class Window(object):
         self.root.title(title)
 
         self.set_size(self.width, self.height)
-        self.root.minsize(800, 600)
+        self.root.minsize(400, 600)
 
         self.top_frame = None
         self.right_frame = None

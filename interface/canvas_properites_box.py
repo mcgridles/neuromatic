@@ -47,7 +47,7 @@ class PropertiesBox(object):
         self.frame.grid(row=frame_row, column=frame_col, sticky=sticky)
         self.frame.rowconfigure(1, weight=1)
         self.frame.columnconfigure(0, weight=1)
-        self.frame.grid_propagate(0)
+        # self.frame.grid_propagate(0)
 
         # Box label attached to the box
         self.box_label = tk.Label(self.frame, text=label_name, font='Helvetica 12 bold')
@@ -81,7 +81,7 @@ class PropertiesBox(object):
         self.prop_box_text.set(new_text)
 
     def create_text(self):
-        self.prop_box = tk.Text(self.frame, padx=3, pady=3)
+        self.prop_box = tk.Text(self.frame, padx=3, pady=3, width=40)
         self.prop_box.grid(row=1, column=0, sticky='nsew')
 
         self.prop_box.config(state=tk.DISABLED)
@@ -109,6 +109,8 @@ class PropertiesBox(object):
             pass
 
         self.prop_box.config(state=tk.DISABLED)
+        lines = self.prop_box.index('end').split('.')[0]
+        self.prop_box.config(height=int(lines)-1)
 
     def get_properties(self):
         return self.box_properties
@@ -164,7 +166,7 @@ class CanvasPropertiesBox(PropertiesBox):
         self.update_text()
         self.update_slots(old_count)
 
-    def update_slots(self,old_count):
+    def update_slots(self, old_count):
         new_count = self.box_properties['component_slots']
         if int(old_count) > int(new_count):
             for x in range(0, int(old_count)-int(new_count)):
@@ -172,6 +174,8 @@ class CanvasPropertiesBox(PropertiesBox):
         elif int(old_count) < int(new_count):
             for x in range(0, int(new_count)-int(old_count)):
                 self.canvas_frame.add_slot()
+
+        self.canvas_frame.trigger_configure_event()
 
 
 class LayerPropertiesBox(PropertiesBox):
