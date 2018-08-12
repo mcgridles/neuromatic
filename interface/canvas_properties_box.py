@@ -7,7 +7,7 @@ DEFAULT_CANVAS_PROPERTIES = {
     'canvas_name': DEFAULT_CANVAS_NAME,
     'component_slots': 3,
     'data_path': 'None',
-    'project_directory': os.path.dirname(os.path.realpath(__file__)),
+    'project_directory': os.path.join(os.path.expanduser('~'), 'Desktop'),
     'training_size': .5,
     'optimizer': 'sgd',
     'loss': 'mean_squared_error',
@@ -382,7 +382,7 @@ class CanvasProperties(PropertiesEditor):
                        'kullback_leibler_divergence', 'poisson', 'cosine_proximity']
         self.loss_selected = tk.StringVar()
 
-        self.FILE_PATH = os.path.dirname(os.path.realpath(__file__))
+        self.FILE_PATH = os.path.join(os.path.expanduser('~'), 'Desktop')
 
         self.VALID_TYPES = {
             'all': ('all files', '*'),

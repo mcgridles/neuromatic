@@ -4,7 +4,7 @@ import os
 import tkinter.filedialog
 
 from backend import control
-from interface import buttons, status_box, canvas_frame, canvas_properites_box
+from interface import buttons, status_box, canvas_frame, canvas_properties_box
 
 
 def get_screen_res():
@@ -210,7 +210,7 @@ class Window(object):
         # compact.
         #
         self.add_slot = lambda: (
-            self.slots.append(canvas_properites_box.LayerPropertiesBox(self.canvas_frame)),
+            self.slots.append(canvas_properties_box.LayerPropertiesBox(self.canvas_frame)),
             self.slots[-1].frame.grid(row=0,column=len(self.slots)-1)
         )
 
@@ -219,9 +219,8 @@ class Window(object):
         )
 
         self.create_new_canvas = lambda: (
-            #TODO: Create New Canvas
             self.slots.clear_canvas(),
-            self.log("Creating New Canvas"),
+            self.log("New canvas created"),
             self.status_box.clear()
         )
 
@@ -236,7 +235,7 @@ class Window(object):
         )
 
         self.clear_canvas = lambda: (
-            self.log('Clearing Slots'),
+            self.log('Slots cleared'),
             self.slots.clear_slots(),
         )
 

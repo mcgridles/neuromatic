@@ -1,8 +1,8 @@
 import tkinter as tk
-import canvas_properites_box, trash_icon
 import copy
 import os
 
+from interface import canvas_properties_box, trash_icon
 
 def callback(event):
     pass
@@ -39,10 +39,10 @@ class CanvasFrame(object):
         self.frame.columnconfigure(5, weight=1)
         self.frame.columnconfigure(6, weight=1)
 
-        self.init_default_cavnas()
+        self.init_default_canvas()
 
-    def init_default_cavnas(self):
-        self.canvas_properties_box = canvas_properites_box.CanvasPropertiesBox(self.frame,
+    def init_default_canvas(self):
+        self.canvas_properties_box = canvas_properties_box.CanvasPropertiesBox(self.frame,
                                                                                frame_row=1,
                                                                                frame_col=1,
                                                                                logger=self.log,
@@ -59,7 +59,7 @@ class CanvasFrame(object):
 
     def add_slot(self):
         new_col = len(self.slots) + 3
-        new_layer_box = canvas_properites_box.LayerPropertiesBox(self.frame,
+        new_layer_box = canvas_properties_box.LayerPropertiesBox(self.frame,
                                                                  frame_row=2,
                                                                  frame_col=new_col,
                                                                  size_x=100,
