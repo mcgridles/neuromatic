@@ -114,6 +114,7 @@ class CanvasFrame(object):
         for slot_number in range(3):
             self.add_slot()
 
+
         self.trigger_configure_event()
 
     def add_slot(self):
