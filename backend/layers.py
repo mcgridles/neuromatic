@@ -40,9 +40,8 @@ class InputLayer(GenericLayer):
         super(InputLayer, self).__init__(properties)
 
     def write_lines(self, fd):
-        line = '\tmodel.add(Dense({0}, activation=\'{1}\', input_shape=({2},)))\n'.format(self.layer_properties['size'],
-                                                                                          self.layer_properties['activation'],
-                                                                                          self.layer_properties['input_dim'])
+        # TODO dimsensions should not be indexed
+        line = '\tmodel(Input(shape=({0},)))\n'.format(self.layer_properties['dimensions'])
         fd.write(line)
 
 class DenseLayer(GenericLayer):

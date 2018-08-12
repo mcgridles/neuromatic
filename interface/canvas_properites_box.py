@@ -63,7 +63,7 @@ class PropertiesBox(object):
         self.frame.grid(row=frame_row, column=frame_col, sticky=sticky)
         self.frame.rowconfigure(1, weight=1)
         self.frame.columnconfigure(0, weight=1)
-        self.frame.grid_propagate(0)
+        # self.frame.grid_propagate(0)
 
         # Box label attached to the box
         self.box_label = tk.Label(self.frame, text=label_name, font='Helvetica 12 bold')
@@ -97,7 +97,7 @@ class PropertiesBox(object):
         self.prop_box_text.set(new_text)
 
     def create_text(self):
-        self.prop_box = tk.Text(self.frame, padx=3, pady=3)
+        self.prop_box = tk.Text(self.frame, padx=3, pady=3, width=40)
         self.prop_box.grid(row=1, column=0, sticky='nsew')
 
         self.prop_box.config(state=tk.DISABLED)
@@ -125,6 +125,8 @@ class PropertiesBox(object):
             pass
 
         self.prop_box.config(state=tk.DISABLED)
+        lines = self.prop_box.index('end').split('.')[0]
+        self.prop_box.config(height=int(lines)-1)
 
     def get_properties(self):
         return self.box_properties
@@ -180,7 +182,7 @@ class CanvasPropertiesBox(PropertiesBox):
         self.update_text()
         self.update_slots(old_count)
 
-    def update_slots(self,old_count):
+    def update_slots(self, old_count):
         new_count = self.box_properties['component_slots']
         if int(old_count) > int(new_count):
             for x in range(0, int(old_count)-int(new_count)):
@@ -188,6 +190,9 @@ class CanvasPropertiesBox(PropertiesBox):
         elif int(old_count) < int(new_count):
             for x in range(0, int(new_count)-int(old_count)):
                 self.canvas_frame.add_slot()
+
+        self.canvas_frame.trigger_configure_event()
+
 
 
 class LayerPropertiesBox(PropertiesBox):
@@ -270,6 +275,7 @@ class LayerPropertiesBox(PropertiesBox):
         x, y = self.frame.winfo_pointerx(), self.frame.winfo_pointery()
         target = event.widget.winfo_containing(x, y)
         if str(target) == '.!frame2.!frame.!label':
+            self.log(self.layer_type + ' Layer Deleted')
             self.clear_slot_attributes()
 
     def update_properties(self, event):
@@ -320,6 +326,7 @@ class LayerPropertiesBox(PropertiesBox):
         clt = self.main_window.current_layer_type
         if clt != 'Empty':
             self.layer_type = clt
+            self.log(clt + ' Layer Added')
             self.main_window.current_layer_type = 'Empty'
             self.box_label.config(text=clt + ' Layer')
             self.box_properties = self.get_slot_attributes_for_text()
@@ -428,6 +435,7 @@ class CanvasProperties(PropertiesEditor):
                        'kullback_leibler_divergence', 'poisson', 'cosine_proximity']
         self.loss_selected = tk.StringVar()
 
+
         #Define a file path for the program to fall back on if the browser is launched without a valid path
         self.FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 
@@ -481,6 +489,7 @@ class CanvasProperties(PropertiesEditor):
         self.training_size_entry.grid(row=4, column=1)
         self.training_size_entry.insert(10, self.training_size)
 
+
         #Construct the optimizer label and the dropdown widget. Give the dropdown the list of options and the variable used to track what is selected.
         tk.Label(self.top_frame, text="Optimizer:").grid(row=5, column=0, sticky=tk.E)
         self.optimizer_entry = tk.OptionMenu(self.top_frame, self.optimizer_selected,
@@ -488,12 +497,14 @@ class CanvasProperties(PropertiesEditor):
         self.optimizer_selected.set(self.optimizer)
         self.optimizer_entry.grid(row=5, column=1)
 
-        #Construct the loss lable and the dropdown widget. Give the dropdown the list of options and the variable used to track what is selected
+
+        #Construct the loss label and the dropdown widget. Give the dropdown the list of options and the variable used to track what is selected
         tk.Label(self.top_frame, text="Loss:").grid(row=6, column=0, sticky=tk.E)
         self.loss_entry = tk.OptionMenu(self.top_frame, self.loss_selected,
                                              *self.losses)
         self.loss_selected.set(self.loss)
         self.loss_entry.grid(row=6, column=1)
+
 
         #Construct the epochs label and entry widget. Set the epochs to the current entry.
         tk.Label(self.top_frame, text="Epochs:").grid(row=7, column=0, sticky=tk.E)
@@ -536,26 +547,33 @@ class CanvasProperties(PropertiesEditor):
         #If the intially selected path is not valid, default to FILE_PATH defined in the construct
         if not os.path.isdir(init_dir):
             init_dir = self.FILE_PATH
+        old_file = self.data_path
 
         #Launch the tkinter file browse window with the inital directory
         file_name = tk.filedialog.askopenfilename(initialdir=init_dir,
                                                            title="Choose File...",
                                                            filetypes=file_types)
 
-        #Set the new file selected into the saved filepath
-        self.data_path = file_name
-
-        #Clear the filepath entry, insert the new one into the in the entry tool, and bring back the properties editor to the top.
+        if file_name:
+            self.data_path = file_name
+        else:
+            self.data_path = 'None'
+        
         self.data_path_entry.delete(0, 'end')
         self.data_path_entry.insert(10, self.data_path)
         self.root.lift()
 
     def get_directory(self):
-        assert os.path.isdir(self.project_dir), '{} is not a valid directory.'.format(self.project_dir)
-
-        dir_name = tk.filedialog.askdirectory(title="Choose File...", initialdir=self.project_dir)
-
-        self.project_dir = dir_name
+        old_dir = self.project_dir
+        if self.project_dir:
+            assert os.path.isdir(self.project_dir), '{} is not a valid directory.'.format(self.project_dir)
+            dir_name = tk.filedialog.askdirectory(title="Choose File...", initialdir=self.project_dir)
+        else:
+            dir_name = tk.filedialog.askdirectory(title="Choose File...", initialdir=os.path.realpath('~'))
+        if dir_name:
+            self.project_dir = dir_name
+        else:
+            self.project_dir = old_dir
         self.project_dir_entry.delete(0, 'end')
         self.project_dir_entry.insert(10, self.project_dir)
         self.root.lift()
@@ -572,8 +590,8 @@ class CanvasProperties(PropertiesEditor):
         if not is_integer(slot_count):
             self.error_mes.set("Number of slots should be an int")
             return
-        if int(slot_count)<3 or int(slot_count)>10:
-            self.error_mes.set("Number of slots should be 3 to 10")
+        if int(slot_count)<2 or int(slot_count)>10:
+            self.error_mes.set("Number of slots should be 2 to 10")
             return
         self.slot_count = slot_count
 
@@ -711,8 +729,8 @@ class LayerProperties(PropertiesEditor):
             if not is_integer(layer_dimensions):
                 self.error_mes.set("Layer Dimensions should be an int")
                 return
-            if int(layer_dimensions)<1 or int(layer_dimensions)>100:
-                self.error_mes.set("Layer Dimensions should be 1 to 100")
+            if int(layer_dimensions)<1 or int(layer_dimensions)>1000:
+                self.error_mes.set("Layer Dimensions should be 1 to 1000")
                 return
             self.layer_dimensions = layer_dimensions
 

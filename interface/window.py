@@ -1,8 +1,11 @@
 import tkinter
 import pickle
 import os
-import buttons, status_box, canvas_frame, canvas_properites_box
 import tkinter.filedialog
+
+from backend import control
+from interface import buttons, status_box, canvas_frame, canvas_properites_box
+
 
 def get_screen_res():
     root = tkinter.Tk()
@@ -13,8 +16,10 @@ def get_screen_res():
 
     return width, height
 
+
 def callback():
     pass
+
 
 class Window(object):
 
@@ -22,14 +27,14 @@ class Window(object):
         self.width = width
         self.height = height
 
-        #This will store which layer is selected
+        # This will store which layer is selected
         self.current_layer_type = 'Empty'
 
         self.root = tkinter.Tk()
         self.root.title(title)
 
         self.set_size(self.width, self.height)
-        self.root.minsize(800, 600)
+        self.root.minsize(400, 600)
 
         self.top_frame = None
         self.right_frame = None
@@ -44,9 +49,13 @@ class Window(object):
         self.clear_canvas = None
         self.empty_funct = None
 
+        self.control = control.Control()
+
         self.config_frames()
         self.create_lambdas()
         self.add_widgets()
+
+        self.control.init_status(self.status_box.add_text)
 
     def config_frames(self):
         self.root.grid_rowconfigure(1, weight=1)
@@ -71,32 +80,32 @@ class Window(object):
 
         # TODO: Format buttons.py Locations
         buttons.GenericButton(root=self.top_frame,
-                              button_label="New",
+                              button_label="New Canvas",
                               passed_function=self.create_new_canvas,
                               assigned_row=0,
                               assigned_col=0,
                               sticky='nsew',
                               logger=self.log)
         buttons.GenericButton(root=self.top_frame,
-                              button_label="Generate",
+                              button_label="Generate Script",
                               passed_function=self.generate_nn_script,
                               assigned_row=0,
                               assigned_col=1,
                               sticky='nsew')
         buttons.GenericButton(root=self.top_frame,
-                              button_label="Train",
+                              button_label="Train Model",
                               passed_function=self.train_model,
                               assigned_row=0,
                               assigned_col=2,
                               sticky='nsew')
         buttons.GenericButton(root=self.top_frame,
                               button_label="Cancel",
-                              passed_function=self.cancel_training,
+                              passed_function=self.control.terminate_training,
                               assigned_row=0,
                               assigned_col=3,
                               sticky='nsew')
         buttons.GenericButton(root=self.top_frame,
-                              button_label="Clear",
+                              button_label="Clear Slots",
                               passed_function=self.clear_canvas,
                               assigned_row=0,
                               assigned_col=4,
@@ -217,36 +226,38 @@ class Window(object):
         )
 
         self.generate_nn_script = lambda: (
-            #TODO: Add the generation script here
-            self.log("Generating Neural Network Script"),
-            self.log(str(self.slots.get_all_project_properties()))
+            self.control.set_properties(self.slots.get_all_project_properties()),
+            self.control.generate_network()
         )
 
         self.train_model = lambda: (
-            #TODO: Add the training script call here
-            self.log("Training Model")
-        )
-
-        self.cancel_training = lambda: (
-            #TODO: Add the canceling functionality here
-            self.log("Canceling Training\n")
+            self.control.set_properties(self.slots.get_all_project_properties()),
+            self.control.train_in_new_thread()
         )
 
         self.clear_canvas = lambda: (
-            self.log('Clearing Slots\n'),
+            self.log('Clearing Slots'),
             self.slots.clear_slots(),
         )
 
-        self.empty_funct = lambda: (
-
-        )
+        self.empty_funct = lambda: ()
 
     def start(self):
+        self.__get_status_updates()
         self.root.mainloop()
 
     def set_size(self, width, height):
         set_str = '{}x{}'.format(str(width), str(height))
         self.root.geometry(set_str)
+
+    def __get_status_updates(self):
+        """
+        Checks for updates to the status box from the training process every 500ms.
+        """
+        status = self.control.check_pipe()
+        if status:
+            self.status_box.add_text(status)
+        self.root.after(500, self.__get_status_updates)
 
 
 class Menu(object):
@@ -280,7 +291,6 @@ class Menu(object):
 
     def open(self):
         popup = OpenPopup(self.main_window, self.log)
-
 
 
 class OpenPopup(object):
