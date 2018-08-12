@@ -1,17 +1,58 @@
 import os
+import re
+import time
 import shutil
-import signal
 import logging
-import multiprocessing
 import pandas as pd
+import multiprocessing
 
 from sklearn.model_selection import train_test_split
 
 from backend import layers
 
+# Configure logging
+LOG_TO_FILE = True
+log_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'logs')
+log_file = 'neuromatic_{0}.log'.format(time.strftime('%m%d%Y_%H%M%S'))
+
+if not os.path.isdir(log_dir):
+    os.makedirs(log_dir)
+if LOG_TO_FILE:
+    logging.basicConfig(level=logging.DEBUG,
+                        format='[%(asctime)s][%(name)-12s][%(levelname)-8s] %(message)s',
+                        datefmt='%H%M%S',
+                        filename=os.path.join(log_dir, log_file),
+                        filemode='w')
+else:
+    logging.basicConfig(level=logging.DEBUG)
+
 
 class NetworkException(Exception):
     pass
+
+
+class ControlProcess(multiprocessing.Process):
+
+    def __init__(self, target, args):
+        super(ControlProcess, self).__init__(target=target, args=args)
+        self.daemon = True
+
+    def start(self):
+        """
+        Override Process.start() to prevent exceptions when attempting to start a process twice
+        """
+        try:
+            super(ControlProcess, self).start()
+        except AssertionError as error:
+            if str(error) != 'cannot start a process twice':
+                raise error
+
+    def terminate(self):
+        """
+        Override Process.terminate() to prevent exceptions if stopped process is terminated
+        """
+        if self.is_alive():
+            super(ControlProcess, self).terminate()
 
 
 class Control(object):
@@ -25,100 +66,150 @@ class Control(object):
         layers: (list[Layers]) -> Stores ordered list of Layers
 
         PRIVATE
-        can_train: (boolean) -> Determines if a model has been generated and can be trained
-        thread_lock: (multiprocessing.Lock) -> Thread lock to prevent conflicting functions from being called at the
-            same time
-        add_text: (function) -> Status box "add_text" function for logging to the GUI
+        __can_generate: (boolean) -> Determines if a network script can be generated
+        __can_train: (boolean) -> Determines if a model has been generated and can be trained
+        __training_process: (multiprocessing.Process) -> Current training process
+        __add_text: (function) -> Status box "add_text" function for logging to the GUI
     """
 
     LAYER_TYPES = {
         'input': layers.InputLayer,
-        'dense': layers.DenseLayer,
+        'hidden': layers.DenseLayer,
         'dropout': layers.DropoutLayer,
+        'output': layers.DenseLayer,
     }
 
-    def __init__(self, add_text):
+    def __init__(self):
         """
         Control initialization
-        :param add_text: (function) -> Status box "add_text" function for logging to the GUI
         """
         self.logger = logging.getLogger('control')
 
         self.canvas_properties = {}
         self.layers = []
 
+        self.__can_generate = False
         self.__can_train = False
-        self.__thread_lock = multiprocessing.Lock()
 
+        self.__training_process = None
+        self.__create_new_process()
+
+        self.__add_text = None
+
+    @property
+    def can_generate(self):
+        return self.__can_generate
+
+    @can_generate.setter
+    def can_generate(self, status):
+        """
+        Set private variable to status
+        :param status: (boolean) -> Updated control status
+        """
+        self.__can_generate = status
+
+    @property
+    def can_train(self):
+        return self.__can_train
+
+    @can_train.setter
+    def can_train(self, status):
+        """
+        Set private variable to status
+        :param status: (boolean) -> Updated control status
+        """
+        self.__can_train = status
+
+    def init_status(self, add_text):
+        """
+        Assign status box "add_text" function for logging to the GUI
+        :param add_text: (function) -> Status box "add_text" function
+        """
         self.__add_text = add_text
 
     def set_properties(self, properties):
         """
-        Stores and performs checks on properties passed from the GUI
+        Store properties passed from the GUI and perform checks checks
         :param properties: (dict{'string': dict}) -> All canvas and layer properties passed from the GUI
         """
+        # Sanitize potentially dangerous inputs
+        properties['canvas_name'] = self.sanitize_input(properties['canvas_name'])
+        properties['project_directory'] = self.sanitize_input(properties['project_directory'])
+        properties['data_path'] = self.sanitize_input(properties['data_path'])
+
         self.canvas_properties = properties
         self.layers = []
-        status = True
+        self.__can_generate = True
+        self.__can_train = True
 
         # Check properties
-        if os.path.isfile(self.canvas_properties['output_path']):
-            file_path = self.canvas_properties['output_path']
-            self.canvas_properties['output_path'] = os.path.dirname(self.canvas_properties['output_path'])
-            self.log_status('{0} is a file, setting output path to {1}'.format(file_path, self.canvas_properties['output_path']), 'warning')
-            status = False
-        if not os.path.isdir(self.canvas_properties['output_path']):
-            self.log_status('{0} does not exist - creating'.format(self.canvas_properties['output_path']), 'warning')
-            os.makedirs(self.canvas_properties['output_path'])
-            status = False
-        if not os.path.isfile(self.canvas_properties['training_data_path']):
-            self.log_status('{0} is not a file or does not exist'.format(self.canvas_properties['training_data_path']), 'error')
+        # TODO figure out which checks are already covered by the GUI
+        # TODO add more checks
+        if os.path.isfile(self.canvas_properties['project_directory']):
+            self.canvas_properties['project_directory'] = os.path.dirname(self.canvas_properties['project_directory'])
+            self.__log_status('Setting output path to {0}'.format(self.canvas_properties['project_directory']), 'debug', suppress=True)
+        if not os.path.isdir(self.canvas_properties['project_directory']):
+            self.__log_status('Creating {0}'.format(self.canvas_properties['project_directory']), 'debug', suppress=True)
+            os.makedirs(self.canvas_properties['project_directory'])
+        if not os.path.isfile(self.canvas_properties['data_path']):
+            self.__log_status('{0} is not a file'.format(self.canvas_properties['data_path']), 'error')
             self.__can_train = False
-            status = False
+        if os.path.splitext(self.canvas_properties['data_path'])[1] != '.csv':
+            self.__log_status('Invalid data file type', 'error')
+            self.__can_train = False
 
-        if self.canvas_properties['train_size'] <= 0 or self.canvas_properties['train_size'] >= 1:
-            self.log_status('Training size must be between 0 and 1', 'error')
-            status = False
-
+        # Set defaults
         if 'optimizer' not in self.canvas_properties:
             self.canvas_properties['optimizer'] = 'sgd'
         if 'loss' not in self.canvas_properties:
-            self.canvas_properties['loss'] = 'sparse_categorical_crossentropy'
+            self.canvas_properties['loss'] = 'mean_squared_error'
         if 'metrics' not in self.canvas_properties:
             self.canvas_properties['metrics'] = ['accuracy']
+        if 'epochs' not in self.canvas_properties:
+            self.canvas_properties['epochs'] = '1'
+        elif int(self.canvas_properties['epochs']) <= 0:
+            self.__log_status('Epochs must be > 0', 'warning')
+            self.canvas_properties['epochs'] = '1'
 
         # Initialize layers
-        input_seen = False
-        for layer in self.canvas_properties['layers']:
-            if not layer['type'] in self.LAYER_TYPES:
-                self.log_status('Invalid layer type: {0}'.format(layer['type']), 'debug')
-                status = False
+        for index, layer in enumerate(self.canvas_properties['layers']):
+            layer_type = layer['type']
+            layer_properties = layer
+
+            if not layer_type in self.LAYER_TYPES and layer_type != 'empty':
+                self.__log_status('Invalid layer type: {0}'.format(layer_type), 'debug')
+                self.__can_generate = False
                 continue
-            if layer['type'] == 'input':
-                input_seen = True
+            elif layer_type == 'empty':
+                self.__log_status('Ignoring empty layer', 'debug', suppress=True)
+                continue
 
-            new_layer = self.LAYER_TYPES[layer['type']](layer)
+            new_layer = self.LAYER_TYPES[layer_type](layer_properties)
             self.layers.append(new_layer)
-        if not input_seen:
-            status = False
-            self.log_status('Invalid network configuration', 'error')
 
-        if not status:
-            self.log_status('Some parameters were invalid', 'warning')
+        if not self.layers:
+            self.__can_generate = False
+        elif type(self.layers[0]) != layers.InputLayer:
+            self.__log_status('Invalid network configuration: network must start with input Layer', 'error')
+            self.__can_generate = False
 
     def generate_network(self):
         """
-        Writes the Python file containing the Keras neural network
+        Write the Python file containing the Keras neural network
         """
-        signal.signal(signal.SIGTERM, self.safe_terminate)
-        self.__thread_lock.acquire()
+        if not self.__can_generate:
+            self.__log_status('Generation error.', 'error')
+            return
+        self.__log_status('Generating network...', 'info')
 
-        self.log_status('Generating network...', 'info')
-        with open(os.path.join(self.canvas_properties['output_path'], 'neural_network.py'), 'w') as fd:
+        file_name = os.path.join(self.canvas_properties['project_directory'],
+                                 '{0}_network.py'.format(self.canvas_properties['canvas_name']))
+        with open(file_name, 'w') as fd:
             # Imports
             fd.write('import h5py\n')
             fd.write('from keras.models import Sequential\n')
-            fd.write('from keras.layers import Flatten, Dense, Dropout\n\n')
+            fd.write('from keras.layers import Input, Dense, Dropout\n')
+            fd.write('from keras.utils import to_categorical\n\n')
 
             fd.write('def train_neural_network(X_train, y_train, X_test, y_test):\n')
 
@@ -129,77 +220,123 @@ class Control(object):
             fd.write('\n')
 
             # Model compilation and training
-            fd.write('\tprint(\'Training model...\')\n')
             fd.write('\tmodel.compile(optimizer=\'{0}\', '.format(self.canvas_properties['optimizer']))
             fd.write('loss=\'{0}\', '.format(self.canvas_properties['loss']))
             fd.write('metrics=[')
             for metric in self.canvas_properties['metrics']:
                 fd.write('\'{0}\','.format(metric))
-            fd.write('])\n')
+            fd.write('])\n\n')
+
+            if self.canvas_properties['loss'] != 'sparse_categorical_crossentropy':
+                fd.write('\ty_train = to_categorical(y_train)\n')
+                fd.write('\ty_test = to_categorical(y_test)\n')
             fd.write('\tmodel.fit(X_train, y_train, epochs={0})\n'.format(self.canvas_properties['epochs']))
             fd.write('\tscore = model.evaluate(X_test, y_test, batch_size=128)\n\n')
 
             # Saving model
-            fd.write('\tprint(\'Saving model to disk...\')\n')
-            fd.write('\tmodel.save(\'{0}\')\n'.format(os.path.join(self.canvas_properties['output_path'], 'model.h5')))
-            fd.write('\tmodel.save_weights(\'{0}\')\n'.format(os.path.join(self.canvas_properties['output_path'], 'weights.h5')))
+            fd.write('\tmodel.save(\'{0}\')\n'.format(os.path.join(self.canvas_properties['project_directory'],
+                                                                   self.canvas_properties['canvas_name'] + '_model.h5')))
+            fd.write('\tmodel.save_weights(\'{0}\')\n'.format(os.path.join(self.canvas_properties['project_directory'],
+                                                                           self.canvas_properties['canvas_name'] + '_weights.h5')))
             fd.write('\tmodel_json = model.to_json()\n')
-            fd.write('\twith open(\'{0}\', \'w\') as json_file:\n'.format(os.path.join(self.canvas_properties['output_path'], 'model.json')))
+            fd.write('\twith open(\'{0}\', \'w\') as json_file:\n'.format(os.path.join(self.canvas_properties['project_directory'],
+                                                                                       self.canvas_properties['canvas_name'] + '_model.json')))
             fd.write('\t\tjson_file.write(model_json)\n\n')
 
             fd.write('\treturn score[1]')
 
         # Create local copy of network to import when training
-        shutil.copy(os.path.join(self.canvas_properties['output_path'], 'neural_network.py'),
-                    os.path.join(os.path.dirname(os.path.abspath(__file__)), 'network.py'))
+        shutil.copy(file_name, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'network.py'))
 
-        self.log_status('Network generated.', 'info')
-        self.__can_train = True
-        self.__thread_lock.release()
+        self.__log_status('Network generated', 'info')
 
-    def train_network(self):
+    def __train_network(self, connection):
         """
-        Trains the created neural network
+        Train the created neural network
+        :param connection: (multiprocess.Pipe) -> Child connection to the parent process
         """
-        if not self.__can_train:
-            self.log_status('Cannot train without a model', 'error')
+        try:
+            from backend import network
+        except ImportError:
+            connection.send('Cannot train without a model\n')
             return
-        signal.signal(signal.SIGTERM, self.safe_terminate)
-        self.__thread_lock.acquire()
-
-        from backend import network
 
         # Read in training data
-        self.log_status('Reading data...', 'info')
-        training_data = pd.read_csv(self.canvas_properties['training_data_path'])
+        connection.send('Reading data...\n')
+        training_data = pd.read_csv(self.canvas_properties['data_path'])
         y_data = training_data.ix[:,0]
         X_data = training_data.ix[:,1:]
-        X_train, X_test, y_train, y_test = train_test_split(X_data, y_data, train_size=self.canvas_properties['train_size'], shuffle=True)
+        X_train, X_test, y_train, y_test = train_test_split(X_data,
+                                                            y_data,
+                                                            train_size=float(self.canvas_properties['training_size']),
+                                                            shuffle=True)
 
-        self.log_status('Training network...', 'debug')
+        connection.send('Training network...\n')
         score = network.train_neural_network(X_train, y_train, X_test, y_test)
 
-        self.log_status('Network trained.', 'debug')
-        self.log_status('Model accuracy: {0}'.format(round(score, 3)))
+        # Test network
+        connection.send('Network trained\n\n')
+        connection.send('Model accuracy: {0}\n'.format(round(score, 3)))
+        connection.close()
 
-        self.__thread_lock.release()
+        return score
 
-    def safe_terminate(self, sig_num, frame):
+    def train_in_new_thread(self):
         """
-        Safely terminate thread and release lock
-        :param sig_num: (int) -> Signal number
-        :param frame: (frame) -> Current stack frame
+        Start a training process. This prevents the main process (GUI) from stalling while training
+        happens
         """
-        self.log_status('Process terminated with signal {0}'.format(sig_num), 'warning')
+        if not self.__can_train:
+            self.__log_status('Training error', 'error')
+            return
 
-        if self.__thread_lock.locked():
-            self.__thread_lock.release()
+        if not self.__training_process.is_alive():
+            self.__log_status('Starting training process', 'debug')
+            try:
+                # Create a new process if one has already been run
+                self.__training_process.join()
+                self.__create_new_process()
+                self.__training_process.start()
+            except AssertionError as error:
+                if str(error) == 'can only join a started process':
+                    self.__training_process.start()
 
-    def log_status(self, msg, level='info'):
+    def terminate_training(self):
+        """
+        Terminate the current training process if there is one running
+        """
+        if self.__training_process.is_alive():
+            # Terminate process and create a new one
+            self.__log_status('Training canceled\n\n', 'debug')
+            self.__training_process.terminate()
+            self.__create_new_process()
+
+    def __create_new_process(self):
+        """
+        Create a new training process to replace one that have already been used
+        """
+        self.__log_status('Creating new process.', 'debug', suppress=True)
+        self.parent_conn, child_conn = multiprocessing.Pipe()
+        self.__training_process = ControlProcess(target=self.__train_network, args=(child_conn,))
+
+    def check_pipe(self):
+        """
+        Checks the pipe between the main process and the training process for any messages.
+        :return: (string) -> Status message if one has been sent
+        """
+        if self.parent_conn.poll():
+            try:
+                status = self.parent_conn.recv()
+                return status
+            except EOFError:
+                pass
+
+    def __log_status(self, msg, level='info', suppress=False):
         """
         Log status to status box and logger
         :param msg: (string) -> Message to log
         :param level: (string) -> Logger level
+        :param suppress: (boolean) -> True if not logging to status box
         """
         logger_level = {
             'info': self.logger.info,
@@ -208,6 +345,19 @@ class Control(object):
             'error': self.logger.error,
             'critical': self.logger.critical
         }
-
         logger_level[level](msg)
-        self.__add_text(msg)
+
+        if msg[-1] != '\n':
+            msg += '\n'
+        if not suppress:
+            self.__add_text(msg)
+
+    @staticmethod
+    def sanitize_input(text):
+        """
+        Remove potentially dangerous characters from a string
+        :param text: (string) -> String to remove characters from
+        :return: (string) -> Sanitized string
+        """
+        bad_chars = '[;\'\"`|#\n\t]'
+        return re.sub(bad_chars, '', text)

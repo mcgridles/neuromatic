@@ -11,7 +11,7 @@ class TestLayers(unittest.TestCase):
             'size': 10,
             'activation': 'sigmoid',
             'batch_size': 1000,
-            'input_dim': 784,
+            'dimensions': 784,
             'percentage': 0.2,
         }
 
