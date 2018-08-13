@@ -41,7 +41,7 @@ class InputLayer(GenericLayer):
 
     def write_lines(self, fd):
         # TODO dimsensions should not be indexed
-        line = '\tmodel(Input(shape=({0},)))\n'.format(self.layer_properties['dimensions'])
+        line = '\t\tInputLayer(input_shape=({0},)),\n'.format(self.layer_properties['dimensions'])
         fd.write(line)
 
 class DenseLayer(GenericLayer):
@@ -56,7 +56,7 @@ class DenseLayer(GenericLayer):
         super(DenseLayer, self).__init__(properties)
 
     def write_lines(self, fd):
-        line = '\tmodel.add(Dense({0}, activation=\'{1}\'))\n'.format(self.layer_properties['size'],
+        line = '\t\tDense({0}, activation=\'{1}\'),\n'.format(self.layer_properties['size'],
                                                                       self.layer_properties['activation'])
         fd.write(line)
 
@@ -71,5 +71,5 @@ class DropoutLayer(GenericLayer):
         super(DropoutLayer, self).__init__(properties)
 
     def write_lines(self, fd):
-        line = '\tmodel.add(Dropout({0}))\n'.format(self.layer_properties['percentage'])
+        line = '\t\tDropout({0}),\n'.format(self.layer_properties['percentage'])
         fd.write(line)
