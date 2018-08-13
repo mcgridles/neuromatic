@@ -615,8 +615,8 @@ class CanvasProperties(PropertiesEditor):
         if not is_integer(slot_count):
             self.error_mes.set("Number of slots should be an int")
             return
-        if int(slot_count)<2 or int(slot_count)>10:
-            self.error_mes.set("Number of slots should be 2 to 10")
+        if int(slot_count)<3 or int(slot_count)>10:
+            self.error_mes.set("Number of slots should be 3 to 10")
             return
         self.slot_count = slot_count
 
