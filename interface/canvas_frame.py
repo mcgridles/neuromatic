@@ -1,5 +1,5 @@
 import tkinter as tk
-import canvas_properites_box, trash_icon
+from interface import canvas_properites_box, trash_icon
 import copy
 import os
 
