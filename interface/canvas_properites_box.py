@@ -166,6 +166,9 @@ class CanvasPropertiesBox(PropertiesBox):
         self.frame.bind('<Button-1>', self.edit_popup)
         self.box_label.bind('<Button-1>', self.edit_popup)
         self.prop_box.bind('<Button-1>', self.edit_popup)
+        self.frame.configure(cursor='hand2')
+        self.box_label.configure(cursor='hand2')
+        self.prop_box.configure(cursor='hand2')
 
     def edit_popup(self, event):
         popup = CanvasProperties(self,main_window=self.main_window, logger=self.log,canvas_frame=self.canvas_frame)
@@ -268,7 +271,8 @@ class LayerPropertiesBox(PropertiesBox):
             self.log(self.layer_type + ' Layer Deleted')
             self.clear_slot_attributes()
         elif re.match('\.!frame2\.!frame\.!frame2\.!canvas\.!frame\.!frame\d{0,2}\.!(label|text|frame)', str(target)):
-            popup = LayerProperties(self)
+            if self.layer_type != 'Empty':
+                popup = LayerProperties(self)
 
     def update_properties(self, event):
         #TODO: This is where the popup will go
