@@ -165,12 +165,18 @@ class Window(object):
         path = new_properties['data_path']
         dir = new_properties['project_directory']
         train = new_properties['training_size']
+        opt = new_properties['optimizer']
+        loss = new_properties['loss']
+        ep = new_properties['epochs']
         self.slots.canvas_properties_box.edit_canvas_attributes(
                                             new_canvas_name=name,
                                             new_slot_count=number,
                                             new_data_path=path,
                                             new_project_dir=dir,
                                             new_training_size=train,
+                                            new_optimizer=opt,
+                                            new_loss=loss,
+                                            new_epochs=ep,
                                             old_count=old_count
         )
 
