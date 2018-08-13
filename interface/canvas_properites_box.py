@@ -665,114 +665,162 @@ class CanvasProperties(PropertiesEditor):
                                         new_epochs=self.epochs,
                                         old_count=old_count)
 
-        #Close the window
+        # Unfreeze the canvas
         self.root.grab_release()
+        
+        # Close the window
         self.root.destroy()
 
 
 class LayerProperties(PropertiesEditor):
     def __init__(self, props):
+        '''
+        A child class of Properties Editor for editing layer properties. This builds the widgets related to layer
+        properties, including the error notification bar and save and close buttons.
+        :param props:
+        '''
+
+        # Retrieve the properties from the layer properties box
         self.layer_type = props.layer_type
         self.size = props.size
         self.layer_dimensions = props.layer_dimensions
         self.activation = props.activation
         self.dropout = props.dropout
 
-        self.layer_size_entry=None
+        # Initalize the entry widgets
+        self.layer_size_entry = None
         self.layer_dimensions_entry = None
         self.layer_function_entry = None
         self.layer_percentage_entry = None
         self.error_entry = None
 
+        # Set the list of available functions for the dropdown options and set a variable to hold the one currently selected
         self.layer_functions = ['softmax', 'elu', 'selu', 'softplus', 'softsign', 'tanh', 'sigmoid', 'hard_sigmoid',
                                 'linear']
         self.layer_function_selected = tk.StringVar()
 
+        # Launch the properties editor constructor
         super().__init__(props)
 
     def add_widgets(self):
-        self.widget_row = 0
+        '''
+        Function that adds all the widgets to the frame
+        :return:
+        '''
 
-        if self.layer_type in ['Output','Hidden']:
-            tk.Label(self.top_frame, text="Layer Size:").grid(row=self.widget_row , column=0, sticky=tk.E)
+        # Define a dynamic row which will be pushed down as widgets are added
+        widget_row = 0
+
+        # Construct these properties editors if the layer is an output or hidden
+        if self.layer_type in ['Output', 'Hidden']:
+            # Add the label and entry for layer size. Insert the layer size into the entry widget
+            tk.Label(self.top_frame, text="Layer Size:").grid(row=widget_row, column=0, sticky=tk.E)
             self.layer_size_entry = tk.Entry(self.top_frame)
-            self.layer_size_entry.grid(row=self.widget_row , column=1)
+            self.layer_size_entry.grid(row=widget_row, column=1)
             self.layer_size_entry.insert(10, self.size)
-            self.widget_row = self.widget_row + 1
-            tk.Label(self.top_frame, text="Activation Function:").grid(row=self.widget_row, column=0, sticky=tk.E)
+            widget_row = widget_row + 1
+
+            # Add the label and dropdown for activation function. Bind the list of available functions and the function selected variable to the dropdown
+            tk.Label(self.top_frame, text="Activation Function:").grid(row=widget_row, column=0, sticky=tk.E)
             self.layer_function_entry = tk.OptionMenu(self.top_frame, self.layer_function_selected,
                                                       *self.layer_functions)
             self.layer_function_selected.set(self.activation)
-            self.layer_function_entry.grid(row=self.widget_row, column=1)
-            self.widget_row = self.widget_row + 1
+            self.layer_function_entry.grid(row=widget_row, column=1)
+            widget_row = widget_row + 1
 
+        # Construct this property if the layer is an input
         if self.layer_type == 'Input':
-            tk.Label(self.top_frame, text="Layer Dimensions:").grid(row=self.widget_row , column=0, sticky=tk.E)
+            # Add the label and entry widget for layer dimensions. Insert the layer dimensions into the entry widget
+            tk.Label(self.top_frame, text="Layer Dimensions:").grid(row=widget_row, column=0, sticky=tk.E)
             self.layer_dimensions_entry = tk.Entry(self.top_frame)
-            self.layer_dimensions_entry.grid(row=self.widget_row , column=1)
+            self.layer_dimensions_entry.grid(row=widget_row, column=1)
             self.layer_dimensions_entry.insert(10, self.layer_dimensions)
-            self.widget_row = self.widget_row + 1
+            widget_row = widget_row + 1
 
+        # Construct this property if the layer is a dropout
         if self.layer_type == 'Dropout':
-            tk.Label(self.top_frame, text="Dropout Percentage:").grid(row=self.widget_row , column=0, sticky=tk.E)
+            # Add the label and entry widget for dropout percentage.
+            tk.Label(self.top_frame, text="Dropout Percentage:").grid(row=widget_row, column=0, sticky=tk.E)
             self.layer_percentage_entry = tk.Entry(self.top_frame)
-            self.layer_percentage_entry.grid(row=self.widget_row , column=1)
+            self.layer_percentage_entry.grid(row=widget_row, column=1)
             self.layer_percentage_entry.insert(10, self.dropout)
-            tk.Label(self.top_frame).grid(row=self.widget_row , column=2)
-            self.widget_row = self.widget_row + 1
+            tk.Label(self.top_frame).grid(row=widget_row, column=2)
+            widget_row = widget_row + 1
 
-        self.error_entry = tk.Label(self.top_frame, textvariable=self.error_mes, fg="red").grid(row=self.widget_row, column=0,
+        # Construct the error entry section with the variable that will hold the error message
+        self.error_entry = tk.Label(self.top_frame, textvariable=self.error_mes, fg="red").grid(row=widget_row,
+                                                                                                column=0,
                                                                                                 sticky=tk.W,
                                                                                                 columnspan=2)
-        tk.Button(self.top_frame, text="OK", command=self.save_configurations).grid(row=self.widget_row , column=2,
-                                                                                        sticky=tk.E, pady=3)
-        tk.Button(self.top_frame, text="Cancel", command=self.exit).grid(row=self.widget_row , column=3,
-                                                                       sticky=tk.W, pady=3)
+
+        # Construct the OK button and Cancel button with their associated functions that will run when pressed
+        tk.Button(self.top_frame, text="OK", command=self.save_configurations).grid(row=widget_row, column=2,
+                                                                                    sticky=tk.E, pady=3)
+        tk.Button(self.top_frame, text="Cancel", command=self.exit).grid(row=widget_row, column=3,
+                                                                                 sticky=tk.W, pady=3)
 
     def exit(self):
         self.root.grab_release()
         self.root.destroy()
 
     def save_configurations(self):
+        '''
+        This function will pass the updated parameters back to the layer properties box and run checks on their validity
+        :return:
+        '''
+
+        # Only run this save and check if there is a layer size property
         if self.layer_size_entry:
+            # Update the layer size from the entry widget. If it isn't an integer or in range, cancel the saving process
             size = self.layer_size_entry.get()
             if not is_integer(size):
                 self.error_mes.set("Layer Size should be an int")
                 return
-            if int(size)<1 or int(size)>1000:
+            if int(size)<1 or int(size) > 1000:
                 self.error_mes.set("Layer Size should be 1 to 1000")
                 return
             self.size = size
 
+        # Only run this save if there is a layer function property
         if self.layer_function_selected:
+            # Update the layer activation function from the dropdown
             self.activation = self.layer_function_selected.get()
 
+        # Only run this save and check if there is a layer percentage property
         if self.layer_percentage_entry:
+            # Update the dropout percentage. If it isn't a float or in range, cancel the saving process
             dropout = self.layer_percentage_entry.get()
             if not is_float(dropout):
                 self.error_mes.set("Dropout Percentage should be a float")
                 return
-            if float(dropout)<0 or float(dropout)>1:
+            if float(dropout) < 0 or float(dropout) > 1:
                 self.error_mes.set("Dropout Percentage should be 0 to 1")
                 return
             self.dropout = dropout
 
+        # Only run this save and check if there is a layer dimensions property
         if self.layer_dimensions_entry:
+            # Update the layer dimensions. If it isn't an integer or in range, cancel the saving process
             layer_dimensions = self.layer_dimensions_entry.get()
             if not is_integer(layer_dimensions):
                 self.error_mes.set("Layer Dimensions should be an int")
                 return
-            if int(layer_dimensions)<1 or int(layer_dimensions)>1000:
+            if int(layer_dimensions) < 1 or int(layer_dimensions) > 1000:
                 self.error_mes.set("Layer Dimensions should be 1 to 1000")
                 return
             self.layer_dimensions = layer_dimensions
 
+        # Use the saving function in the properties box to update the properties
         self.props.edit_slot_attributes(new_layer_type=self.layer_type,
                                         new_size=self.size,
                                         new_activation=self.activation,
                                         new_dropout=self.dropout,
                                         new_layer_dimensions=self.layer_dimensions)
+        
+        # Unfreeze the canvas
         self.root.grab_release()
+        
+        # Close the layer properties editor window
         self.root.destroy()
 
 
