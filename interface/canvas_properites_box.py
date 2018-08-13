@@ -329,7 +329,7 @@ class LayerPropertiesBox(PropertiesBox):
 
     def clear_slot_attributes(self):
         self.box_label.config(text='Empty Layer')
-        self.edit_slot_attributes('Empty',1,'sigmoid',.5)
+        self.edit_slot_attributes(new_layer_type='Empty', new_size=1, new_activation='sigmoid', new_dropout=.5, new_layer_dimensions=1)
 
 
 class PropertiesEditor(ABC):
