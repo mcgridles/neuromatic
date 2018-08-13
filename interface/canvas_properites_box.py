@@ -1,5 +1,6 @@
 import tkinter as tk
 import os
+import re
 from abc import ABC, abstractmethod
 
 DEFAULT_CANVAS_NAME = 'new_canvas_{}'.format(1)
@@ -162,9 +163,9 @@ class CanvasPropertiesBox(PropertiesBox):
         if canvas_frame:
             self.canvas_frame = canvas_frame
 
-        self.frame.bind('<Double-Button-1>', self.edit_popup)
-        self.box_label.bind('<Double-Button-1>', self.edit_popup)
-        self.prop_box.bind('<Double-Button-1>', self.edit_popup)
+        self.frame.bind('<Button-1>', self.edit_popup)
+        self.box_label.bind('<Button-1>', self.edit_popup)
+        self.prop_box.bind('<Button-1>', self.edit_popup)
 
     def edit_popup(self, event):
         popup = CanvasProperties(self,main_window=self.main_window, logger=self.log,canvas_frame=self.canvas_frame)
@@ -249,16 +250,6 @@ class LayerPropertiesBox(PropertiesBox):
         self.box_label.bind('<ButtonRelease-1>', self.on_drop)
         self.prop_box.bind('<ButtonRelease-1>', self.on_drop)
 
-        self.frame.bind('<Double-Button-1>', self.edit_popup)
-        self.box_label.bind('<Double-Button-1>', self.edit_popup)
-        self.prop_box.bind('<Double-Button-1>', self.edit_popup)
-
-    def edit_popup(self, event):
-        if self.layer_type == 'Empty':
-            self.log('Cannot Edit Empty Layer')
-        else:
-            popup = LayerProperties(self)
-
     def on_start(self,event):
         pass
 
@@ -266,7 +257,6 @@ class LayerPropertiesBox(PropertiesBox):
         self.frame.configure(cursor='middlebutton')
         self.box_label.configure(cursor='middlebutton')
         self.prop_box.configure(cursor='middlebutton')
-        pass
 
     def on_drop(self, event):
         self.frame.configure(cursor='hand2')
@@ -274,9 +264,11 @@ class LayerPropertiesBox(PropertiesBox):
         self.prop_box.configure(cursor='hand2')
         x, y = self.frame.winfo_pointerx(), self.frame.winfo_pointery()
         target = event.widget.winfo_containing(x, y)
-        if str(target) == '.!frame2.!frame.!label':
+        if str(target) == '.!frame2.!frame.!frame3.!label':
             self.log(self.layer_type + ' Layer Deleted')
             self.clear_slot_attributes()
+        elif re.match('\.!frame2\.!frame\.!frame2\.!canvas\.!frame\.!frame\d{0,2}\.!(label|text|frame)', str(target)):
+            popup = LayerProperties(self)
 
     def update_properties(self, event):
         #TODO: This is where the popup will go
