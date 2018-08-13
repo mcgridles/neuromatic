@@ -1,14 +1,16 @@
 import tkinter
 import os
 import pickle
+import webbrowser
 from interface import open_popup
 
 
 class Menu(object):
 
     def __init__(self, root, main_window, logger):
-        self.menu = tkinter.Menu(root)
-        root.config(menu=self.menu)
+        self.root = root
+        self.menu = tkinter.Menu(self.root)
+        self.root.config(menu=self.menu)
         self.add()
         self.main_window = main_window
         self.log = logger
@@ -19,11 +21,11 @@ class Menu(object):
         file_menu.add_command(label="Save", command=self.save)
         file_menu.add_command(label="Open...", command=self.open)
         file_menu.add_separator()
-        file_menu.add_command(label="Exit", command=callback)
+        file_menu.add_command(label="Exit", command=self.root.destroy)
 
         help_menu = tkinter.Menu(self.menu)
         self.menu.add_cascade(label="Help", menu=help_menu)
-        help_menu.add_command(label="About...", command=callback)
+        help_menu.add_command(label="About...", command=self.open_readme)
 
     def save(self):
         data = self.main_window.slots.get_all_project_properties()
@@ -35,3 +37,7 @@ class Menu(object):
 
     def open(self):
         open_popup.OpenPopup(self.main_window, self.log)
+
+    @staticmethod
+    def open_readme():
+        webbrowser.open_new('https://github.com/mcgridles/neuromatic/blob/master/README.md')
