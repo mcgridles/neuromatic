@@ -1,4 +1,5 @@
 import tkinter as tk
+import canvas_properites_box, trash_icon
 import copy
 import os
 
@@ -26,6 +27,7 @@ class CanvasFrame(object):
         self.slots = list()
 
         self.log = logger
+        self.root = root
         self.main_window = main_window
 
         self.main_frame = tk.Frame(root, height=size_y, width=size_x, padx=3, pady=3, bg='white')
@@ -86,13 +88,12 @@ class CanvasFrame(object):
         else:
             set_height = None
 
+        self.init_default_canvas()
         if self.scrollable_frame.winfo_width() > new_canvas_width\
                 and self.scrollable_frame.winfo_reqwidth() > new_canvas_width:
             set_width = self.scrollable_frame.winfo_reqwidth()
         else:
             set_width = self.canvas.winfo_width()
-
-        self.canvas.itemconfig(self.canvas_frame, height=set_height, width=set_width)
 
     def _on_frame_configure(self, event):
         # print('config')
