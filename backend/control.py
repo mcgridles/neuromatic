@@ -140,6 +140,10 @@ class Control(object):
         self.__can_generate = True
         self.__can_train = True
 
+        if 'csv' not in os.path.splitext(self.canvas_properties['data_path'])[1]:
+            self.__log_status('Invalid data file type', 'error')
+            self.__can_train = False
+
         # Set defaults
         if 'optimizer' not in self.canvas_properties:
             self.canvas_properties['optimizer'] = 'sgd'
@@ -191,16 +195,16 @@ class Control(object):
             # Imports
             fd.write('import h5py\n')
             fd.write('from keras.models import Sequential\n')
-            fd.write('from keras.layers import Input, Dense, Dropout\n')
+            fd.write('from keras.layers import InputLayer, Dense, Dropout\n')
             fd.write('from keras.utils import to_categorical\n\n')
 
             fd.write('def train_neural_network(X_train, y_train, X_test, y_test):\n')
 
             # Model creation and adding layers
-            fd.write('\tmodel = Sequential()\n\n')
+            fd.write('\tmodel = Sequential([\n')
             for layer in self.layers:
                 layer.write_lines(fd)
-            fd.write('\n')
+            fd.write('])\n\n')
 
             # Model compilation and training
             fd.write('\tmodel.compile(optimizer=\'{0}\', '.format(self.canvas_properties['optimizer']))
@@ -208,7 +212,7 @@ class Control(object):
             fd.write('metrics=[')
             for metric in self.canvas_properties['metrics']:
                 fd.write('\'{0}\','.format(metric))
-            fd.write('])\n\n')
+            fd.write('\t])\n\n')
 
             if self.canvas_properties['loss'] != 'sparse_categorical_crossentropy':
                 fd.write('\ty_train = to_categorical(y_train)\n')
@@ -241,7 +245,7 @@ class Control(object):
         try:
             from backend import network
         except ImportError:
-            connection.send('Cannot train without a model\n')
+            connection.send('Cannot train without a network\n')
             return
 
         # Read in training data

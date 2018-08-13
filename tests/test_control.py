@@ -203,6 +203,48 @@ class TestControl(unittest.TestCase):
         self.assertTrue(self.controller.can_generate)
         self.assertTrue(self.controller.can_train)
 
+    @mock.patch('backend.control.os')
+    def test_set_properties_invalid_data_file(self, mock_os):
+        # Arrange
+        mock_os.path.isfile.side_effect = [False, True]
+        mock_os.path.isdir.return_value = True
+        mock_os.path.splitext.return_value = ['file', '.xls']
+        properties = {
+            'canvas_name': 'neuromatic',
+            'project_directory': '/path/to/directory',
+            'data_path': '/path/to/file.xls',
+            'training_size': 0.8,
+            'optimizer': 'sgd',
+            'loss': 'categorical_crossentropy',
+            'metrics': ['accuracy'],
+            'epochs': 5,
+            'layers': [
+                {
+                    'type': 'input',
+                    'size': 10,
+                    'activation': 'sigmoid',
+                    'dimensions': 784
+                },
+                {
+                    'type': 'hidden',
+                    'size': 10,
+                    'activation': 'sigmoid',
+                    'dimensions': 784
+                }
+            ]
+        }
+
+        # Act
+        with self.assertLogs('control', level='DEBUG') as log:
+            self.controller.set_properties(properties)
+
+        # Assert
+        self.assertEqual(self.controller.canvas_properties, properties)
+        self.assertEqual(len(self.controller.layers), 2)
+        self.assertTrue(self.controller.can_generate)
+        self.assertFalse(self.controller.can_train)
+        self.assertEqual(log.output, ['ERROR:control:Invalid data file type'])
+
     def test_sanitize_input(self):
         # Arrange
         string1 = 'Remove these characters;`\'\"|\n\t#'
