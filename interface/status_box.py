@@ -54,7 +54,20 @@ class StatusBox(object):
 
     def clear(self):
         self.text.delete("1.0", 'End')
+        self.text.destroy()
+        self.text = tk.Text(self.frame)
+        self.text.config(state=tk.DISABLED, wrap=tk.NONE)
+        self.text.grid(row=1, column=0, sticky='nsew')
 
+        self.v_scroll = tk.Scrollbar(self.frame, orient=tk.VERTICAL)
+        self.v_scroll.grid(row=1, column=1, sticky='ns')
+        self.v_scroll.config(command=self.text.yview)
+        self.text.config(yscrollcommand=self.v_scroll.set)
+
+        self.h_scroll = tk.Scrollbar(self.frame, orient=tk.HORIZONTAL)
+        self.h_scroll.grid(row=2, column=0, sticky='ew')
+        self.h_scroll.config(command=self.text.xview)
+        self.text.config(xscrollcommand=self.h_scroll.set)
 
 if __name__ == '__main__':
     root = tk.Tk()
