@@ -4,7 +4,7 @@ import os
 import tkinter.filedialog
 
 from backend import control
-from interface import buttons, status_box, canvas_frame, canvas_properites_box
+from interface import buttons, status_box, canvas_frame
 
 
 def get_screen_res():
@@ -39,8 +39,9 @@ class Window(object):
         self.top_frame = None
         self.right_frame = None
         self.left_frame = None
+        self.status_box = None
+        self.slots = None
 
-        self.add_slot = None
         self.log = None
         self.create_new_canvas = None
         self.generate_nn_script = None
@@ -78,7 +79,6 @@ class Window(object):
     def add_widgets(self):
         Menu(self.root, self, self.log)
 
-        # TODO: Format buttons.py Locations
         buttons.GenericButton(root=self.top_frame,
                               button_label="New Canvas",
                               passed_function=self.create_new_canvas,
@@ -154,16 +154,15 @@ class Window(object):
                                               logger=self.log,
                                               main_window=self)
 
-    def _log(self,message):
+    def _log(self, message):
         self.status_box.add_text(message+'\n')
 
-    def overwrite_properties(self,new_properties):
-        # TODO: update canvas properties, insert the correct number of blocks
+    def overwrite_properties(self, new_properties):
         old_count = self.slots.canvas_properties_box.box_properties['component_slots']
         name = new_properties['canvas_name']
         number = new_properties['component_slots']
         path = new_properties['data_path']
-        dir = new_properties['project_directory']
+        directory = new_properties['project_directory']
         train = new_properties['training_size']
         opt = new_properties['optimizer']
         loss = new_properties['loss']
@@ -172,7 +171,7 @@ class Window(object):
                                             new_canvas_name=name,
                                             new_slot_count=number,
                                             new_data_path=path,
-                                            new_project_dir=dir,
+                                            new_project_dir=directory,
                                             new_training_size=train,
                                             new_optimizer=opt,
                                             new_loss=loss,
@@ -183,7 +182,7 @@ class Window(object):
         self.slots.canvas_properties_box.update_slots(number)
 
         num_slots = new_properties['component_slots']
-        for x in range(0,int(num_slots)):
+        for x in range(0, int(num_slots)):
             layer = new_properties['layers'][x]
             if layer['type'] == 'hidden':
                 self.slots.slots[x].edit_slot_attributes(
@@ -215,17 +214,11 @@ class Window(object):
         # that they can be passed into the buttons.py class as input arguments so the buttons.py class will remain
         # compact.
         #
-        self.add_slot = lambda: (
-            self.slots.append(canvas_properites_box.LayerPropertiesBox(self.canvas_frame)),
-            self.slots[-1].frame.grid(row=0,column=len(self.slots)-1)
-        )
-
         self.log = lambda message: (
             self._log(message)
         )
 
         self.create_new_canvas = lambda: (
-            #TODO: Create New Canvas
             self.slots.clear_canvas(),
             self.log("Creating New Canvas"),
             self.status_box.clear()
@@ -291,16 +284,16 @@ class Menu(object):
         data = self.main_window.slots.get_all_project_properties()
         save_location = str(data['project_directory'])
         file_name = str(data['canvas_name'])
-        full_path = save_location+ '/'+ file_name + '.txt'
-        with open(os.path.expanduser(full_path),'wb') as file:
+        full_path = save_location + '/' + file_name + '.txt'
+        with open(os.path.expanduser(full_path), 'wb') as file:
             pickle.dump(data, file, protocol=pickle.HIGHEST_PROTOCOL)
 
     def open(self):
-        popup = OpenPopup(self.main_window, self.log)
+        OpenPopup(self.main_window, self.log)
 
 
 class OpenPopup(object):
-    def __init__(self, main_window,logger):
+    def __init__(self, main_window, logger):
         self.FILE_PATH = os.path.dirname(os.path.realpath(__file__))
         self.root = tkinter.Toplevel()
         self.root.title('Title')
@@ -310,40 +303,40 @@ class OpenPopup(object):
         self.config_frames()
         self.add_widgets()
 
-    def config_frames(self):
+        self.top_frame = None
+        self.data_path_entry = None
 
+    def config_frames(self):
         self.root.grid_rowconfigure(1, weight=1)
         self.root.grid_columnconfigure(1, weight=1)
 
         self.top_frame = tkinter.Frame(self.root, pady=1)
-        self.top_frame.grid(row=0, columnspan=2, sticky=('nesw'))
+        self.top_frame.grid(row=0, columnspan=2, sticky='nesw')
 
     def add_widgets(self):
         tkinter.Label(self.top_frame, text="File Path:").grid(row=1, column=0)
         self.data_path_entry = tkinter.Entry(self.top_frame)
         self.data_path_entry.grid(row=1, column=1)
         self.data_path_entry.insert(10, self.data_path)
-        tkinter.Button(self.top_frame, text="Browse...", command=self.get_file).grid(row=1, column=2)
-
-        tkinter.Button(self.top_frame, text="OK", command=self.save_configurations).grid(row=2, column=0,
-                                                                                               sticky=tkinter.W, pady=3)
-        tkinter.Button(self.top_frame, text="Cancel", command=self.root.destroy).grid(row=2, column=1,
-                                                                                        sticky=tkinter.E, pady=3)
+        tkinter.Button(self.top_frame,
+                       text="Browse...",
+                       command=self.get_file).grid(row=1, column=2)
+        tkinter.Button(self.top_frame,
+                       text="OK",
+                       command=self.save_configurations).grid(row=2, column=0, sticky=tkinter.W, pady=3)
+        tkinter.Button(self.top_frame,
+                       text="Cancel",
+                       command=self.root.destroy).grid(row=2, column=1, sticky=tkinter.E, pady=3)
 
     def get_file(self):
-        file_type_list = 'json'
-
-        if type(file_type_list) is not list or tuple:
-            file_type_list = [file_type_list]
-
         file_types = list()
 
         init_dir = os.path.dirname(self.data_path)
 
         assert os.path.isdir(init_dir), '{} is not a valid directory.'.format(init_dir)
         file_name = tkinter.filedialog.askopenfilename(initialdir=init_dir,
-                                                           title="Choose File...",
-                                                           filetypes=file_types)
+                                                       title="Choose File...",
+                                                       filetypes=file_types)
 
         self.data_path = file_name
         self.data_path_entry.delete(0, 'end')
@@ -352,7 +345,7 @@ class OpenPopup(object):
 
     def save_configurations(self):
         self.data_path = self.data_path_entry.get()
-        with open(self.data_path,'rb') as file:
+        with open(self.data_path, 'rb') as file:
             self.log('Opened ' + str(self.data_path))
             info = pickle.load(file)
             self.main_window.overwrite_properties(info)
@@ -365,8 +358,8 @@ class OpenPopup(object):
         set_str = '{}x{}'.format(str(width), str(height))
         self.root.geometry(set_str)
 
+
 def main():
-    width, height = get_screen_res()
     window = Window('Neuromatic', 800, 600)
     window.start()
 
