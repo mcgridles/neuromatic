@@ -28,10 +28,10 @@ class Menu(object):
         help_menu.add_command(label="About...", command=self.open_readme)
 
     def save(self):
-        data = self.main_window.slots.get_all_project_properties()
+        data = self.main_window.canvas.get_all_project_properties()
         save_location = str(data['project_directory'])
         file_name = str(data['canvas_name'])
-        full_path = save_location + '/' + file_name + '.txt'
+        full_path = save_location + '/' + file_name + '.pkl'
         with open(os.path.expanduser(full_path), 'wb') as file:
             pickle.dump(data, file, protocol=pickle.HIGHEST_PROTOCOL)
 
