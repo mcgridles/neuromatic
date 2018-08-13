@@ -275,7 +275,6 @@ class LayerPropertiesBox(PropertiesBox):
                 popup = LayerProperties(self)
 
     def update_properties(self, event):
-        #TODO: This is where the popup will go
         pass
 
     def edit_slot_attributes(self, new_layer_type=None, new_size=None, new_activation=None, new_dropout=None, new_layer_dimensions=None):
@@ -357,6 +356,7 @@ class PropertiesEditor(ABC):
         self.top_frame = None
         self.root = tk \
             .Toplevel()
+        self.root.grab_set()
         self.root.title("Edit Properties")
 
         # Launch the functions to configure the window and frame and add the elements on the window
@@ -514,8 +514,12 @@ class CanvasProperties(PropertiesEditor):
         # Construct the Ok and cancel button. Bind the special save configurations function to the OK, and bind the close function to cancel button
         tk.Button(self.top_frame, text="OK", command=self.save_configurations).grid(row=8, column=2,
                                                                                                sticky=tk.E, pady=3)
-        tk.Button(self.top_frame, text="Cancel", command=self.root.destroy).grid(row=8, column=3,
+        tk.Button(self.top_frame, text="Cancel", command=self.exit).grid(row=8, column=3,
                                                                                         sticky=tk.W, pady=3)
+
+    def exit(self):
+        self.root.grab_release()
+        self.root.destroy()
 
     def get_file(self):
         '''
@@ -661,6 +665,7 @@ class CanvasProperties(PropertiesEditor):
                                         old_count=old_count)
 
         #Close the window
+        self.root.grab_release()
         self.root.destroy()
 
 
@@ -720,8 +725,12 @@ class LayerProperties(PropertiesEditor):
                                                                                                 columnspan=2)
         tk.Button(self.top_frame, text="OK", command=self.save_configurations).grid(row=self.widget_row , column=2,
                                                                                         sticky=tk.E, pady=3)
-        tk.Button(self.top_frame, text="Cancel", command=self.root.destroy).grid(row=self.widget_row , column=3,
+        tk.Button(self.top_frame, text="Cancel", command=self.exit).grid(row=self.widget_row , column=3,
                                                                        sticky=tk.W, pady=3)
+
+    def exit(self):
+        self.root.grab_release()
+        self.root.destroy()
 
     def save_configurations(self):
         if self.layer_size_entry:
@@ -762,6 +771,7 @@ class LayerProperties(PropertiesEditor):
                                         new_activation=self.activation,
                                         new_dropout=self.dropout,
                                         new_layer_dimensions=self.layer_dimensions)
+        self.root.grab_release()
         self.root.destroy()
 
 
