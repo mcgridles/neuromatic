@@ -1,5 +1,6 @@
 import tkinter as tk
 import os
+import re
 from abc import ABC, abstractmethod
 
 DEFAULT_CANVAS_NAME = 'new_canvas_{}'.format(1)
@@ -162,9 +163,12 @@ class CanvasPropertiesBox(PropertiesBox):
         if canvas_frame:
             self.canvas_frame = canvas_frame
 
-        self.frame.bind('<Double-Button-1>', self.edit_popup)
-        self.box_label.bind('<Double-Button-1>', self.edit_popup)
-        self.prop_box.bind('<Double-Button-1>', self.edit_popup)
+        self.frame.bind('<Button-1>', self.edit_popup)
+        self.box_label.bind('<Button-1>', self.edit_popup)
+        self.prop_box.bind('<Button-1>', self.edit_popup)
+        self.frame.configure(cursor='hand2')
+        self.box_label.configure(cursor='hand2')
+        self.prop_box.configure(cursor='hand2')
 
     def edit_popup(self, event):
         popup = CanvasProperties(self,main_window=self.main_window, logger=self.log,canvas_frame=self.canvas_frame)
@@ -249,16 +253,6 @@ class LayerPropertiesBox(PropertiesBox):
         self.box_label.bind('<ButtonRelease-1>', self.on_drop)
         self.prop_box.bind('<ButtonRelease-1>', self.on_drop)
 
-        self.frame.bind('<Double-Button-1>', self.edit_popup)
-        self.box_label.bind('<Double-Button-1>', self.edit_popup)
-        self.prop_box.bind('<Double-Button-1>', self.edit_popup)
-
-    def edit_popup(self, event):
-        if self.layer_type == 'Empty':
-            self.log('Cannot Edit Empty Layer')
-        else:
-            popup = LayerProperties(self)
-
     def on_start(self,event):
         pass
 
@@ -266,7 +260,6 @@ class LayerPropertiesBox(PropertiesBox):
         self.frame.configure(cursor='middlebutton')
         self.box_label.configure(cursor='middlebutton')
         self.prop_box.configure(cursor='middlebutton')
-        pass
 
     def on_drop(self, event):
         self.frame.configure(cursor='hand2')
@@ -274,12 +267,14 @@ class LayerPropertiesBox(PropertiesBox):
         self.prop_box.configure(cursor='hand2')
         x, y = self.frame.winfo_pointerx(), self.frame.winfo_pointery()
         target = event.widget.winfo_containing(x, y)
-        if str(target) == '.!frame2.!frame.!label':
+        if str(target) == '.!frame2.!frame.!frame3.!label':
             self.log(self.layer_type + ' Layer Deleted')
             self.clear_slot_attributes()
+        elif re.match('\.!frame2\.!frame\.!frame2\.!canvas\.!frame\.!frame\d{0,2}\.!(label|text|frame)', str(target)):
+            if self.layer_type != 'Empty':
+                popup = LayerProperties(self)
 
     def update_properties(self, event):
-        #TODO: This is where the popup will go
         pass
 
     def edit_slot_attributes(self, new_layer_type=None, new_size=None, new_activation=None, new_dropout=None, new_layer_dimensions=None):
@@ -333,8 +328,9 @@ class LayerPropertiesBox(PropertiesBox):
             self.update_text()
 
     def clear_slot_attributes(self):
+        # Set slot attributes to default
         self.box_label.config(text='Empty Layer')
-        self.edit_slot_attributes('Empty',1,'sigmoid',.5)
+        self.edit_slot_attributes(new_layer_type='Empty', new_size=1, new_activation='sigmoid', new_dropout=.5, new_layer_dimensions=1)
 
 
 class PropertiesEditor(ABC):
@@ -361,6 +357,7 @@ class PropertiesEditor(ABC):
         self.top_frame = None
         self.root = tk \
             .Toplevel()
+        self.root.grab_set()
         self.root.title("Edit Properties")
 
         # Launch the functions to configure the window and frame and add the elements on the window
@@ -518,8 +515,12 @@ class CanvasProperties(PropertiesEditor):
         # Construct the Ok and cancel button. Bind the special save configurations function to the OK, and bind the close function to cancel button
         tk.Button(self.top_frame, text="OK", command=self.save_configurations).grid(row=8, column=2,
                                                                                                sticky=tk.E, pady=3)
-        tk.Button(self.top_frame, text="Cancel", command=self.root.destroy).grid(row=8, column=3,
+        tk.Button(self.top_frame, text="Cancel", command=self.exit).grid(row=8, column=3,
                                                                                         sticky=tk.W, pady=3)
+
+    def exit(self):
+        self.root.grab_release()
+        self.root.destroy()
 
     def get_file(self):
         '''
@@ -664,6 +665,9 @@ class CanvasProperties(PropertiesEditor):
                                         new_epochs=self.epochs,
                                         old_count=old_count)
 
+        # Unfreeze the canvas
+        self.root.grab_release()
+        
         # Close the window
         self.root.destroy()
 
@@ -752,8 +756,12 @@ class LayerProperties(PropertiesEditor):
         # Construct the OK button and Cancel button with their associated functions that will run when pressed
         tk.Button(self.top_frame, text="OK", command=self.save_configurations).grid(row=widget_row, column=2,
                                                                                     sticky=tk.E, pady=3)
-        tk.Button(self.top_frame, text="Cancel", command=self.root.destroy).grid(row=widget_row, column=3,
+        tk.Button(self.top_frame, text="Cancel", command=self.exit).grid(row=widget_row, column=3,
                                                                                  sticky=tk.W, pady=3)
+
+    def exit(self):
+        self.root.grab_release()
+        self.root.destroy()
 
     def save_configurations(self):
         '''
@@ -808,7 +816,10 @@ class LayerProperties(PropertiesEditor):
                                         new_activation=self.activation,
                                         new_dropout=self.dropout,
                                         new_layer_dimensions=self.layer_dimensions)
-
+        
+        # Unfreeze the canvas
+        self.root.grab_release()
+        
         # Close the layer properties editor window
         self.root.destroy()
 

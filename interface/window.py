@@ -1,46 +1,36 @@
 import tkinter
-import pickle
-import os
 import tkinter.filedialog
-
 from backend import control
-from interface import buttons, status_box, canvas_frame, canvas_properites_box
-
-
-def get_screen_res():
-    root = tkinter.Tk()
-    root.withdraw()
-    width = root.winfo_screenwidth()
-    height = root.winfo_screenheight()
-    root.destroy()
-
-    return width, height
-
-
-def callback():
-    pass
+from interface import buttons, status_box, canvas_frame, menu
 
 
 class Window(object):
 
     def __init__(self, title, width, height):
-        self.width = width
-        self.height = height
-
-        # This will store which layer is selected
-        self.current_layer_type = 'Empty'
-
+        """
+        This class is used as the main window to the application. It stores all top level Tkinter objects and
+        connects the GUI to the backend.
+        :param title: str - Title of the application
+        :param width: int - Width of the GUI
+        :param height: int - Height of the GUI
+        """
+        # Instance of the main window
         self.root = tkinter.Tk()
         self.root.title(title)
-
-        self.set_size(self.width, self.height)
+        self.set_size(width, height)
         self.root.minsize(400, 600)
 
+        # Currently selected layer on the canvas
+        self.current_layer_type = 'Empty'
+
+        # Top level Tkinter objects
         self.top_frame = None
         self.right_frame = None
         self.left_frame = None
+        self.status_box = None
+        self.canvas = None
 
-        self.add_slot = None
+        # Lambdas used to connect the GUI and Backend
         self.log = None
         self.create_new_canvas = None
         self.generate_nn_script = None
@@ -49,36 +39,53 @@ class Window(object):
         self.clear_canvas = None
         self.empty_funct = None
 
+        # Backend object
         self.control = control.Control()
 
+        # Configure the window's Tkinter frames
         self.config_frames()
+
         self.create_lambdas()
         self.add_widgets()
 
+        # Send initial status to the status box
         self.control.init_status(self.status_box.add_text)
 
     def config_frames(self):
+        """
+        Configure the window's Tkinter frames for widget organization.
+        :return: None
+        """
+        # Manage how the frmaes will resize upon the window resizing
         self.root.grid_rowconfigure(1, weight=1)
         self.root.grid_columnconfigure(0, weight=2)
         self.root.grid_columnconfigure(1, weight=1)
 
+        # Add the top_frame for buttons
         self.top_frame = tkinter.Frame(self.root, pady=3)
         self.top_frame.grid(row=0, columnspan=2, sticky="nsew")
 
+        # Add the left_frame for the canvas
         self.left_frame = tkinter.Frame(self.root, pady=3, padx=3, relief='sunken', borderwidth=5)
         self.left_frame.grid(row=1, column=0, sticky='nsew')
         self.left_frame.grid_columnconfigure(0, weight=1)
         self.left_frame.grid_rowconfigure(0, weight=1)
 
+        # Add the right frame for the status box and the layer buttons
         self.right_frame = tkinter.Frame(self.root, pady=3, padx=3)
         self.right_frame.grid(row=1, column=1, sticky='nsew')
         self.right_frame.grid_rowconfigure(4, weight=1)
         self.right_frame.grid_columnconfigure(0, weight=1)
 
     def add_widgets(self):
-        Menu(self.root, self, self.log)
+        """
+        Fill the window frames with Tkinter widgets.
+        :return: None
+        """
+        # Add a "File" menu to the top of the window
+        menu.Menu(self.root, self, self.log)
 
-        # TODO: Format buttons.py Locations
+        # Add the buttons to the tope_frame. Used to interface the GUI with the backend.
         buttons.GenericButton(root=self.top_frame,
                               button_label="New Canvas",
                               passed_function=self.create_new_canvas,
@@ -111,6 +118,7 @@ class Window(object):
                               assigned_col=4,
                               sticky='nsew')
 
+        # Add layer buttons to the right frame. Used for the drag and drop interface.
         buttons.LayerButton(root=self.right_frame,
                             button_label="Input Layer",
                             passed_function=self.empty_funct,
@@ -147,106 +155,132 @@ class Window(object):
                             sticky='ew',
                             logger=self.log,
                             main_window=self)
+
+        # Add the status box to the right frame
         self.status_box = status_box.StatusBox(self.right_frame)
         self.status_box.frame.grid(row=4, column=0)
 
-        self.slots = canvas_frame.CanvasFrame(self.left_frame,
-                                              logger=self.log,
-                                              main_window=self)
+        # Add the canvas frame to the left frame
+        self.canvas = canvas_frame.CanvasFrame(self.left_frame,
+                                               logger=self.log,
+                                               main_window=self)
 
-    def _log(self,message):
-        self.status_box.add_text(message+'\n')
-
-    def overwrite_properties(self,new_properties):
-        # TODO: update canvas properties, insert the correct number of blocks
-        old_count = self.slots.canvas_properties_box.box_properties['component_slots']
+    def overwrite_properties(self, new_properties):
+        """
+        Overwrite the current canvas design based on the properties contained in the passed dictionary.
+        :param new_properties: dict -
+        :return: None
+        """
+        old_count = self.canvas.canvas_properties_box.box_properties['component_slots']
         name = new_properties['canvas_name']
-        number = new_properties['component_slots']
+        num_slots = new_properties['component_slots']
         path = new_properties['data_path']
-        dir = new_properties['project_directory']
+        directory = new_properties['project_directory']
         train = new_properties['training_size']
-        self.slots.canvas_properties_box.edit_canvas_attributes(
+        opt = new_properties['optimizer']
+        loss = new_properties['loss']
+        ep = new_properties['epochs']
+
+        # Edit the canvas properties
+        self.canvas.canvas_properties_box.edit_canvas_attributes(
                                             new_canvas_name=name,
-                                            new_slot_count=number,
+                                            new_slot_count=num_slots,
                                             new_data_path=path,
-                                            new_project_dir=dir,
+                                            new_project_dir=directory,
                                             new_training_size=train,
+                                            new_optimizer=opt,
+                                            new_loss=loss,
+                                            new_epochs=ep,
                                             old_count=old_count
         )
 
-        self.slots.canvas_properties_box.update_slots(number)
+        # Update the number of canvas slots based on the new properties
+        self.canvas.canvas_properties_box.update_slots(num_slots)
 
-        num_slots = new_properties['component_slots']
-        for x in range(0,int(num_slots)):
-            layer = new_properties['layers'][x]
+        # Update the layer properties, for each layer, based on the properties passed in the layer list
+        for index in range(0, int(num_slots)):
+            # Get the layer from the list
+            layer = new_properties['layers'][index]
+
+            # If the layer is a hidden layer
             if layer['type'] == 'hidden':
-                self.slots.slots[x].edit_slot_attributes(
+                # Update the slot for the given layer
+                self.canvas.slots[index].edit_slot_attributes(
                                     new_layer_type='Hidden',
                                     new_size=layer['size'],
                                     new_activation=layer['activation'])
-                self.slots.slots[x].box_label.config(text='Hidden Layer')
+                self.canvas.slots[index].box_label.config(text='Hidden Layer')
 
             if layer['type'] == 'output':
-                self.slots.slots[x].edit_slot_attributes(
+                self.canvas.slots[index].edit_slot_attributes(
                                     new_layer_type='Output',
                                     new_size=layer['size'],
                                     new_activation=layer['activation'])
-                self.slots.slots[x].box_label.config(text='Output Layer')
+                self.canvas.slots[index].box_label.config(text='Output Layer')
 
             if layer['type'] == 'input':
-                self.slots.slots[x].edit_slot_attributes(
+                self.canvas.slots[index].edit_slot_attributes(
                                     new_layer_type='Input',
                                     new_layer_dimensions=layer['dimensions'])
-                self.slots.slots[x].box_label.config(text='Input Layer')
+                self.canvas.slots[index].box_label.config(text='Input Layer')
+
             if layer['type'] == 'dropout':
-                self.slots.slots[x].edit_slot_attributes(
+                self.canvas.slots[index].edit_slot_attributes(
                                     new_layer_type='Dropout',
                                     new_dropout=layer['percentage'])
-                self.slots.slots[x].box_label.config(text='Dropout Layer')
+                self.canvas.slots[index].box_label.config(text='Dropout Layer')
 
     def create_lambdas(self):
-        # This is where all the buttons different functions will be listed. They will be defined as lambdas so
-        # that they can be passed into the buttons.py class as input arguments so the buttons.py class will remain
-        # compact.
-        #
-        self.add_slot = lambda: (
-            self.slots.append(canvas_properites_box.LayerPropertiesBox(self.canvas_frame)),
-            self.slots[-1].frame.grid(row=0,column=len(self.slots)-1)
-        )
-
+        """
+        This is where all the buttons different functions will be listed. They will be defined as lambdas so
+        that they can be passed into the buttons.py class as input arguments so the buttons.py class will remain
+        compact.
+        :return: None
+        """
         self.log = lambda message: (
-            self._log(message)
+            self.status_box.add_text(message + '\n')
         )
 
         self.create_new_canvas = lambda: (
-            #TODO: Create New Canvas
-            self.slots.clear_canvas(),
+            self.canvas.clear_canvas(),
             self.log("Creating New Canvas"),
             self.status_box.clear()
         )
 
         self.generate_nn_script = lambda: (
-            self.control.set_properties(self.slots.get_all_project_properties()),
+            self.control.set_properties(self.canvas.get_all_project_properties()),
             self.control.generate_network()
         )
 
         self.train_model = lambda: (
-            self.control.set_properties(self.slots.get_all_project_properties()),
+            self.control.set_properties(self.canvas.get_all_project_properties()),
             self.control.train_in_new_thread()
         )
 
         self.clear_canvas = lambda: (
             self.log('Clearing Slots'),
-            self.slots.clear_slots(),
+            self.canvas.clear_slots(),
         )
 
         self.empty_funct = lambda: ()
 
     def start(self):
+        """
+        Start the main window
+        :return: None
+        """
+        # Check for updates from the backend
         self.__get_status_updates()
+        # Starts the main window
         self.root.mainloop()
 
     def set_size(self, width, height):
+        """
+        Combine the height and width measurements to a str. Update the window size with the string.
+        :param width: int
+        :param height: int
+        :return: None
+        """
         set_str = '{}x{}'.format(str(width), str(height))
         self.root.geometry(set_str)
 
@@ -257,110 +291,11 @@ class Window(object):
         status = self.control.check_pipe()
         if status:
             self.status_box.add_text(status)
+        # Check for backend status every 500ms
         self.root.after(500, self.__get_status_updates)
 
 
-class Menu(object):
-
-    def __init__(self, root, main_window, logger):
-        self.menu = tkinter.Menu(root)
-        root.config(menu=self.menu)
-        self.add()
-        self.main_window = main_window
-        self.log = logger
-
-    def add(self):
-        file_menu = tkinter.Menu(self.menu)
-        self.menu.add_cascade(label="File", menu=file_menu)
-        file_menu.add_command(label="Save", command=self.save)
-        file_menu.add_command(label="Open...", command=self.open)
-        file_menu.add_separator()
-        file_menu.add_command(label="Exit", command=callback)
-
-        help_menu = tkinter.Menu(self.menu)
-        self.menu.add_cascade(label="Help", menu=help_menu)
-        help_menu.add_command(label="About...", command=callback)
-
-    def save(self):
-        data = self.main_window.slots.get_all_project_properties()
-        save_location = str(data['project_directory'])
-        file_name = str(data['canvas_name'])
-        full_path = save_location+ '/'+ file_name + '.txt'
-        with open(os.path.expanduser(full_path),'wb') as file:
-            pickle.dump(data, file, protocol=pickle.HIGHEST_PROTOCOL)
-
-    def open(self):
-        popup = OpenPopup(self.main_window, self.log)
-
-
-class OpenPopup(object):
-    def __init__(self, main_window,logger):
-        self.FILE_PATH = os.path.dirname(os.path.realpath(__file__))
-        self.root = tkinter.Toplevel()
-        self.root.title('Title')
-        self.data_path = os.path.expanduser('~')
-        self.main_window = main_window
-        self.log = logger
-        self.config_frames()
-        self.add_widgets()
-
-    def config_frames(self):
-
-        self.root.grid_rowconfigure(1, weight=1)
-        self.root.grid_columnconfigure(1, weight=1)
-
-        self.top_frame = tkinter.Frame(self.root, pady=1)
-        self.top_frame.grid(row=0, columnspan=2, sticky=('nesw'))
-
-    def add_widgets(self):
-        tkinter.Label(self.top_frame, text="File Path:").grid(row=1, column=0)
-        self.data_path_entry = tkinter.Entry(self.top_frame)
-        self.data_path_entry.grid(row=1, column=1)
-        self.data_path_entry.insert(10, self.data_path)
-        tkinter.Button(self.top_frame, text="Browse...", command=self.get_file).grid(row=1, column=2)
-
-        tkinter.Button(self.top_frame, text="OK", command=self.save_configurations).grid(row=2, column=0,
-                                                                                               sticky=tkinter.W, pady=3)
-        tkinter.Button(self.top_frame, text="Cancel", command=self.root.destroy).grid(row=2, column=1,
-                                                                                        sticky=tkinter.E, pady=3)
-
-    def get_file(self):
-        file_type_list = 'json'
-
-        if type(file_type_list) is not list or tuple:
-            file_type_list = [file_type_list]
-
-        file_types = list()
-
-        init_dir = os.path.dirname(self.data_path)
-
-        assert os.path.isdir(init_dir), '{} is not a valid directory.'.format(init_dir)
-        file_name = tkinter.filedialog.askopenfilename(initialdir=init_dir,
-                                                           title="Choose File...",
-                                                           filetypes=file_types)
-
-        self.data_path = file_name
-        self.data_path_entry.delete(0, 'end')
-        self.data_path_entry.insert(10, self.data_path)
-        self.root.lift()
-
-    def save_configurations(self):
-        self.data_path = self.data_path_entry.get()
-        with open(self.data_path,'rb') as file:
-            self.log('Opened ' + str(self.data_path))
-            info = pickle.load(file)
-            self.main_window.overwrite_properties(info)
-        self.root.destroy()
-
-    def start(self):
-        self.root.mainloop()
-
-    def set_size(self, width, height):
-        set_str = '{}x{}'.format(str(width), str(height))
-        self.root.geometry(set_str)
-
 def main():
-    width, height = get_screen_res()
     window = Window('Neuromatic', 800, 600)
     window.start()
 
