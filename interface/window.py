@@ -1,9 +1,7 @@
 import tkinter
-import pickle
-import os
 import tkinter.filedialog
 from backend import control
-from interface import buttons, status_box, canvas_frame
+from interface import buttons, status_box, canvas_frame, menu
 
 
 class Window(object):
@@ -85,7 +83,7 @@ class Window(object):
         :return: None
         """
         # Add a "File" menu to the top of the window
-        Menu(self.root, self, self.log)
+        menu.Menu(self.root, self, self.log)
 
         # Add the buttons to the tope_frame. Used to interface the GUI with the backend.
         buttons.GenericButton(root=self.top_frame,
@@ -295,106 +293,6 @@ class Window(object):
             self.status_box.add_text(status)
         # Check for backend status every 500ms
         self.root.after(500, self.__get_status_updates)
-
-
-class Menu(object):
-
-    def __init__(self, root, main_window, logger):
-        self.menu = tkinter.Menu(root)
-        root.config(menu=self.menu)
-        self.add()
-        self.main_window = main_window
-        self.log = logger
-
-    def add(self):
-        file_menu = tkinter.Menu(self.menu)
-        self.menu.add_cascade(label="File", menu=file_menu)
-        file_menu.add_command(label="Save", command=self.save)
-        file_menu.add_command(label="Open...", command=self.open)
-        file_menu.add_separator()
-        file_menu.add_command(label="Exit", command=callback)
-
-        help_menu = tkinter.Menu(self.menu)
-        self.menu.add_cascade(label="Help", menu=help_menu)
-        help_menu.add_command(label="About...", command=callback)
-
-    def save(self):
-        data = self.main_window.slots.get_all_project_properties()
-        save_location = str(data['project_directory'])
-        file_name = str(data['canvas_name'])
-        full_path = save_location + '/' + file_name + '.txt'
-        with open(os.path.expanduser(full_path), 'wb') as file:
-            pickle.dump(data, file, protocol=pickle.HIGHEST_PROTOCOL)
-
-    def open(self):
-        OpenPopup(self.main_window, self.log)
-
-
-class OpenPopup(object):
-    def __init__(self, main_window, logger):
-        self.FILE_PATH = os.path.dirname(os.path.realpath(__file__))
-        self.root = tkinter.Toplevel()
-        self.root.title('Title')
-        self.data_path = os.path.expanduser('~')
-        self.main_window = main_window
-        self.log = logger
-        self.config_frames()
-        self.add_widgets()
-
-        self.top_frame = None
-        self.data_path_entry = None
-
-    def config_frames(self):
-        self.root.grid_rowconfigure(1, weight=1)
-        self.root.grid_columnconfigure(1, weight=1)
-
-        self.top_frame = tkinter.Frame(self.root, pady=1)
-        self.top_frame.grid(row=0, columnspan=2, sticky='nesw')
-
-    def add_widgets(self):
-        tkinter.Label(self.top_frame, text="File Path:").grid(row=1, column=0)
-        self.data_path_entry = tkinter.Entry(self.top_frame)
-        self.data_path_entry.grid(row=1, column=1)
-        self.data_path_entry.insert(10, self.data_path)
-        tkinter.Button(self.top_frame,
-                       text="Browse...",
-                       command=self.get_file).grid(row=1, column=2)
-        tkinter.Button(self.top_frame,
-                       text="OK",
-                       command=self.save_configurations).grid(row=2, column=0, sticky=tkinter.W, pady=3)
-        tkinter.Button(self.top_frame,
-                       text="Cancel",
-                       command=self.root.destroy).grid(row=2, column=1, sticky=tkinter.E, pady=3)
-
-    def get_file(self):
-        file_types = list()
-
-        init_dir = os.path.dirname(self.data_path)
-
-        assert os.path.isdir(init_dir), '{} is not a valid directory.'.format(init_dir)
-        file_name = tkinter.filedialog.askopenfilename(initialdir=init_dir,
-                                                       title="Choose File...",
-                                                       filetypes=file_types)
-
-        self.data_path = file_name
-        self.data_path_entry.delete(0, 'end')
-        self.data_path_entry.insert(10, self.data_path)
-        self.root.lift()
-
-    def save_configurations(self):
-        self.data_path = self.data_path_entry.get()
-        with open(self.data_path, 'rb') as file:
-            self.log('Opened ' + str(self.data_path))
-            info = pickle.load(file)
-            self.main_window.overwrite_properties(info)
-        self.root.destroy()
-
-    def start(self):
-        self.root.mainloop()
-
-    def set_size(self, width, height):
-        set_str = '{}x{}'.format(str(width), str(height))
-        self.root.geometry(set_str)
 
 
 def main():
