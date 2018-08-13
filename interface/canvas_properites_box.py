@@ -391,6 +391,14 @@ class PropertiesEditor(ABC):
         '''Declare an abstract method that will save the new properties and close the window'''
         pass
 
+    def exit(self):
+        '''
+        A common function to unfreeze the canvas window and close the properties editor
+        :return:
+        '''
+        self.root.grab_release()
+        self.root.destroy()
+
 
 class CanvasProperties(PropertiesEditor):
     def __init__(self, props, logger=None, main_window=None, canvas_frame=None):
@@ -517,10 +525,6 @@ class CanvasProperties(PropertiesEditor):
                                                                                                sticky=tk.E, pady=3)
         tk.Button(self.top_frame, text="Cancel", command=self.exit).grid(row=8, column=3,
                                                                                         sticky=tk.W, pady=3)
-
-    def exit(self):
-        self.root.grab_release()
-        self.root.destroy()
 
     def get_file(self):
         '''
@@ -665,11 +669,8 @@ class CanvasProperties(PropertiesEditor):
                                         new_epochs=self.epochs,
                                         old_count=old_count)
 
-        # Unfreeze the canvas
-        self.root.grab_release()
-        
         # Close the window
-        self.root.destroy()
+        self.exit()
 
 
 class LayerProperties(PropertiesEditor):
@@ -759,10 +760,6 @@ class LayerProperties(PropertiesEditor):
         tk.Button(self.top_frame, text="Cancel", command=self.exit).grid(row=widget_row, column=3,
                                                                                  sticky=tk.W, pady=3)
 
-    def exit(self):
-        self.root.grab_release()
-        self.root.destroy()
-
     def save_configurations(self):
         '''
         This function will pass the updated parameters back to the layer properties box and run checks on their validity
@@ -816,12 +813,9 @@ class LayerProperties(PropertiesEditor):
                                         new_activation=self.activation,
                                         new_dropout=self.dropout,
                                         new_layer_dimensions=self.layer_dimensions)
-        
-        # Unfreeze the canvas
-        self.root.grab_release()
-        
-        # Close the layer properties editor window
-        self.root.destroy()
+
+        # Close the window
+        self.exit()
 
 
 if __name__ == '__main__':
