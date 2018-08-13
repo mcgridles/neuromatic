@@ -167,14 +167,6 @@ class Window(object):
                                                logger=self.log,
                                                main_window=self)
 
-    def _log(self, message):
-        """
-        Can be passed to functions and other classes to enable status logging to the window's status box.
-        :param message:
-        :return: None
-        """
-        self.status_box.add_text(message+'\n')
-
     def overwrite_properties(self, new_properties):
         """
         Overwrite the current canvas design based on the properties contained in the passed dictionary.
@@ -248,7 +240,7 @@ class Window(object):
         :return: None
         """
         self.log = lambda message: (
-            self._log(message)
+            self.status_box.add_text(message + '\n')
         )
 
         self.create_new_canvas = lambda: (
