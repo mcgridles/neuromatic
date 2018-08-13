@@ -353,21 +353,21 @@ class PropertiesEditor(ABC):
         self.main_window = main_window
         self.canvas_frame = canvas_frame
 
-        #Creates the error entry sections as it is common for layer and canvas properties
+        # Creates the error entry sections as it is common for layer and canvas properties
         self.error_entry = None
         self.error_mes = tk.StringVar()
 
-        #Constructs the frame and the window root used
+        # Constructs the frame and the window root used
         self.top_frame = None
         self.root = tk \
             .Toplevel()
         self.root.title("Edit Properties")
 
-        #Launch the functions to configure the window and frame and add the elements on the window
+        # Launch the functions to configure the window and frame and add the elements on the window
         self.config_frames()
         self.add_widgets()
 
-        #Launch the abstract base class' constructor
+        # Launch the abstract base class' constructor
         super().__init__()
 
     def config_frames(self):
@@ -406,7 +406,7 @@ class CanvasProperties(PropertiesEditor):
         :param canvas_frame:
         '''
 
-        #Retrieve the following canvas properties from the class' dictonary passed
+        # Retrieve the following canvas properties from the class' dictonary passed
         self.canvas_name = props.box_properties['canvas_name']
         self.slot_count = props.box_properties['component_slots']
         self.data_path = props.box_properties['data_path']
@@ -416,7 +416,7 @@ class CanvasProperties(PropertiesEditor):
         self.loss = props.box_properties['loss']
         self.epochs = props.box_properties['epochs']
 
-        #Declare all the entry widgets used in the window
+        # Declare all the entry widgets used in the window
         self.canvas_name_entry = None
         self.slot_count_entry = None
         self.data_path_entry = None
@@ -426,7 +426,7 @@ class CanvasProperties(PropertiesEditor):
         self.loss_entry = None
         self.epochs_entry = None
 
-        #As optimizer and loss are dropdowns, the available choices must be defined as lists and variables made for the current selection
+        # As optimizer and loss are dropdowns, the available choices must be defined as lists and variables made for the current selection
         self.optimizers = ['sgd', 'adam', 'adagrad', 'rmsprop', 'adadelta', 'adamax', 'nadam']
         self.optimizer_selected = tk.StringVar()
         self.losses = ['mean_squared_error', 'mean_absolute_error', 'mean_absolute_percentage_error',
@@ -436,10 +436,10 @@ class CanvasProperties(PropertiesEditor):
         self.loss_selected = tk.StringVar()
 
 
-        #Define a file path for the program to fall back on if the browser is launched without a valid path
+        # Define a file path for the program to fall back on if the browser is launched without a valid path
         self.FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 
-        #Define the configurations available to the browser selection tool
+        # Define the configurations available to the browser selection tool
         self.VALID_TYPES = {
             'all': ('all files', '*'),
             'csv': ('csv', '*.csv'),
@@ -447,7 +447,7 @@ class CanvasProperties(PropertiesEditor):
             'h5py': ('h5py', '*.h5py')
         }
 
-        #Call the constructor of the properties editor class
+        # Call the constructor of the properties editor class
         super().__init__(props, logger, main_window, canvas_frame)
 
     def add_widgets(self):
@@ -457,40 +457,40 @@ class CanvasProperties(PropertiesEditor):
         :return:
         '''
 
-        #Construct the canvas name label and the text entry widget. Insert the current canvas name into the entry widget
+        # Construct the canvas name label and the text entry widget. Insert the current canvas name into the entry widget
         tk.Label(self.top_frame, text="Canvas Name:").grid(row=0, column=0, sticky=tk.E)
         self.canvas_name_entry = tk.Entry(self.top_frame)
         self.canvas_name_entry.grid(row=0, column=1)
         self.canvas_name_entry.insert(10, self.canvas_name)
 
-        #Construct the component slots label and the text entry widget. Insert the component slot number into the entry widget
+        # Construct the component slots label and the text entry widget. Insert the component slot number into the entry widget
         tk.Label(self.top_frame, text="Number of Component Slots:").grid(row=1, column=0, sticky=tk.E)
         self.slot_count_entry = tk.Entry(self.top_frame)
         self.slot_count_entry.grid(row=1, column=1)
         self.slot_count_entry.insert(10, self.slot_count)
 
-        #Construct the training data label, the text entry, and the browse button widget. Insert the path into the entry widget
+        # Construct the training data label, the text entry, and the browse button widget. Insert the path into the entry widget
         tk.Label(self.top_frame, text="Training Data Path:").grid(row=2, column=0, sticky=tk.E)
         self.data_path_entry = tk.Entry(self.top_frame)
         self.data_path_entry.grid(row=2, column=1)
         self.data_path_entry.insert(10, self.data_path)
         tk.Button(self.top_frame, text="Browse...", command=self.get_file).grid(row=2, column=2)
 
-        #Construct the project dir label, the text entry, and the browse button widget, Insert the path into the entry widget
+        # Construct the project dir label, the text entry, and the browse button widget, Insert the path into the entry widget
         tk.Label(self.top_frame, text="Project Directory:").grid(row=3, column=0, sticky=tk.E)
         self.project_dir_entry = tk.Entry(self.top_frame)
         self.project_dir_entry.grid(row=3, column=1)
         self.project_dir_entry.insert(10, self.project_dir)
         tk.Button(self.top_frame, text="Browse...", command=self.get_directory).grid(row=3, column=2)
 
-        #Construct the training size label and the text entry widget. Insert the size into the entry widget
+        # Construct the training size label and the text entry widget. Insert the size into the entry widget
         tk.Label(self.top_frame, text="Training Size:").grid(row=4, column=0, sticky=tk.E)
         self.training_size_entry = tk.Entry(self.top_frame)
         self.training_size_entry.grid(row=4, column=1)
         self.training_size_entry.insert(10, self.training_size)
 
 
-        #Construct the optimizer label and the dropdown widget. Give the dropdown the list of options and the variable used to track what is selected.
+        # Construct the optimizer label and the dropdown widget. Give the dropdown the list of options and the variable used to track what is selected.
         tk.Label(self.top_frame, text="Optimizer:").grid(row=5, column=0, sticky=tk.E)
         self.optimizer_entry = tk.OptionMenu(self.top_frame, self.optimizer_selected,
                                                   *self.optimizers)
@@ -498,7 +498,7 @@ class CanvasProperties(PropertiesEditor):
         self.optimizer_entry.grid(row=5, column=1)
 
 
-        #Construct the loss label and the dropdown widget. Give the dropdown the list of options and the variable used to track what is selected
+        # Construct the loss label and the dropdown widget. Give the dropdown the list of options and the variable used to track what is selected
         tk.Label(self.top_frame, text="Loss:").grid(row=6, column=0, sticky=tk.E)
         self.loss_entry = tk.OptionMenu(self.top_frame, self.loss_selected,
                                              *self.losses)
@@ -506,16 +506,16 @@ class CanvasProperties(PropertiesEditor):
         self.loss_entry.grid(row=6, column=1)
 
 
-        #Construct the epochs label and entry widget. Set the epochs to the current entry.
+        # Construct the epochs label and entry widget. Set the epochs to the current entry.
         tk.Label(self.top_frame, text="Epochs:").grid(row=7, column=0, sticky=tk.E)
         self.epochs_entry = tk.Entry(self.top_frame)
         self.epochs_entry.grid(row=7, column=1)
         self.epochs_entry.insert(10, self.epochs)
 
-        #Construct the error widget with a variable to represent the displayed text
+        # Construct the error widget with a variable to represent the displayed text
         self.error_entry = tk.Label(self.top_frame, textvariable=self.error_mes, fg="red").grid(row=8, column=0, sticky=tk.W, columnspan=2)
 
-        #Construct the Ok and cancel button. Bind the special save configurations function to the OK, and bind the close function to cancel button
+        # Construct the Ok and cancel button. Bind the special save configurations function to the OK, and bind the close function to cancel button
         tk.Button(self.top_frame, text="OK", command=self.save_configurations).grid(row=8, column=2,
                                                                                                sticky=tk.E, pady=3)
         tk.Button(self.top_frame, text="Cancel", command=self.root.destroy).grid(row=8, column=3,
@@ -527,65 +527,86 @@ class CanvasProperties(PropertiesEditor):
         :return:
         '''
 
-        #Set the available filetypes to just csv
+        # Set the available filetypes to just csv
         file_type_list = 'csv'
 
-        #Change the filetype into a list if applicable
+        # Change the filetype into a list if applicable
         if type(file_type_list) is not list or tuple:
             file_type_list = [file_type_list]
 
         file_types = list()
 
-        #Will be checked in generate script, not necessary to build net
+        # Will be checked in generate script, not necessary to build net
         for file_type in file_type_list:
             assert file_type in self.VALID_TYPES, '{} is not valid file type.'.format(file_type)
             file_types.append(self.VALID_TYPES[file_type])
 
-        #Set the inital directory to whatever was initally selected by the user
+        # Set the inital directory to whatever was initally selected by the user
         init_dir = os.path.dirname(self.data_path)
 
-        #If the intially selected path is not valid, default to FILE_PATH defined in the construct
+        # If the intially selected path is not valid, default to FILE_PATH defined in the construct
         if not os.path.isdir(init_dir):
             init_dir = self.FILE_PATH
-        old_file = self.data_path
 
-        #Launch the tkinter file browse window with the inital directory
+        # Launch the tkinter file browse window with the inital directory
         file_name = tk.filedialog.askopenfilename(initialdir=init_dir,
                                                            title="Choose File...",
                                                            filetypes=file_types)
 
+        # If no file was selected was selected, skip the following code
         if file_name:
+            # Set the new file selected to the filepath. Clear the entry parameter and insert the new filepath
             self.data_path = file_name
-        else:
-            self.data_path = 'None'
-        
-        self.data_path_entry.delete(0, 'end')
-        self.data_path_entry.insert(10, self.data_path)
+            self.data_path_entry.delete(0, 'end')
+            self.data_path_entry.insert(10, self.data_path)
+
+        # Bring back the properties window to the top
         self.root.lift()
 
     def get_directory(self):
-        old_dir = self.project_dir
-        if self.project_dir:
-            assert os.path.isdir(self.project_dir), '{} is not a valid directory.'.format(self.project_dir)
-            dir_name = tk.filedialog.askdirectory(title="Choose File...", initialdir=self.project_dir)
-        else:
-            dir_name = tk.filedialog.askdirectory(title="Choose File...", initialdir=os.path.realpath('~'))
+        '''
+        This function initializes a browse directory window and lets the user select a directory
+        :return:
+        '''
+
+        # Set the inital directory to the previously stated directory
+        init_dir = self.project_dir
+
+        # If the stated directory is not valid, default to FILE_PATH, declared in the constructor
+        if not os.path.isdir(self.project_dir):
+            init_dir = self.FILE_PATH
+
+        # Launch the tkinter directory browse window with the inital directory
+        dir_name = tk.filedialog.askdirectory(title="Choose File...", initialdir=init_dir)
+
+        # If no directory was selected, skip the following code
         if dir_name:
+            # Set the directory to the directory that was selected. Clear the entry widget and insert the new directory
             self.project_dir = dir_name
-        else:
-            self.project_dir = old_dir
-        self.project_dir_entry.delete(0, 'end')
-        self.project_dir_entry.insert(10, self.project_dir)
+            self.project_dir_entry.delete(0, 'end')
+            self.project_dir_entry.insert(10, self.project_dir)
+
+        # Bring back the properties window to the top
         self.root.lift()
 
     def save_configurations(self):
+        '''
+        This function will pass all the new data back to the box while also performing the majority of the checks on the
+        input values to make sure they are within limits.
+        :return:
+        '''
+
+        # Store the old slot count for resizing effects
         old_count = self.slot_count
+
+        # Store the new canvas name. If it has an invalid character count, cancel the saving process.
         canvas_name = self.canvas_name_entry.get()
         if len(canvas_name)<1 or len(canvas_name)>32:
             self.error_mes.set("Canvas Name should be 1 to 32 char")
             return
         self.canvas_name = canvas_name
 
+        # Store the new canvas name. If it isn't an integer, or is out of range, cancel the saving process
         slot_count = self.slot_count_entry.get()
         if not is_integer(slot_count):
             self.error_mes.set("Number of slots should be an int")
@@ -595,18 +616,18 @@ class CanvasProperties(PropertiesEditor):
             return
         self.slot_count = slot_count
 
+        # Store the new data path. Do not run a check, as the csv limitation may make it difficult to save other properties
         data_path = self.data_path_entry.get()
-        # if not os.path.isfile(data_path):
-        #     self.error_mes.set("Training data does not have valid filepath")
-        #     return
         self.data_path = data_path
 
+        # Store the new project directory. If it isn't a valid path, cancel the saving process.
         project_dir = self.project_dir_entry.get()
         if not os.path.isdir(project_dir):
             self.error_mes.set("Project directory does not have a valid path")
             return
         self.project_dir = project_dir
 
+        # Store the new training size. If it isn't a float, or it is out of range, cancel the saving process.
         training_size = self.training_size_entry.get()
         if not is_float(training_size):
             self.error_mes.set("Training size should be a float")
@@ -616,10 +637,13 @@ class CanvasProperties(PropertiesEditor):
             return
         self.training_size = training_size
 
+        #Store the new optimizer selected
         self.optimizer = self.optimizer_selected.get()
 
+        #Store the new loss selected
         self.loss = self.loss_selected.get()
 
+        # Store the new epochs. If it isn't an integer, or if it is out of range, cancel the saving process.
         epochs = self.epochs_entry.get()
         if not is_integer(epochs):
             self.error_mes.set("Epochs should be an int")
@@ -629,6 +653,7 @@ class CanvasProperties(PropertiesEditor):
             return
         self.epochs = epochs
 
+        # Call the function of the canvas properties box to save all the new values
         self.props.edit_canvas_attributes(new_canvas_name=self.canvas_name,
                                         new_slot_count=self.slot_count,
                                         new_data_path=self.data_path,
@@ -638,6 +663,8 @@ class CanvasProperties(PropertiesEditor):
                                         new_loss=self.loss,
                                         new_epochs=self.epochs,
                                         old_count=old_count)
+
+        #Close the window
         self.root.destroy()
 
 
