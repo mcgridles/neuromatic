@@ -239,7 +239,6 @@ class LayerPropertiesBox(PropertiesBox):
     def on_start(self,event):
         x, y = self.frame.winfo_pointerx(), self.frame.winfo_pointery()
         target = str(event.widget.winfo_containing(x, y))
-        print(target)
         match_target = re.match('\.!frame2\.!frame\.!frame2\.!canvas\.!frame\.!frame(\d{0,2})\.!(label|text|frame)',
                                 target)
         self.slot_number = match_target.group(1)
