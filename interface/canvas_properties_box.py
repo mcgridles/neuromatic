@@ -303,7 +303,7 @@ class LayerPropertiesBox(PropertiesBox):
         elif self.layer_type == 'Hidden':
             return {'type': 'hidden', 'size': self.size, 'activation': self.activation}
         elif self.layer_type == 'Output':
-            return {'type': ' output', 'size': self.size, 'activation': self.activation}
+            return {'type': 'output', 'size': self.size, 'activation': self.activation}
 
     def inherit_layer_type(self, event):
         # Called when button is dropped
