@@ -66,7 +66,7 @@ class OpenPopup(object):
         """
 
         # Only look for the following file types
-        file_types = [('Pickle Files','*.pkl')]
+        file_types = [('Pickle Files', '*.pkl')]
         # The directory to which the filedialog will open by default
         init_dir = os.path.dirname(self.data_path)
 
@@ -111,17 +111,18 @@ class OpenPopup(object):
 
     def start(self):
         """
-
-        :return:
+        Open the popup window.
+        :return: None
         """
         self.root.mainloop()
 
     def set_size(self, width, height):
         """
-        
-        :param width:
-        :param height:
-        :return:
+        Set the size of the window.
+        :param width: int - Width of the window.
+        :param height: int - Height of the window.
+        :return: None
         """
+        # Combine the height and width to single string to be passed to root
         set_str = '{}x{}'.format(str(width), str(height))
         self.root.geometry(set_str)
