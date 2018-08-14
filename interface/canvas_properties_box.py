@@ -68,7 +68,6 @@ class PropertiesBox(object):
         self.frame.grid(row=frame_row, column=frame_col, sticky=sticky)
         self.frame.rowconfigure(1, weight=1)
         self.frame.columnconfigure(0, weight=1)
-        # self.frame.grid_propagate(0)
 
         # Box label attached to the box
         self.box_label = tk.Label(self.frame, text=label_name, font='Helvetica 12 bold')
@@ -79,27 +78,9 @@ class PropertiesBox(object):
         self.prop_box = None
         self.prop_box_text = None
 
-        # self.create_button()
         self.create_text()
 
         self.editor = None
-
-    def create_button(self):
-        self.prop_box_text = tk.StringVar()
-        self.prop_box_text.set('Here I Am')
-        self.prop_box = tk.Button(self.frame, textvariable=self.prop_box_text, command=callback)
-
-        self.prop_box.grid(row=1, column=0, sticky='nsew')
-
-        self.set_button_text()
-
-    def set_button_text(self):
-        new_text = ''
-        for key in self.box_properties:
-            new_text += ('{}:\n'.format(key))
-            new_text += '   {}\n'.format(self.box_properties[key])
-
-        self.prop_box_text.set(new_text)
 
     def create_text(self):
         self.prop_box = tk.Text(self.frame, padx=3, pady=3, width=40)
