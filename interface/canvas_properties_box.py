@@ -38,8 +38,8 @@ def is_float(string_input):
     """
     Simple function that determines if a value in the form of a string is a float or not.
     Used in property editing to determine valid input.
-    Works by trying to convert it to an float using a native conversion function through python, and returning true if it
-    works and false if it doesn't
+    Works by trying to convert it to an float using a native conversion function through python, and returning true if
+    it works and false if it doesn't
     :param string_input:
     :return:
     """
@@ -62,8 +62,10 @@ class PropertiesBox(object):
                  size_y=200,
                  sticky='nsew',
                  logger=None,
-                 main_window=None,
-                 canvas_frame=None):
+                 main_window=None):
+
+        self.log = logger
+        self.main_window = main_window
         self.frame = tk.Frame(root, height=size_y, width=size_x, bg='gray', padx=3, pady=3)
         self.frame.grid(row=frame_row, column=frame_col, sticky=sticky)
         self.frame.rowconfigure(1, weight=1)
@@ -77,26 +79,14 @@ class PropertiesBox(object):
 
         self.prop_box = None
         self.prop_box_text = None
-
-        self.create_text()
-
         self.editor = None
 
-    def create_text(self):
         self.prop_box = tk.Text(self.frame, padx=3, pady=3, width=40)
         self.prop_box.grid(row=1, column=0, sticky='nsew')
 
         self.prop_box.config(state=tk.DISABLED)
         self.prop_box.tag_configure('boldline', font='helvetica 10 bold')
         self.update_text()
-
-        self.frame.bind('<Double-Button-1>', self.update_properties)
-        self.box_label.bind('<Double-Button-1>', self.update_properties)
-        self.prop_box.bind('<Double-Button-1>', self.update_properties)
-
-    def update_properties(self, event):
-        # self.editor = DummyPropertiesEditor(self.frame)
-        pass
 
     def update_text(self):
         self.prop_box.config(state=tk.NORMAL)
@@ -139,12 +129,9 @@ class CanvasPropertiesBox(PropertiesBox):
                                                   sticky=sticky,
                                                   label_name='CanvasPropertiesBox',
                                                   init_properties=DEFAULT_CANVAS_PROPERTIES,
-                                                  logger=None,
-                                                  main_window=None,
-                                                  canvas_frame=None)
+                                                  logger=logger,
+                                                  main_window=main_window)
 
-        self.log = logger
-        self.main_window = main_window
         if canvas_frame:
             self.canvas_frame = canvas_frame
 
@@ -158,8 +145,17 @@ class CanvasPropertiesBox(PropertiesBox):
     def edit_popup(self, event):
         popup = CanvasProperties(self,main_window=self.main_window, logger=self.log,canvas_frame=self.canvas_frame)
 
-    def edit_canvas_attributes(self, new_canvas_name=None, new_slot_count=None, new_data_path=None,
-                               new_project_dir=None, new_training_size=None, new_optimizer=None, new_loss=None, new_epochs=None, old_count=None):
+    def edit_canvas_attributes(self,
+                               new_canvas_name=None,
+                               new_slot_count=None,
+                               new_data_path=None,
+                               new_project_dir=None,
+                               new_training_size=None,
+                               new_optimizer=None,
+                               new_loss=None,
+                               new_epochs=None,
+                               old_count=None):
+
         self.box_properties['canvas_name'] = new_canvas_name
         self.box_properties['component_slots'] = new_slot_count
         self.box_properties['data_path'] = new_data_path
@@ -170,6 +166,7 @@ class CanvasPropertiesBox(PropertiesBox):
         self.box_properties['epochs'] = new_epochs
         self.update_text()
         self.update_slots(old_count)
+        self.log('Updated Canvas Properties')
 
     def update_slots(self, old_count):
         new_count = self.box_properties['component_slots']
@@ -202,15 +199,13 @@ class LayerPropertiesBox(PropertiesBox):
                                                  size_y=size_y,
                                                  sticky=sticky,
                                                  label_name='Empty Layer',
-                                                 init_properties=None ,
-                                                 logger=None,
-                                                 main_window=None)
+                                                 init_properties=None,
+                                                 logger=logger,
+                                                 main_window=main_window)
 
         self.prop_box.bind('<<Inherit>>', self.inherit_layer_type)
         self.box_label.bind('<<Inherit>>', self.inherit_layer_type)
         self.frame.bind('<<Inherit>>', self.inherit_layer_type)
-        self.log = logger
-        self.main_window = main_window
 
         self.layer_type = 'Empty'
         self.size = 1
@@ -221,24 +216,33 @@ class LayerPropertiesBox(PropertiesBox):
         self.box_properties = self.get_slot_attributes_for_text()
         self.update_text()
 
-        self.frame.bind('<Button-1>', self.on_start)
+        # self.frame.bind('<Button-1>', self.on_start)
         self.box_label.bind('<Button-1>', self.on_start)
         self.prop_box.bind('<Button-1>', self.on_start)
 
-        self.frame.configure(cursor='hand2')
+        # self.frame.configure(cursor='hand2')
         self.box_label.configure(cursor='hand2')
         self.prop_box.configure(cursor='hand2')
 
-        self.frame.bind('<B1-Motion>', self.on_drag)
+        # self.frame.bind('<B1-Motion>', self.on_drag)
         self.box_label.bind('<B1-Motion>', self.on_drag)
         self.prop_box.bind('<B1-Motion>', self.on_drag)
 
-        self.frame.bind('<ButtonRelease-1>', self.on_drop)
+        # self.frame.bind('<ButtonRelease-1>', self.on_drop)
         self.box_label.bind('<ButtonRelease-1>', self.on_drop)
         self.prop_box.bind('<ButtonRelease-1>', self.on_drop)
 
+        # Stores Tkinter target object that is clicked during on_start
+        # Used to check if click and release occur on the same object
+        self.slot_number = None
+
     def on_start(self,event):
-        pass
+        x, y = self.frame.winfo_pointerx(), self.frame.winfo_pointery()
+        target = str(event.widget.winfo_containing(x, y))
+        print(target)
+        match_target = re.match('\.!frame2\.!frame\.!frame2\.!canvas\.!frame\.!frame(\d{0,2})\.!(label|text|frame)',
+                                target)
+        self.slot_number = match_target.group(1)
 
     def on_drag(self,event):
         self.frame.configure(cursor='middlebutton')
@@ -254,14 +258,18 @@ class LayerPropertiesBox(PropertiesBox):
         if str(target) == '.!frame2.!frame.!frame3.!label':
             self.log(self.layer_type + ' Layer Deleted')
             self.clear_slot_attributes()
-        elif re.match('\.!frame2\.!frame\.!frame2\.!canvas\.!frame\.!frame\d{0,2}\.!(label|text|frame)', str(target)):
-            if self.layer_type != 'Empty':
+        else:
+            match_str = '\.!frame2\.!frame\.!frame2\.!canvas\.!frame\.!frame{}\.!(label|text|frame)'\
+                .format(self.slot_number)
+            if re.match(match_str, str(target)) and self.layer_type != 'Empty':
                 popup = LayerProperties(self)
 
-    def update_properties(self, event):
-        pass
-
-    def edit_slot_attributes(self, new_layer_type=None, new_size=None, new_activation=None, new_dropout=None, new_layer_dimensions=None):
+    def edit_slot_attributes(self,
+                             new_layer_type=None,
+                             new_size=None,
+                             new_activation=None,
+                             new_dropout=None,
+                             new_layer_dimensions=None):
         if new_layer_type:
             self.layer_type = new_layer_type
         if new_size:
@@ -276,32 +284,32 @@ class LayerPropertiesBox(PropertiesBox):
             self.layer_type = 'Empty'
         self.box_properties = self.get_slot_attributes_for_text()
         self.update_text()
+        self.log('Updated Layer Properties')
 
     def get_slot_attributes_for_text(self):
         if self.layer_type == 'Empty':
             return {}
         elif self.layer_type == 'Dropout':
-            return {'percentage':self.dropout}
+            return {'percentage': self.dropout}
         elif self.layer_type == 'Input':
-            return {'dimensions':self.layer_dimensions}
+            return {'dimensions': self.layer_dimensions}
         else:
-            return {'size':self.size,'activation':self.activation}
-
+            return {'size': self.size, 'activation': self.activation}
 
     def get_attributes(self):
         if self.layer_type == 'Empty':
-            return {'type':'empty'}
+            return {'type': 'empty'}
         elif self.layer_type == 'Dropout':
-            return {'type':'dropout','percentage':self.dropout}
+            return {'type': 'dropout', 'percentage': self.dropout}
         elif self.layer_type == 'Input':
-            return {'type':'input','dimensions':self.layer_dimensions}
+            return {'type': 'input', 'dimensions': self.layer_dimensions}
         elif self.layer_type == 'Hidden':
-            return {'type':'hidden','size':self.size,'activation':self.activation}
+            return {'type': 'hidden', 'size': self.size, 'activation': self.activation}
         elif self.layer_type == 'Output':
-            return {'type':'output','size':self.size,'activation':self.activation}
+            return {'type':' output', 'size': self.size, 'activation': self.activation}
 
     def inherit_layer_type(self, event):
-        #Called when button is dropped
+        # Called when button is dropped
         clt = self.main_window.current_layer_type
         if clt != 'Empty':
             self.layer_type = clt
@@ -314,7 +322,11 @@ class LayerPropertiesBox(PropertiesBox):
     def clear_slot_attributes(self):
         # Set slot attributes to default
         self.box_label.config(text='Empty Layer')
-        self.edit_slot_attributes(new_layer_type='Empty', new_size=1, new_activation='sigmoid', new_dropout=.5, new_layer_dimensions=1)
+        self.edit_slot_attributes(new_layer_type='Empty',
+                                  new_size=1,
+                                  new_activation='sigmoid',
+                                  new_dropout=.5,
+                                  new_layer_dimensions=1)
 
 
 class PropertiesEditor(ABC):
@@ -385,10 +397,10 @@ class PropertiesEditor(ABC):
         pass
 
     def exit(self):
-        '''
+        """
         A common function to unfreeze the canvas window and close the properties editor
         :return:
-        '''
+        """
         self.root.grab_release()
         self.root.destroy()
 
@@ -623,7 +635,8 @@ class CanvasProperties(PropertiesEditor):
             return
         self.slot_count = slot_count
 
-        # Store the new data path. Do not run a check, as the csv limitation may make it difficult to save other properties
+        # Store the new data path. Do not run a check, as the csv limitation
+        # may make it difficult to save other properties
         data_path = self.data_path_entry.get()
         self.data_path = data_path
 
@@ -644,10 +657,10 @@ class CanvasProperties(PropertiesEditor):
             return
         self.training_size = training_size
 
-        #Store the new optimizer selected
+        # Store the new optimizer selected
         self.optimizer = self.optimizer_selected.get()
 
-        #Store the new loss selected
+        # Store the new loss selected
         self.loss = self.loss_selected.get()
 
         # Store the new epochs. If it isn't an integer, or if it is out of range, cancel the saving process.
@@ -662,14 +675,14 @@ class CanvasProperties(PropertiesEditor):
 
         # Call the function of the canvas properties box to save all the new values
         self.props.edit_canvas_attributes(new_canvas_name=self.canvas_name,
-                                        new_slot_count=self.slot_count,
-                                        new_data_path=self.data_path,
-                                        new_project_dir=self.project_dir,
-                                        new_training_size=self.training_size,
-                                        new_optimizer=self.optimizer,
-                                        new_loss=self.loss,
-                                        new_epochs=self.epochs,
-                                        old_count=old_count)
+                                          new_slot_count=self.slot_count,
+                                          new_data_path=self.data_path,
+                                          new_project_dir=self.project_dir,
+                                          new_training_size=self.training_size,
+                                          new_optimizer=self.optimizer,
+                                          new_loss=self.loss,
+                                          new_epochs=self.epochs,
+                                          old_count=old_count)
 
         # Close the window
         self.exit()
@@ -677,11 +690,11 @@ class CanvasProperties(PropertiesEditor):
 
 class LayerProperties(PropertiesEditor):
     def __init__(self, props):
-        '''
+        """
         A child class of Properties Editor for editing layer properties. This builds the widgets related to layer
         properties, including the error notification bar and save and close buttons.
         :param props:
-        '''
+        """
 
         # Retrieve the properties from the layer properties box
         self.layer_type = props.layer_type
@@ -697,19 +710,20 @@ class LayerProperties(PropertiesEditor):
         self.layer_percentage_entry = None
         self.error_entry = None
 
-        # Set the list of available functions for the dropdown options and set a variable to hold the one currently selected
+        # Set the list of available functions for the dropdown options
+        # and set a variable to hold the one currently selected
         self.layer_functions = ['softmax', 'elu', 'selu', 'softplus', 'softsign', 'tanh', 'sigmoid', 'hard_sigmoid',
                                 'linear']
         self.layer_function_selected = tk.StringVar()
 
         # Launch the properties editor constructor
-        super().__init__(props)
+        super(LayerProperties, self).__init__(props)
 
     def add_widgets(self):
-        '''
+        """
         Function that adds all the widgets to the frame
         :return:
-        '''
+        """
 
         # Define a dynamic row which will be pushed down as widgets are added
         widget_row = 0
@@ -723,7 +737,8 @@ class LayerProperties(PropertiesEditor):
             self.layer_size_entry.insert(10, self.size)
             widget_row = widget_row + 1
 
-            # Add the label and dropdown for activation function. Bind the list of available functions and the function selected variable to the dropdown
+            # Add the label and dropdown for activation function. Bind the list of available
+            # functions and the function selected variable to the dropdown
             tk.Label(self.top_frame, text="Activation Function:").grid(row=widget_row, column=0, sticky=tk.E)
             self.layer_function_entry = tk.OptionMenu(self.top_frame, self.layer_function_selected,
                                                       *self.layer_functions)
@@ -763,10 +778,10 @@ class LayerProperties(PropertiesEditor):
                                                                                  sticky=tk.W, pady=3)
 
     def save_configurations(self):
-        '''
+        """
         This function will pass the updated parameters back to the layer properties box and run checks on their validity
         :return:
-        '''
+        """
 
         # Only run this save and check if there is a layer size property
         if self.layer_size_entry:

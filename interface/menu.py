@@ -68,4 +68,4 @@ class Menu(object):
         Open a new browser tab to the most recent version of the README on GitHub.
         :return: None
         """
-        webbrowser.open_new('https://github.com/mcgridles/neuromatic/blob/master/README.md')
+        webbrowser.open_new_tab('https://github.com/mcgridles/neuromatic/blob/master/README.md')
