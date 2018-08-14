@@ -17,6 +17,8 @@ setup(name='neuromatic',
           'scipy',
           'six',
           'pytz',
-          'python-dateutil'
+          'h5py',
+          'pyyaml',
+          'cython'
       ]
      )
