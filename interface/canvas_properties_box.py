@@ -1,7 +1,9 @@
 import tkinter as tk
 import os
+import time
 import re
 from abc import ABC, abstractmethod
+
 
 DEFAULT_CANVAS_NAME = 'new_canvas_{}'.format(1)
 DEFAULT_CANVAS_PROPERTIES = {
@@ -17,14 +19,14 @@ DEFAULT_CANVAS_PROPERTIES = {
 
 
 def is_integer(string_input):
-    '''
+    """
     Simple function that determines if a value in the form of a string is a integer or not.
     Used in property editing to determine valid input.
     Works by trying to convert it to an int using a native conversion function through python, and returning true if it
     works and false if it doesn't
     :param string_input:
     :return:
-    '''
+    """
     try:
         int(string_input)
         return True
@@ -33,21 +35,23 @@ def is_integer(string_input):
 
 
 def is_float(string_input):
-    '''
+    """
     Simple function that determines if a value in the form of a string is a float or not.
     Used in property editing to determine valid input.
     Works by trying to convert it to an float using a native conversion function through python, and returning true if it
     works and false if it doesn't
     :param string_input:
     :return:
-    '''
+    """
     try:
         float(string_input)
         return True
     except ValueError:
         return False
 
+
 class PropertiesBox(object):
+
     def __init__(self,
                  root,
                  label_name,
@@ -198,7 +202,6 @@ class CanvasPropertiesBox(PropertiesBox):
         self.canvas_frame.trigger_configure_event()
 
 
-
 class LayerPropertiesBox(PropertiesBox):
 
     def __init__(self,
@@ -334,16 +337,18 @@ class LayerPropertiesBox(PropertiesBox):
 
 
 class PropertiesEditor(ABC):
+
     def __init__(self, props, logger=None, main_window=None, canvas_frame=None):
-        '''
+        """
         Abstract class to represent a generic property editor popup.
         :param props:
         :param logger:
         :param main_window:
         :param canvas_frame:
-        '''
+        """
 
-        # Constructs props, the dictionary of all the properties, as well as logger, main_window, and canvas_frame for some information relating to the canvas state.
+        # Constructs props, the dictionary of all the properties, as well as logger, main_window, and canvas_frame for
+        # some information relating to the canvas state.
         self.props = props
         self.logger = logger
         self.main_window = main_window
@@ -355,9 +360,7 @@ class PropertiesEditor(ABC):
 
         # Constructs the frame and the window root used
         self.top_frame = None
-        self.root = tk \
-            .Toplevel()
-        self.root.grab_set()
+        self.root = tk.Toplevel()
         self.root.title("Edit Properties")
 
         # Launch the functions to configure the window and frame and add the elements on the window
@@ -365,14 +368,23 @@ class PropertiesEditor(ABC):
         self.add_widgets()
 
         # Launch the abstract base class' constructor
-        super().__init__()
+        super(PropertiesEditor, self).__init__()
+
+        # TopLevel widget needs additional time to start on some machines.
+        # Trying to grab_set before the widget is finished loading causes system failure.
+        for attempt in range(3):
+            try:
+                self.root.grab_set()
+                break
+            except tk.TclError:
+                time.sleep(.1)
 
     def config_frames(self):
-        '''
+        """
         Configure the grid used to place the frame on the window, and create the frame and the grid on the frame used to
         place the elements on the frame
         :return:
-        '''
+        """
         self.root.grid_rowconfigure(1, weight=1)
         self.root.grid_columnconfigure(1, weight=1)
 
@@ -381,14 +393,14 @@ class PropertiesEditor(ABC):
 
     @abstractmethod
     def add_widgets(self):
-        '''
+        """
         Declare an abstract method that will add the widgets to the frame
-        '''
+        """
         pass
 
     @abstractmethod
     def save_configurations(self):
-        '''Declare an abstract method that will save the new properties and close the window'''
+        """Declare an abstract method that will save the new properties and close the window"""
         pass
 
     def exit(self):
@@ -401,15 +413,16 @@ class PropertiesEditor(ABC):
 
 
 class CanvasProperties(PropertiesEditor):
+
     def __init__(self, props, logger=None, main_window=None, canvas_frame=None):
-        '''
+        """
         A child class of Properties Editor for editing canvas properties. This builds the widgets related to canvas
         properties, including the error notfication bar and save and close buttons.
         :param props:
         :param logger:
         :param main_window:
         :param canvas_frame:
-        '''
+        """
 
         # Retrieve the following canvas properties from the class' dictonary passed
         self.canvas_name = props.box_properties['canvas_name']
@@ -431,7 +444,8 @@ class CanvasProperties(PropertiesEditor):
         self.loss_entry = None
         self.epochs_entry = None
 
-        # As optimizer and loss are dropdowns, the available choices must be defined as lists and variables made for the current selection
+        # As optimizer and loss are dropdowns, the available choices must be defined as lists and variables
+        # made for the current selection
         self.optimizers = ['sgd', 'adam', 'adagrad', 'rmsprop', 'adadelta', 'adamax', 'nadam']
         self.optimizer_selected = tk.StringVar()
         self.losses = ['mean_squared_error', 'mean_absolute_error', 'mean_absolute_percentage_error',
@@ -452,35 +466,39 @@ class CanvasProperties(PropertiesEditor):
         }
 
         # Call the constructor of the properties editor class
-        super().__init__(props, logger, main_window, canvas_frame)
+        super(CanvasProperties, self).__init__(props, logger, main_window, canvas_frame)
 
     def add_widgets(self):
-        '''
+        """
         This function adds all the widgets to the frame; the labels, the various entry forms, the error notification,
         and the confirm and close buttons
         :return:
-        '''
+        """
 
-        # Construct the canvas name label and the text entry widget. Insert the current canvas name into the entry widget
+        # Construct the canvas name label and the text entry widget.
+        # Insert the current canvas name into the entry widget
         tk.Label(self.top_frame, text="Canvas Name:").grid(row=0, column=0, sticky=tk.E)
         self.canvas_name_entry = tk.Entry(self.top_frame)
         self.canvas_name_entry.grid(row=0, column=1)
         self.canvas_name_entry.insert(10, self.canvas_name)
 
-        # Construct the component slots label and the text entry widget. Insert the component slot number into the entry widget
+        # Construct the component slots label and the text entry widget.
+        # Insert the component slot number into the entry widget
         tk.Label(self.top_frame, text="Number of Component Slots:").grid(row=1, column=0, sticky=tk.E)
         self.slot_count_entry = tk.Entry(self.top_frame)
         self.slot_count_entry.grid(row=1, column=1)
         self.slot_count_entry.insert(10, self.slot_count)
 
-        # Construct the training data label, the text entry, and the browse button widget. Insert the path into the entry widget
+        # Construct the training data label, the text entry, and the browse button widget.
+        # Insert the path into the entry widget
         tk.Label(self.top_frame, text="Training Data Path:").grid(row=2, column=0, sticky=tk.E)
         self.data_path_entry = tk.Entry(self.top_frame)
         self.data_path_entry.grid(row=2, column=1)
         self.data_path_entry.insert(10, self.data_path)
         tk.Button(self.top_frame, text="Browse...", command=self.get_file).grid(row=2, column=2)
 
-        # Construct the project dir label, the text entry, and the browse button widget, Insert the path into the entry widget
+        # Construct the project dir label, the text entry, and the browse button widget,
+        # Insert the path into the entry widget
         tk.Label(self.top_frame, text="Project Directory:").grid(row=3, column=0, sticky=tk.E)
         self.project_dir_entry = tk.Entry(self.top_frame)
         self.project_dir_entry.grid(row=3, column=1)
@@ -493,22 +511,21 @@ class CanvasProperties(PropertiesEditor):
         self.training_size_entry.grid(row=4, column=1)
         self.training_size_entry.insert(10, self.training_size)
 
-
-        # Construct the optimizer label and the dropdown widget. Give the dropdown the list of options and the variable used to track what is selected.
+        # Construct the optimizer label and the dropdown widget.
+        # Give the dropdown the list of options and the variable used to track what is selected.
         tk.Label(self.top_frame, text="Optimizer:").grid(row=5, column=0, sticky=tk.E)
         self.optimizer_entry = tk.OptionMenu(self.top_frame, self.optimizer_selected,
                                                   *self.optimizers)
         self.optimizer_selected.set(self.optimizer)
         self.optimizer_entry.grid(row=5, column=1)
 
-
-        # Construct the loss label and the dropdown widget. Give the dropdown the list of options and the variable used to track what is selected
+        # Construct the loss label and the dropdown widget.
+        # Give the dropdown the list of options and the variable used to track what is selected
         tk.Label(self.top_frame, text="Loss:").grid(row=6, column=0, sticky=tk.E)
         self.loss_entry = tk.OptionMenu(self.top_frame, self.loss_selected,
                                              *self.losses)
         self.loss_selected.set(self.loss)
         self.loss_entry.grid(row=6, column=1)
-
 
         # Construct the epochs label and entry widget. Set the epochs to the current entry.
         tk.Label(self.top_frame, text="Epochs:").grid(row=7, column=0, sticky=tk.E)
@@ -517,19 +534,24 @@ class CanvasProperties(PropertiesEditor):
         self.epochs_entry.insert(10, self.epochs)
 
         # Construct the error widget with a variable to represent the displayed text
-        self.error_entry = tk.Label(self.top_frame, textvariable=self.error_mes, fg="red").grid(row=8, column=0, sticky=tk.W, columnspan=2)
+        self.error_entry = tk.Label(self.top_frame,
+                                    textvariable=self.error_mes,
+                                    fg="red").grid(row=8, column=0, sticky=tk.W, columnspan=2)
 
-        # Construct the Ok and cancel button. Bind the special save configurations function to the OK, and bind the close function to cancel button
-        tk.Button(self.top_frame, text="OK", command=self.save_configurations).grid(row=8, column=2,
-                                                                                               sticky=tk.E, pady=3)
-        tk.Button(self.top_frame, text="Cancel", command=self.exit).grid(row=8, column=3,
-                                                                                        sticky=tk.W, pady=3)
+        # Construct the Ok and cancel button. Bind the special save configurations function to the OK, and bind the
+        # close function to cancel button
+        tk.Button(self.top_frame,
+                  text="OK",
+                  command=self.save_configurations).grid(row=8, column=2, sticky=tk.E, pady=3)
+        tk.Button(self.top_frame,
+                  text="Cancel",
+                  command=self.exit).grid(row=8, column=3, sticky=tk.W, pady=3)
 
     def get_file(self):
-        '''
+        """
         This function initializes a browse file window and lets the user select a csv file
         :return:
-        '''
+        """
 
         # Set the available filetypes to just csv
         file_type_list = 'csv'
@@ -568,10 +590,10 @@ class CanvasProperties(PropertiesEditor):
         self.root.lift()
 
     def get_directory(self):
-        '''
+        """
         This function initializes a browse directory window and lets the user select a directory
         :return:
-        '''
+        """
 
         # Set the inital directory to the previously stated directory
         init_dir = self.project_dir
@@ -594,11 +616,11 @@ class CanvasProperties(PropertiesEditor):
         self.root.lift()
 
     def save_configurations(self):
-        '''
+        """
         This function will pass all the new data back to the box while also performing the majority of the checks on the
         input values to make sure they are within limits.
         :return:
-        '''
+        """
 
         # Store the old slot count for resizing effects
         old_count = self.slot_count
