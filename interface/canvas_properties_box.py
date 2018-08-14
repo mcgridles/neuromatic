@@ -331,10 +331,10 @@ class PropertiesEditor(ABC):
     def __init__(self, props, logger=None, main_window=None, canvas_frame=None):
         """
         Abstract class to represent a generic property editor popup.
-        :param props:
-        :param logger:
-        :param main_window:
-        :param canvas_frame:
+        :param props: Dict
+        :param logger: Logger
+        :param main_window: TKinter root
+        :param canvas_frame: Tkinter frame
         """
 
         # Constructs props, the dictionary of all the properties, as well as logger, main_window, and canvas_frame for
@@ -373,7 +373,7 @@ class PropertiesEditor(ABC):
         """
         Configure the grid used to place the frame on the window, and create the frame and the grid on the frame used to
         place the elements on the frame
-        :return:
+        :return: None
         """
         self.root.grid_rowconfigure(1, weight=1)
         self.root.grid_columnconfigure(1, weight=1)
@@ -396,7 +396,7 @@ class PropertiesEditor(ABC):
     def exit(self):
         """
         A common function to unfreeze the canvas window and close the properties editor
-        :return:
+        :return: None
         """
         self.root.grab_release()
         self.root.destroy()
@@ -408,10 +408,10 @@ class CanvasProperties(PropertiesEditor):
         """
         A child class of Properties Editor for editing canvas properties. This builds the widgets related to canvas
         properties, including the error notfication bar and save and close buttons.
-        :param props:
-        :param logger:
-        :param main_window:
-        :param canvas_frame:
+        :param props: Dict
+        :param logger: Logger
+        :param main_window: TKinter root
+        :param canvas_frame: Tkinter frame
         """
 
         # Retrieve the following canvas properties from the class' dictonary passed
@@ -462,7 +462,7 @@ class CanvasProperties(PropertiesEditor):
         """
         This function adds all the widgets to the frame; the labels, the various entry forms, the error notification,
         and the confirm and close buttons
-        :return:
+        :return: None
         """
 
         # Construct the canvas name label and the text entry widget.
@@ -538,7 +538,7 @@ class CanvasProperties(PropertiesEditor):
     def get_file(self):
         """
         This function initializes a browse file window and lets the user select a csv file
-        :return:
+        :return: None
         """
 
         # Set the available filetypes to just csv
@@ -578,7 +578,7 @@ class CanvasProperties(PropertiesEditor):
     def get_directory(self):
         """
         This function initializes a browse directory window and lets the user select a directory
-        :return:
+        :return: None
         """
 
         # Set the inital directory to the previously stated directory
@@ -605,7 +605,7 @@ class CanvasProperties(PropertiesEditor):
         """
         This function will pass all the new data back to the box while also performing the majority of the checks on the
         input values to make sure they are within limits.
-        :return:
+        :return: None
         """
 
         # Store the old slot count for resizing effects
@@ -686,7 +686,7 @@ class LayerProperties(PropertiesEditor):
         """
         A child class of Properties Editor for editing layer properties. This builds the widgets related to layer
         properties, including the error notification bar and save and close buttons.
-        :param props:
+        :param props: Dict
         """
 
         # Retrieve the properties from the layer properties box
@@ -715,7 +715,7 @@ class LayerProperties(PropertiesEditor):
     def add_widgets(self):
         """
         Function that adds all the widgets to the frame
-        :return:
+        :return: None
         """
 
         # Define a dynamic row which will be pushed down as widgets are added
@@ -775,7 +775,7 @@ class LayerProperties(PropertiesEditor):
     def save_configurations(self):
         """
         This function will pass the updated parameters back to the layer properties box and run checks on their validity
-        :return:
+        :return: None
         """
 
         # Only run this save and check if there is a layer size property
