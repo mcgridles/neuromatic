@@ -164,7 +164,7 @@ class CanvasFrame(object):
         self.canvas_properties_box.edit_canvas_attributes(new_canvas_name='new_canvas_{}'.format(1),
                                                           new_slot_count=3,
                                                           new_data_path='None',
-                                                          new_project_dir=os.path.dirname(os.path.realpath(__file__)),
+                                                          new_project_dir=os.path.join(os.path.expanduser('~'), 'Desktop'),
                                                           new_training_size=.5,
                                                           new_optimizer='sgd',
                                                           new_loss='mean_squared_error',
