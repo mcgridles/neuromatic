@@ -63,9 +63,25 @@ class PropertiesBox(object):
                  sticky='nsew',
                  logger=None,
                  main_window=None):
+        """
+        This is the parent class for the layer and canvas properties boxes
+        :param root: tkinter.Widget - Widget that encapsulates this class's widgets.
+        :param label_name: string - The default name of the box
+        :param init_properties: dictionary - The default values of the boxes properties
+        :param frame_row: int - The row of the grid the box frame will occupy
+        :param frame_row: int - The column of the grid the box frame will occupy
+        :param size_x: int - The default frame width of the box
+        :param size_y: int - The default frame height of the box
+        :param sticky: str - The sides to which the CanvasFrame will adhere and expand
+        :param logger: function - Function for passing strings to the status box.
+        :param main_window: tkinter.Tk - main_window instance used for tracking canvas design data
+        """
 
+        # Make main_window and logger accessable to all widgets/functions
         self.log = logger
         self.main_window = main_window
+
+        # Create the canvas properties box frame
         self.frame = tk.Frame(root, height=size_y, width=size_x, bg='gray', padx=3, pady=3)
         self.frame.grid(row=frame_row, column=frame_col, sticky=sticky)
         self.frame.rowconfigure(1, weight=1)
@@ -75,28 +91,31 @@ class PropertiesBox(object):
         self.box_label = tk.Label(self.frame, text=label_name, font='Helvetica 12 bold')
         self.box_label.grid(row=0, column=0, sticky='ew')
 
+        # Initialize the default project properties
         self.box_properties = init_properties
 
-        self.prop_box = None
-        self.prop_box_text = None
-        self.editor = None
-
+        # Create text box for information
         self.prop_box = tk.Text(self.frame, padx=3, pady=3, width=40)
         self.prop_box.grid(row=1, column=0, sticky='nsew')
-
         self.prop_box.config(state=tk.DISABLED)
         self.prop_box.tag_configure('boldline', font='helvetica 10 bold')
         self.update_text()
 
     def update_text(self):
+        """
+        Updates the text in the property boxes text box to reflect changes in self.box_properties
+        :return: None
+        """
+
+        # Erase previous text
         self.prop_box.config(state=tk.NORMAL)
         self.prop_box.delete('1.0', tk.END)
 
+        # Format box properties to be displayed in the text box
         if self.box_properties:
             for key in self.box_properties:
                 self.prop_box.insert(tk.END, '{}:\n'.format(key), 'boldline')
                 self.prop_box.insert(tk.END, '   {}\n'.format(self.box_properties[key]))
-
         else:
             pass
 
@@ -105,6 +124,10 @@ class PropertiesBox(object):
         self.prop_box.config(height=int(lines)-1)
 
     def get_properties(self):
+        """
+        Returns the boxes current properties
+        :return: box_properties: dict - Dictionary of box attributes
+        """
         return self.box_properties
 
 
@@ -120,6 +143,19 @@ class CanvasPropertiesBox(PropertiesBox):
                  logger=None,
                  main_window=None,
                  canvas_frame=None):
+        """
+        Child class of PropertiesBox. Used for canvas properties.
+        :param root: tkinter.Widget - Widget that encapsulates this class's widgets.
+        :param label_name: string - The default name of the box
+        :param init_properties: dictionary - The default values of the boxes properties
+        :param frame_row: int - The row of the grid the box frame will occupy
+        :param frame_row: int - The column of the grid the box frame will occupy
+        :param size_x: int - The default frame width of the box
+        :param size_y: int - The default frame height of the box
+        :param sticky: str - The sides to which the CanvasFrame will adhere and expand
+        :param logger: function - Function for passing strings to the status box.
+        :param main_window: tkinter.Tk - main_window instance used for tracking canvas design data
+        """
 
         super(CanvasPropertiesBox, self).__init__(root,
                                                   frame_row=frame_row,
@@ -132,17 +168,26 @@ class CanvasPropertiesBox(PropertiesBox):
                                                   logger=logger,
                                                   main_window=main_window)
 
+        # Save canvas frame to abstract its properties for property changes
         if canvas_frame:
             self.canvas_frame = canvas_frame
 
+        # Bind button click event to edit popup
         self.frame.bind('<Button-1>', self.edit_popup)
         self.box_label.bind('<Button-1>', self.edit_popup)
         self.prop_box.bind('<Button-1>', self.edit_popup)
+
+        #Modify the cursor image above box
         self.frame.configure(cursor='hand2')
         self.box_label.configure(cursor='hand2')
         self.prop_box.configure(cursor='hand2')
 
     def edit_popup(self, event):
+        """
+        Instantiates CanvasProperties popup which edits the canvas properties box attributes
+        :param event: Tkinter.target - A Tkinter variable that represents a user's interaction with the GUI.
+        :return: None
+        """
         popup = CanvasProperties(self, main_window=self.main_window, logger=self.log, canvas_frame=self.canvas_frame)
 
     def edit_canvas_attributes(self,
@@ -155,6 +200,19 @@ class CanvasPropertiesBox(PropertiesBox):
                                new_loss=None,
                                new_epochs=None,
                                old_count=None):
+        """
+        Updates the the box_properties to the input values
+        :param new_canvas_name: string - The desired updated value of canvas_name
+        :param new_slot_count: int - The desired updated value of component_slots
+        :param new_data_path: string - The desired updated value of data_path
+        :param new_project_dir: string - The desired updated value of project_directory
+        :param new_training_size: int - The desired updated value of training_size
+        :param new_optimizer: string - The desired updated value of optimizer
+        :param new_loss: string - The desired updated value of loss
+        :param new_epochs: int - The desired updated value of epochs
+        :param old_count: int - The previous number of slots on the canvas
+        :return: None
+        """
 
         self.box_properties['canvas_name'] = new_canvas_name
         self.box_properties['component_slots'] = new_slot_count
@@ -168,6 +226,13 @@ class CanvasPropertiesBox(PropertiesBox):
         self.update_slots(old_count)
 
     def update_slots(self, old_count):
+        """
+        Updates the number of displayed slots on the GUI
+        :param old_count: int - The previous number of slots on the canvas
+        :return: None
+        """
+
+        # Add or remove slots to the canvas based on previous and new component_slots
         new_count = self.box_properties['component_slots']
         if int(old_count) > int(new_count):
             for x in range(0, int(old_count)-int(new_count)):
@@ -175,7 +240,6 @@ class CanvasPropertiesBox(PropertiesBox):
         elif int(old_count) < int(new_count):
             for x in range(0, int(new_count)-int(old_count)):
                 self.canvas_frame.add_slot()
-
         self.canvas_frame.trigger_configure_event()
 
 
@@ -190,6 +254,19 @@ class LayerPropertiesBox(PropertiesBox):
                  sticky='nsew',
                  logger=None,
                  main_window=None):
+        """
+        Child class of PropertiesBox. Used for slot properties.
+        :param root: tkinter.Widget - Widget that encapsulates this class's widgets.
+        :param label_name: string - The default name of the box
+        :param init_properties: dictionary - The default values of the boxes properties
+        :param frame_row: int - The row of the grid the box frame will occupy
+        :param frame_row: int - The column of the grid the box frame will occupy
+        :param size_x: int - The default frame width of the box
+        :param size_y: int - The default frame height of the box
+        :param sticky: str - The sides to which the CanvasFrame will adhere and expand
+        :param logger: function - Function for passing strings to the status box.
+        :param main_window: tkinter.Tk - main_window instance used for tracking canvas design data
+        """
 
         super(LayerPropertiesBox, self).__init__(root,
                                                  frame_row=frame_row,
@@ -206,36 +283,37 @@ class LayerPropertiesBox(PropertiesBox):
         self.box_label.bind('<<Inherit>>', self.inherit_layer_type)
         self.frame.bind('<<Inherit>>', self.inherit_layer_type)
 
+        # Initialize default properties
         self.layer_type = 'Empty'
         self.size = 1
         self.activation = 'sigmoid'
         self.dropout = .5
         self.layer_dimensions = 1
-
         self.box_properties = self.get_slot_attributes_for_text()
         self.update_text()
 
-        # self.frame.bind('<Button-1>', self.on_start)
+        # Bind function call to button press, drag, and release
         self.box_label.bind('<Button-1>', self.on_start)
         self.prop_box.bind('<Button-1>', self.on_start)
-
-        # self.frame.configure(cursor='hand2')
-        self.box_label.configure(cursor='hand2')
-        self.prop_box.configure(cursor='hand2')
-
-        # self.frame.bind('<B1-Motion>', self.on_drag)
         self.box_label.bind('<B1-Motion>', self.on_drag)
         self.prop_box.bind('<B1-Motion>', self.on_drag)
-
-        # self.frame.bind('<ButtonRelease-1>', self.on_drop)
         self.box_label.bind('<ButtonRelease-1>', self.on_drop)
         self.prop_box.bind('<ButtonRelease-1>', self.on_drop)
+
+        # Change the cursor image when above slot
+        self.box_label.configure(cursor='hand2')
+        self.prop_box.configure(cursor='hand2')
 
         # Stores Tkinter target object that is clicked during on_start
         # Used to check if click and release occur on the same object
         self.slot_number = None
 
     def on_start(self, event):
+        """
+        Determine which slot was selected from the button click event
+        :param event: Tkinter.target - A Tkinter variable that represents a user's interaction with the GUI.
+        :return: None
+        """
         x, y = self.frame.winfo_pointerx(), self.frame.winfo_pointery()
         target = str(event.widget.winfo_containing(x, y))
         match_target = re.match('\.!frame2\.!frame\.!frame2\.!canvas\.!frame\.!frame(\d{0,2})\.!(label|text|frame)',
@@ -243,16 +321,32 @@ class LayerPropertiesBox(PropertiesBox):
         self.slot_number = match_target.group(1)
 
     def on_drag(self, event):
+        """
+        Change the cursor image when the slot is dragged
+        :param event: Tkinter.target - A Tkinter variable that represents a user's interaction with the GUI.
+        :return: None
+        """
         self.frame.configure(cursor='middlebutton')
         self.box_label.configure(cursor='middlebutton')
         self.prop_box.configure(cursor='middlebutton')
 
     def on_drop(self, event):
+        """
+        Determines if a slot was clicked or dragged to the trash icon
+        :param event: Tkinter.target - A Tkinter variable that represents a user's interaction with the GUI.
+        :return: None
+        """
+
+        # Reset cursor image
         self.frame.configure(cursor='hand2')
         self.box_label.configure(cursor='hand2')
         self.prop_box.configure(cursor='hand2')
+
+        # Get the widget the mouse was released on
         x, y = self.frame.winfo_pointerx(), self.frame.winfo_pointery()
         target = event.widget.winfo_containing(x, y)
+
+        # Reset slot to default if dropped on trash icon. Else open slot editor popup
         if str(target) == '.!frame2.!frame.!frame3.!label':
             self.log(self.layer_type + ' Layer Deleted')
             self.clear_slot_attributes()
@@ -268,6 +362,17 @@ class LayerPropertiesBox(PropertiesBox):
                              new_activation=None,
                              new_dropout=None,
                              new_layer_dimensions=None):
+        """
+        Updates the the box_properties to the input values
+        :param new_layer_type: string - The desired updated value of layer_type
+        :param new_size: int - The desired updated value of size
+        :param new_activation: string - The desired updated value of activation
+        :param new_dropout: float - The desired updated value of dropout
+        :param new_layer_dimensions: int - The desired updated value of layer_dimensions
+        :return: None
+        """
+
+        # Update box properties
         if new_layer_type:
             self.layer_type = new_layer_type
         if new_size:
@@ -284,6 +389,10 @@ class LayerPropertiesBox(PropertiesBox):
         self.update_text()
 
     def get_slot_attributes_for_text(self):
+        """
+        Returns the current slots attributes which will be displayed on the gui
+        :return: dictionary
+        """
         if self.layer_type == 'Empty':
             return {}
         elif self.layer_type == 'Dropout':
@@ -294,6 +403,10 @@ class LayerPropertiesBox(PropertiesBox):
             return {'size': self.size, 'activation': self.activation}
 
     def get_attributes(self):
+        """
+        Returns the current slots attributes to be used by the back end
+        :return: dictionary
+        """
         if self.layer_type == 'Empty':
             return {'type': 'empty'}
         elif self.layer_type == 'Dropout':
@@ -306,8 +419,16 @@ class LayerPropertiesBox(PropertiesBox):
             return {'type': 'output', 'size': self.size, 'activation': self.activation}
 
     def inherit_layer_type(self, event):
-        # Called when button is dropped
+        """
+        Changes the current slots attributes to those of the current layer type held by canvas frame
+        :param event: Tkinter.target - A Tkinter variable that represents a user's interaction with the GUI.
+        :return: None
+        """
+
+        # Get the layer type of the button being dragged
         clt = self.main_window.current_layer_type
+
+        # Update slot attributes
         if clt != 'Empty':
             self.layer_type = clt
             self.log(clt + ' Layer Added')
@@ -317,7 +438,10 @@ class LayerPropertiesBox(PropertiesBox):
             self.update_text()
 
     def clear_slot_attributes(self):
-        # Set slot attributes to default
+        """
+        Sets all slot parameters to default
+        :return: None
+        """
         self.box_label.config(text='Empty Layer')
         self.edit_slot_attributes(new_layer_type='Empty',
                                   new_size=1,

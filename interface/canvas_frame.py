@@ -28,39 +28,50 @@ class CanvasFrame(object):
         :param logger: function - Function for passing strings to the status box.
         :param main_window: tkinter.Tk - main_window instance used for tracking canvas design data
         """
-
+        # Initialize the 4 main canvas properties
         self.canvas_properties_box = None
         self.trash_icon = None
         self.h_scroll = None
         self.slots = list()
 
+        # Make main_window and logger accessable to all widgets/functions
         self.log = logger
         self.main_window = main_window
 
+        # Create the frame for the canvas
         self.main_frame = tk.Frame(root, height=height, width=width, padx=3, pady=3, bg='white')
         self.main_frame.grid(row=assigned_row, column=assigned_col, sticky=sticky)
         self.main_frame.grid_rowconfigure(1, weight=1)
         self.main_frame.grid_columnconfigure(0, weight=1)
 
+        # Create the frame partition for the top of the canvas
         self.top_frame = tk.Frame(self.main_frame, height=200, width=200)
         self.top_frame.grid(row=0, column=0, sticky='nsew')
+
+        # Create the frame partition for the middle of the canvas
         self.mid_frame = tk.Frame(self.main_frame)
         self.mid_frame.grid(row=1, column=0, sticky='nsew')
         self.mid_frame.grid_rowconfigure(0, weight=1)
         self.mid_frame.grid_columnconfigure(0, weight=1)
+
+        # Create the frame partition for the bottom of the canvas
         self.bottom_frame = tk.Frame(self.main_frame, height=40, width=200)
         self.bottom_frame.grid(row=2, column=0, sticky='nsew')
 
+        # Make the middle/slot partition a canvas
         self.canvas = tk.Canvas(self.mid_frame)
         self.canvas.grid(row=0, column=0, sticky='nsew')
 
+        # Add a scroll bar to control the slot slide
         self.h_scroll = tk.Scrollbar(self.main_frame, orient=tk.HORIZONTAL, command=self.canvas.xview)
         self.h_scroll.grid(row=3, column=0, sticky='ew')
 
+        # Make the canvas scollable
         self.canvas.config(xscrollcommand=self.h_scroll.set)
         self.canvas.grid_rowconfigure(0, weight=1)
         self.canvas.grid_columnconfigure(0, weight=1)
 
+        # Make a scrollable frame
         self.scrollable_frame = tk.Frame(self.canvas, padx=3, pady=3)
         self.scrollable_frame.rowconfigure(1, weight=1)
         self.scrollable_frame.rowconfigure(3, weight=1)

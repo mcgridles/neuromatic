@@ -26,6 +26,7 @@ class StatusBox(object):
         self.h_scroll.grid(row=2, column=0, sticky='ew')
         self.h_scroll.config(command=self.text.xview)
         self.text.config(xscrollcommand=self.h_scroll.set)
+        self.add_text('Welcome to Neuromatic\n')
 
     def add_text(self, text):
         """
