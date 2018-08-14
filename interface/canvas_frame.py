@@ -75,7 +75,6 @@ class CanvasFrame(object):
         self.scrollable_frame.event_generate('<Configure>', when='tail')
 
     def _resize_frame(self, event):
-        # print('resize')
         new_canvas_width = event.width
         new_canvas_height = event.height
 
@@ -96,7 +95,6 @@ class CanvasFrame(object):
         self.canvas.itemconfig(self.canvas_frame, height=set_height, width=set_width)
 
     def _on_frame_configure(self, event):
-        # print('config')
         self.canvas.configure(scrollregion=self.canvas.bbox('all'), width=200, height=200)
 
     def init_default_canvas(self):
