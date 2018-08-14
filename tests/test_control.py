@@ -43,7 +43,7 @@ class TestControl(unittest.TestCase):
         # Assert
         self.assertEqual(mock_open.call_args, mock.call('/path/to/directory/neuromatic_network.py', 'w'))
         self.assertEqual(mock_open.return_value.__enter__.return_value.write.call_count, 23)
-        self.assertEquals(log.output, ['INFO:control:Generating network...', 'INFO:control:Network generated'])
+        self.assertEquals(log.output, ['INFO:control:\nGenerating network...', 'INFO:control:Network generated'])
 
     @mock.patch('backend.control.os')
     def test_set_properties_success(self, mock_os):
@@ -63,15 +63,17 @@ class TestControl(unittest.TestCase):
             'layers': [
                 {
                     'type': 'input',
-                    'size': 10,
-                    'activation': 'sigmoid',
                     'dimensions': 784
                 },
                 {
                     'type': 'hidden',
-                    'size': 10,
+                    'size': 100,
                     'activation': 'sigmoid',
-                    'dimensions': 784
+                },
+                {
+                    'type': 'output',
+                    'size': 10,
+                    'activation': 'softmax',
                 }
             ]
         }
@@ -83,159 +85,9 @@ class TestControl(unittest.TestCase):
 
         # Assert
         self.assertEqual(self.controller.canvas_properties, properties)
-        self.assertEqual(len(self.controller.layers), 2)
+        self.assertEqual(len(self.controller.layers), 3)
         self.assertTrue(self.controller.can_generate)
         self.assertTrue(self.controller.can_train)
-
-    @mock.patch('backend.control.os')
-    def test_set_properties_project_directory_is_file(self, mock_os):
-        # Arrange
-        mock_os.path.isfile.side_effect = [True, True]
-        mock_os.path.isdir.return_value = True
-        mock_os.path.dirname.return_value = '/path/to'
-        mock_os.path.splitext.return_value = ['filename', '.csv']
-        properties = {
-            'canvas_name': 'neuromatic',
-            'project_directory': '/path/to/directory',
-            'data_path': '/path/to/file.csv',
-            'training_size': 0.8,
-            'optimizer': 'sgd',
-            'loss': 'categorical_crossentropy',
-            'metrics': ['accuracy'],
-            'epochs': 5,
-            'layers': [
-                {
-                    'type': 'input',
-                    'size': 10,
-                    'activation': 'sigmoid',
-                    'batch_size': 100,
-                    'input_dim': 784
-                }
-            ]
-        }
-
-        # Act
-        with self.assertLogs('control', level='DEBUG') as log:
-            self.controller.set_properties(properties)
-
-        # Assert
-        self.assertEqual(self.controller.canvas_properties['project_directory'], '/path/to')
-        self.assertTrue(self.controller.can_generate)
-        self.assertTrue(self.controller.can_train)
-        self.assertEqual(log.output, ['DEBUG:control:Setting output path to /path/to'])
-
-    @mock.patch('backend.control.os')
-    def test_set_properties_project_directory_does_not_exist(self, mock_os):
-        # Arrange
-        mock_os.path.isfile.side_effect = [False, True]
-        mock_os.path.isdir.return_value = False
-        mock_os.path.splitext.return_value = ['filename', '.csv']
-        mock_os.makedirs.return_value = True
-        properties = {
-            'canvas_name': 'neuromatic',
-            'project_directory': '/path/to/directory',
-            'data_path': '/path/to/file.csv',
-            'training_size': 0.8,
-            'optimizer': 'sgd',
-            'loss': 'categorical_crossentropy',
-            'metrics': ['accuracy'],
-            'epochs': 5,
-            'layers': [
-                {
-                    'type': 'input',
-                    'size': 10,
-                    'activation': 'sigmoid',
-                    'batch_size': 100,
-                    'input_dim': 784
-                }
-            ]
-        }
-
-        # Act
-        with self.assertLogs('control', level='DEBUG') as log:
-            self.controller.set_properties(properties)
-
-        # Assert
-        self.assertEquals(mock_os.makedirs.call_args, mock.call('/path/to/directory'))
-        self.assertEqual(len(self.controller.layers), 1)
-        self.assertTrue(self.controller.can_generate)
-        self.assertEqual(log.output, [
-            'DEBUG:control:Creating /path/to/directory',
-        ])
-
-    @mock.patch('backend.control.os')
-    def test_set_properties_training_file_does_not_exist(self, mock_os):
-        # Arrange
-        mock_os.path.isfile.side_effect = [False, False]
-        mock_os.path.isdir.return_value = True
-        mock_os.path.splitext.return_value = ['filename', '.csv']
-        properties = {
-            'canvas_name': 'neuromatic',
-            'project_directory': '/path/to/directory',
-            'data_path': '/path/to/file.csv',
-            'training_size': 0.8,
-            'optimizer': 'sgd',
-            'loss': 'categorical_crossentropy',
-            'metrics': ['accuracy'],
-            'epochs': 5,
-            'layers': [
-                {
-                    'type': 'input',
-                    'size': 10,
-                    'activation': 'sigmoid',
-                    'batch_size': 100,
-                    'input_dim': 784
-                }
-            ]
-        }
-
-        # Act
-        with self.assertLogs('control', level='DEBUG') as log:
-            self.controller.set_properties(properties)
-
-        # Assert
-        self.assertTrue(self.controller.can_generate)
-        self.assertFalse(self.controller.can_train)
-        self.assertEqual(log.output, [
-            'ERROR:control:/path/to/file.csv is not a file',
-        ])
-
-    @mock.patch('backend.control.os')
-    def test_set_properties_wrong_training_file_type(self, mock_os):
-        # Arrange
-        mock_os.path.isfile.side_effect = [False, True]
-        mock_os.path.isdir.return_value = True
-        mock_os.path.splitext.return_value = ['filename', '.xls']
-        properties = {
-            'canvas_name': 'neuromatic',
-            'project_directory': '/path/to/directory',
-            'data_path': '/path/to/file.xls',
-            'training_size': 0.8,
-            'optimizer': 'sgd',
-            'loss': 'categorical_crossentropy',
-            'metrics': ['accuracy'],
-            'epochs': 5,
-            'layers': [
-                {
-                    'type': 'input',
-                    'size': 10,
-                    'activation': 'sigmoid',
-                    'batch_size': 100,
-                    'input_dim': 784
-                }
-            ]
-        }
-
-        # Act
-        with self.assertLogs('control', level='DEBUG') as log:
-            self.controller.set_properties(properties)
-
-        # Assert
-        self.assertTrue(self.controller.can_generate)
-        self.assertFalse(self.controller.can_train)
-        self.assertEqual(log.output, [
-            'ERROR:control:Invalid data file type',
-        ])
 
     @mock.patch('backend.control.os')
     def test_set_properties_invalid_layer(self, mock_os):
@@ -273,6 +125,7 @@ class TestControl(unittest.TestCase):
         self.assertTrue(self.controller.can_train)
         self.assertEqual(log.output, [
             'DEBUG:control:Invalid layer type: bad_layer',
+            'DEBUG:control:Not enough layers'
         ])
 
     @mock.patch('backend.control.os')
@@ -307,6 +160,7 @@ class TestControl(unittest.TestCase):
         self.assertTrue(self.controller.can_train)
         self.assertEqual(log.output, [
             'DEBUG:control:Ignoring empty layer',
+            'DEBUG:control:Not enough layers'
         ])
 
     @mock.patch('backend.control.os')
@@ -323,17 +177,17 @@ class TestControl(unittest.TestCase):
             'layers': [
                 {
                     'type': 'input',
-                    'size': 10,
-                    'activation': 'sigmoid',
-                    'batch_size': 100,
-                    'input_dim': 784
+                    'dimensions': 784
                 },
                 {
                     'type': 'hidden',
-                    'size': 10,
+                    'size': 100,
                     'activation': 'sigmoid',
-                    'batch_size': 100,
-                    'input_dim': 784
+                },
+                {
+                    'type': 'output',
+                    'size': 10,
+                    'activation': 'softmax',
                 }
             ]
         }
@@ -350,6 +204,50 @@ class TestControl(unittest.TestCase):
         self.assertEqual(self.controller.canvas_properties['epochs'], '1')
         self.assertTrue(self.controller.can_generate)
         self.assertTrue(self.controller.can_train)
+
+    @mock.patch('backend.control.os')
+    def test_set_properties_invalid_data_file(self, mock_os):
+        # Arrange
+        mock_os.path.isfile.side_effect = [False, True]
+        mock_os.path.isdir.return_value = True
+        mock_os.path.splitext.return_value = ['file', '.xls']
+        properties = {
+            'canvas_name': 'neuromatic',
+            'project_directory': '/path/to/directory',
+            'data_path': '/path/to/file.xls',
+            'training_size': 0.8,
+            'optimizer': 'sgd',
+            'loss': 'categorical_crossentropy',
+            'metrics': ['accuracy'],
+            'epochs': 5,
+            'layers': [
+                {
+                    'type': 'input',
+                    'dimensions': 784
+                },
+                {
+                    'type': 'hidden',
+                    'size': 100,
+                    'activation': 'sigmoid',
+                },
+                {
+                    'type': 'output',
+                    'size': 10,
+                    'activation': 'softmax',
+                }
+            ]
+        }
+
+        # Act
+        with self.assertLogs('control', level='DEBUG') as log:
+            self.controller.set_properties(properties)
+
+        # Assert
+        self.assertEqual(self.controller.canvas_properties, properties)
+        self.assertEqual(len(self.controller.layers), 3)
+        self.assertTrue(self.controller.can_generate)
+        self.assertFalse(self.controller.can_train)
+        self.assertEqual(log.output, ['ERROR:control:Invalid data file type'])
 
     def test_sanitize_input(self):
         # Arrange

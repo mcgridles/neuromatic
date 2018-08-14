@@ -134,27 +134,13 @@ class Control(object):
         """
         # Sanitize potentially dangerous inputs
         properties['canvas_name'] = self.sanitize_input(properties['canvas_name'])
-        properties['project_directory'] = self.sanitize_input(properties['project_directory'])
-        properties['data_path'] = self.sanitize_input(properties['data_path'])
 
         self.canvas_properties = properties
         self.layers = []
         self.__can_generate = True
         self.__can_train = True
 
-        # Check properties
-        # TODO figure out which checks are already covered by the GUI
-        # TODO add more checks
-        if os.path.isfile(self.canvas_properties['project_directory']):
-            self.canvas_properties['project_directory'] = os.path.dirname(self.canvas_properties['project_directory'])
-            self.__log_status('Setting output path to {0}'.format(self.canvas_properties['project_directory']), 'debug', suppress=True)
-        if not os.path.isdir(self.canvas_properties['project_directory']):
-            self.__log_status('Creating {0}'.format(self.canvas_properties['project_directory']), 'debug', suppress=True)
-            os.makedirs(self.canvas_properties['project_directory'])
-        if not os.path.isfile(self.canvas_properties['data_path']):
-            self.__log_status('{0} is not a file'.format(self.canvas_properties['data_path']), 'error')
-            self.__can_train = False
-        if os.path.splitext(self.canvas_properties['data_path'])[1] != '.csv':
+        if 'csv' not in os.path.splitext(self.canvas_properties['data_path'])[1]:
             self.__log_status('Invalid data file type', 'error')
             self.__can_train = False
 
@@ -187,7 +173,8 @@ class Control(object):
             new_layer = self.LAYER_TYPES[layer_type](layer_properties)
             self.layers.append(new_layer)
 
-        if not self.layers:
+        if len(self.layers) < 3:
+            self.__log_status('Not enough layers', 'debug', suppress=True)
             self.__can_generate = False
         elif type(self.layers[0]) != layers.InputLayer:
             self.__log_status('Invalid network configuration: network must start with input Layer', 'error')
@@ -198,9 +185,9 @@ class Control(object):
         Write the Python file containing the Keras neural network
         """
         if not self.__can_generate:
-            self.__log_status('Generation error.', 'error')
+            self.__log_status('Generation error', 'error')
             return
-        self.__log_status('Generating network...', 'info')
+        self.__log_status('\nGenerating network...', 'info')
 
         file_name = os.path.join(self.canvas_properties['project_directory'],
                                  '{0}_network.py'.format(self.canvas_properties['canvas_name']))
@@ -208,16 +195,16 @@ class Control(object):
             # Imports
             fd.write('import h5py\n')
             fd.write('from keras.models import Sequential\n')
-            fd.write('from keras.layers import Input, Dense, Dropout\n')
+            fd.write('from keras.layers import InputLayer, Dense, Dropout\n')
             fd.write('from keras.utils import to_categorical\n\n')
 
             fd.write('def train_neural_network(X_train, y_train, X_test, y_test):\n')
 
             # Model creation and adding layers
-            fd.write('\tmodel = Sequential()\n\n')
+            fd.write('\tmodel = Sequential([\n')
             for layer in self.layers:
                 layer.write_lines(fd)
-            fd.write('\n')
+            fd.write('\t])\n\n')
 
             # Model compilation and training
             fd.write('\tmodel.compile(optimizer=\'{0}\', '.format(self.canvas_properties['optimizer']))
@@ -225,7 +212,7 @@ class Control(object):
             fd.write('metrics=[')
             for metric in self.canvas_properties['metrics']:
                 fd.write('\'{0}\','.format(metric))
-            fd.write('])\n\n')
+            fd.write('\t])\n\n')
 
             if self.canvas_properties['loss'] != 'sparse_categorical_crossentropy':
                 fd.write('\ty_train = to_categorical(y_train)\n')
@@ -258,7 +245,7 @@ class Control(object):
         try:
             from backend import network
         except ImportError:
-            connection.send('Cannot train without a model\n')
+            connection.send('Cannot train without a network\n')
             return
 
         # Read in training data
@@ -271,15 +258,18 @@ class Control(object):
                                                             train_size=float(self.canvas_properties['training_size']),
                                                             shuffle=True)
 
-        connection.send('Training network...\n')
-        score = network.train_neural_network(X_train, y_train, X_test, y_test)
+        try:
+            connection.send('Training network...\n')
+            score = network.train_neural_network(X_train, y_train, X_test, y_test)
 
-        # Test network
-        connection.send('Network trained\n\n')
-        connection.send('Model accuracy: {0}\n'.format(round(score, 3)))
+            # Test network
+            connection.send('Network trained\n\n')
+            connection.send('Model accuracy: {0}\n'.format(round(score, 3)))
+        except (ValueError, AttributeError) as error:
+            connection.send('An error occurred while training:\n')
+            connection.send(str(error))
+
         connection.close()
-
-        return score
 
     def train_in_new_thread(self):
         """
@@ -291,7 +281,7 @@ class Control(object):
             return
 
         if not self.__training_process.is_alive():
-            self.__log_status('Starting training process', 'debug')
+            self.__log_status('\nStarting training process', 'debug')
             try:
                 # Create a new process if one has already been run
                 self.__training_process.join()
@@ -307,7 +297,7 @@ class Control(object):
         """
         if self.__training_process.is_alive():
             # Terminate process and create a new one
-            self.__log_status('Training canceled\n\n', 'debug')
+            self.__log_status('Training canceled\n', 'debug')
             self.__training_process.terminate()
             self.__create_new_process()
 
@@ -315,7 +305,7 @@ class Control(object):
         """
         Create a new training process to replace one that have already been used
         """
-        self.__log_status('Creating new process.', 'debug', suppress=True)
+        self.__log_status('Creating new process', 'debug', suppress=True)
         self.parent_conn, child_conn = multiprocessing.Pipe()
         self.__training_process = ControlProcess(target=self.__train_network, args=(child_conn,))
 

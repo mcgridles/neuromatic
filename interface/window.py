@@ -243,7 +243,7 @@ class Window(object):
 
         self.create_new_canvas = lambda: (
             self.canvas.clear_canvas(),
-            self.log("Creating New Canvas"),
+            self.log("New canvas created"),
             self.status_box.clear()
         )
 
@@ -258,7 +258,7 @@ class Window(object):
         )
 
         self.clear_canvas = lambda: (
-            self.log('Clearing Slots'),
+            self.log('Slots cleared'),
             self.canvas.clear_slots(),
         )
 
