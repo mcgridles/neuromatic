@@ -51,6 +51,17 @@ class LayerButton(GenericButton):
                  sticky='nsew',
                  logger=None,
                  main_window=None):
+        """
+        The LayerButton adds the drag and drop methods to the GenericButton.
+        :param root: Tkinter.Widget - The Tkinter parent widget in which this class is encapsulated.
+        :param button_label: str - The string displayed on the button.
+        :param passed_function: function - The function executed on the button click.
+        :param assigned_row: int - The row on which the button will exist on root.
+        :param assigned_col: int - The column on which the button will exist on root.
+        :param sticky: str - The sides of root to which the widget will adhere and expand.
+        :param logger: funciton - The function to which status strings can be passed.
+        :param main_window: Tkinter.Tk - The main window of the application. Used to manage application data.
+        """
 
         super(LayerButton, self).__init__(root=root,
                                           button_label=button_label,
@@ -61,6 +72,7 @@ class LayerButton(GenericButton):
                                           logger=logger,
                                           main_window=main_window)
 
+        # Track the button's layer type
         self.layer_type = layer_type
         # The layer buttons are made draggable for canvas design.
         self.make_draggable()
@@ -112,11 +124,3 @@ class LayerButton(GenericButton):
             target.event_generate('<<Inherit>>', when='tail')
         except:
             pass
-
-
-def main():
-    pass
-
-
-if __name__ == '__main__':
-    main()

@@ -242,7 +242,7 @@ class Window(object):
         )
 
         self.create_new_canvas = lambda: (
-            self.canvas.clear_canvas(),
+            self.canvas.create_new_canvas(),
             self.log("New canvas created"),
             self.status_box.clear()
         )
