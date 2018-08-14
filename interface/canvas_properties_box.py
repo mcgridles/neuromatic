@@ -143,7 +143,7 @@ class CanvasPropertiesBox(PropertiesBox):
         self.prop_box.configure(cursor='hand2')
 
     def edit_popup(self, event):
-        popup = CanvasProperties(self,main_window=self.main_window, logger=self.log,canvas_frame=self.canvas_frame)
+        popup = CanvasProperties(self, main_window=self.main_window, logger=self.log, canvas_frame=self.canvas_frame)
 
     def edit_canvas_attributes(self,
                                new_canvas_name=None,
@@ -235,14 +235,14 @@ class LayerPropertiesBox(PropertiesBox):
         # Used to check if click and release occur on the same object
         self.slot_number = None
 
-    def on_start(self,event):
+    def on_start(self, event):
         x, y = self.frame.winfo_pointerx(), self.frame.winfo_pointery()
         target = str(event.widget.winfo_containing(x, y))
         match_target = re.match('\.!frame2\.!frame\.!frame2\.!canvas\.!frame\.!frame(\d{0,2})\.!(label|text|frame)',
                                 target)
         self.slot_number = match_target.group(1)
 
-    def on_drag(self,event):
+    def on_drag(self, event):
         self.frame.configure(cursor='middlebutton')
         self.box_label.configure(cursor='middlebutton')
         self.prop_box.configure(cursor='middlebutton')
@@ -303,7 +303,7 @@ class LayerPropertiesBox(PropertiesBox):
         elif self.layer_type == 'Hidden':
             return {'type': 'hidden', 'size': self.size, 'activation': self.activation}
         elif self.layer_type == 'Output':
-            return {'type':' output', 'size': self.size, 'activation': self.activation}
+            return {'type': ' output', 'size': self.size, 'activation': self.activation}
 
     def inherit_layer_type(self, event):
         # Called when button is dropped
@@ -504,16 +504,14 @@ class CanvasProperties(PropertiesEditor):
         # Construct the optimizer label and the dropdown widget.
         # Give the dropdown the list of options and the variable used to track what is selected.
         tk.Label(self.top_frame, text="Optimizer:").grid(row=5, column=0, sticky=tk.E)
-        self.optimizer_entry = tk.OptionMenu(self.top_frame, self.optimizer_selected,
-                                                  *self.optimizers)
+        self.optimizer_entry = tk.OptionMenu(self.top_frame, self.optimizer_selected, *self.optimizers)
         self.optimizer_selected.set(self.optimizer)
         self.optimizer_entry.grid(row=5, column=1)
 
         # Construct the loss label and the dropdown widget.
         # Give the dropdown the list of options and the variable used to track what is selected
         tk.Label(self.top_frame, text="Loss:").grid(row=6, column=0, sticky=tk.E)
-        self.loss_entry = tk.OptionMenu(self.top_frame, self.loss_selected,
-                                             *self.losses)
+        self.loss_entry = tk.OptionMenu(self.top_frame, self.loss_selected, *self.losses)
         self.loss_selected.set(self.loss)
         self.loss_entry.grid(row=6, column=1)
 
@@ -565,9 +563,7 @@ class CanvasProperties(PropertiesEditor):
             init_dir = self.FILE_PATH
 
         # Launch the tkinter file browse window with the inital directory
-        file_name = tk.filedialog.askopenfilename(initialdir=init_dir,
-                                                           title="Choose File...",
-                                                           filetypes=file_types)
+        file_name = tk.filedialog.askopenfilename(initialdir=init_dir, title="Choose File...", filetypes=file_types)
 
         # If no file was selected was selected, skip the following code
         if file_name:
@@ -617,7 +613,7 @@ class CanvasProperties(PropertiesEditor):
 
         # Store the new canvas name. If it has an invalid character count, cancel the saving process.
         canvas_name = self.canvas_name_entry.get()
-        if len(canvas_name)<1 or len(canvas_name)>32:
+        if len(canvas_name) < 1 or len(canvas_name) > 32:
             self.error_mes.set("Canvas Name should be 1 to 32 char")
             return
         self.canvas_name = canvas_name
@@ -627,7 +623,7 @@ class CanvasProperties(PropertiesEditor):
         if not is_integer(slot_count):
             self.error_mes.set("Number of slots should be an int")
             return
-        if int(slot_count)<3 or int(slot_count)>10:
+        if int(slot_count) < 3 or int(slot_count) > 10:
             self.error_mes.set("Number of slots should be 3 to 10")
             return
         self.slot_count = slot_count
@@ -769,10 +765,12 @@ class LayerProperties(PropertiesEditor):
                                                                                                 columnspan=2)
 
         # Construct the OK button and Cancel button with their associated functions that will run when pressed
-        tk.Button(self.top_frame, text="OK", command=self.save_configurations).grid(row=widget_row, column=2,
-                                                                                    sticky=tk.E, pady=3)
-        tk.Button(self.top_frame, text="Cancel", command=self.exit).grid(row=widget_row, column=3,
-                                                                                 sticky=tk.W, pady=3)
+        tk.Button(self.top_frame,
+                  text="OK",
+                  command=self.save_configurations).grid(row=widget_row, column=2, sticky=tk.E, pady=3)
+        tk.Button(self.top_frame,
+                  text="Cancel",
+                  command=self.exit).grid(row=widget_row, column=3, sticky=tk.W, pady=3)
 
     def save_configurations(self):
         """
@@ -787,7 +785,7 @@ class LayerProperties(PropertiesEditor):
             if not is_integer(size):
                 self.error_mes.set("Layer Size should be an int")
                 return
-            if int(size)<1 or int(size) > 1000:
+            if int(size) < 1 or int(size) > 1000:
                 self.error_mes.set("Layer Size should be 1 to 1000")
                 return
             self.size = size
