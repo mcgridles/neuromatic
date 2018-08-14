@@ -166,7 +166,6 @@ class CanvasPropertiesBox(PropertiesBox):
         self.box_properties['epochs'] = new_epochs
         self.update_text()
         self.update_slots(old_count)
-        self.log('Updated Canvas Properties')
 
     def update_slots(self, old_count):
         new_count = self.box_properties['component_slots']
@@ -283,7 +282,6 @@ class LayerPropertiesBox(PropertiesBox):
             self.layer_type = 'Empty'
         self.box_properties = self.get_slot_attributes_for_text()
         self.update_text()
-        self.log('Updated Layer Properties')
 
     def get_slot_attributes_for_text(self):
         if self.layer_type == 'Empty':
