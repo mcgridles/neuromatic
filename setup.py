@@ -9,7 +9,7 @@ setup(
     url='https://github.com/mcgridles/neuromatic/',
     packages=['backend', 'examples', 'files', 'interface', 'logs', 'tests'],
     install_requires=[
-        'Keras==2.1.6',
+        'keras==2.1.6',
         'pandas>=0.23.3',
         'sklearn>=0.0',
         'tensorflow>=1.9.0',
@@ -22,5 +22,7 @@ setup(
         'opencv-python>=3.4.2.17',
         'matplotlib>=2.2.3',
         'h5py>=2.8.0',
+        'pyyaml>=3.13',
+        'cython>=0.28.5'
     ]
 )
