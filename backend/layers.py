@@ -6,8 +6,7 @@ class GenericLayer(ABC):
 
     Available Properties:
         size: (int) -> The number of neurons in the layer
-        batch_size: (int) -> The number of batches in the training data
-        input_dim: (int) -> The number of features in the training data
+        dimensions: (int) -> The number of features in the training data
         activation: (string) -> The chosen activation function
         percentage: (float) -> The percent chance a node is ignored for a given batch
 
@@ -40,8 +39,7 @@ class InputLayer(GenericLayer):
         super(InputLayer, self).__init__(properties)
 
     def write_lines(self, fd):
-        # TODO dimsensions should not be indexed
-        line = '\tmodel(Input(shape=({0},)))\n'.format(self.layer_properties['dimensions'])
+        line = '\t\tInputLayer(input_shape=({0},)),\n'.format(self.layer_properties['dimensions'])
         fd.write(line)
 
 class DenseLayer(GenericLayer):
@@ -56,8 +54,8 @@ class DenseLayer(GenericLayer):
         super(DenseLayer, self).__init__(properties)
 
     def write_lines(self, fd):
-        line = '\tmodel.add(Dense({0}, activation=\'{1}\'))\n'.format(self.layer_properties['size'],
-                                                                      self.layer_properties['activation'])
+        line = '\t\tDense({0}, activation=\'{1}\'),\n'.format(self.layer_properties['size'],
+                                                              self.layer_properties['activation'])
         fd.write(line)
 
 class DropoutLayer(GenericLayer):
@@ -71,5 +69,5 @@ class DropoutLayer(GenericLayer):
         super(DropoutLayer, self).__init__(properties)
 
     def write_lines(self, fd):
-        line = '\tmodel.add(Dropout({0}))\n'.format(self.layer_properties['percentage'])
+        line = '\t\tDropout({0}),\n'.format(self.layer_properties['percentage'])
         fd.write(line)

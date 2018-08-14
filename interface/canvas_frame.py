@@ -1,7 +1,8 @@
 import tkinter as tk
-from interface import canvas_properites_box, trash_icon
 import copy
 import os
+
+from interface import canvas_properties_box, trash_icon
 
 
 def callback(event):
@@ -65,7 +66,7 @@ class CanvasFrame(object):
         self.scrollable_frame.bind('<Configure>', self._on_frame_configure)
         self.canvas.bind('<Configure>', self._resize_frame)
 
-        self.init_default_cavnas()
+        self.init_default_canvas()
         self._prev_width = self.canvas.winfo_width()
         self._prev_height = self.canvas.winfo_height()
 
@@ -98,8 +99,8 @@ class CanvasFrame(object):
         # print('config')
         self.canvas.configure(scrollregion=self.canvas.bbox('all'), width=200, height=200)
 
-    def init_default_cavnas(self):
-        self.canvas_properties_box = canvas_properites_box.CanvasPropertiesBox(self.top_frame,
+    def init_default_canvas(self):
+        self.canvas_properties_box = canvas_properties_box.CanvasPropertiesBox(self.top_frame,
                                                                                frame_row=0,
                                                                                frame_col=0,
                                                                                logger=self.log,
@@ -119,7 +120,7 @@ class CanvasFrame(object):
 
     def add_slot(self):
         new_col = len(self.slots) + 3
-        new_layer_box = canvas_properites_box.LayerPropertiesBox(self.scrollable_frame,
+        new_layer_box = canvas_properties_box.LayerPropertiesBox(self.scrollable_frame,
                                                                  frame_row=2,
                                                                  frame_col=new_col,
                                                                  # size_x=100,
@@ -163,7 +164,7 @@ class CanvasFrame(object):
         self.canvas_properties_box.edit_canvas_attributes(new_canvas_name='new_canvas_{}'.format(1),
                                                           new_slot_count=3,
                                                           new_data_path='None',
-                                                          new_project_dir=os.path.dirname(os.path.realpath(__file__)),
+                                                          new_project_dir=os.path.join(os.path.expanduser('~'), 'Desktop'),
                                                           new_training_size=.5,
                                                           new_optimizer='sgd',
                                                           new_loss='mean_squared_error',

@@ -1,14 +1,13 @@
 import os
 import subprocess
 
-from backend.control import Control
+from backend import control
 
 project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-add_text = lambda msg: print(msg)
 properties = {
-    'output_path': '{0}/files/'.format(project_dir),
-    'training_data_path': '{0}/files/mnist.csv'.format(project_dir),
-    'train_size': 0.8,
+    'project_directory': '{0}/files/'.format(project_dir),
+    'data_path': '{0}/files/mnist.csv'.format(project_dir),
+    'training_size': 0.8,
     'optimizer': 'adam',
     'loss': 'sparse_categorical_crossentropy',
     'metrics': ['accuracy'],
@@ -16,19 +15,25 @@ properties = {
     'layers': [
         {
             'type': 'input',
+            'dimensions': 784
+        },
+        {
+            'type': 'output',
             'size': 10,
             'activation': 'softmax',
-            'input_dim': 784
-        },
+        }
     ]
 }
 
+# Unzip MNIST dataset
 subprocess.call('unzip {0}/files/mnist.csv.zip -d {0}/files/'.format(project_dir), shell=True)
 
-controller = Control(add_text)
+controller = control.Control()
+controller.init_status(lambda msg: print(msg))
 controller.set_properties(properties)
 controller.generate_network()
-controller.train_network()
+controller.train_in_new_thread()
 
+# Remove files created while running
 os.remove('{0}/files/mnist.csv'.format(project_dir))
 os.remove('{0}/backend/network.py'.format(project_dir))

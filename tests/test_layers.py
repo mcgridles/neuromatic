@@ -1,7 +1,7 @@
 import unittest
 from unittest import mock
 
-from backend.layers import InputLayer, DenseLayer, DropoutLayer
+from backend import layers
 
 @mock.patch('builtins.open')
 class TestLayers(unittest.TestCase):
@@ -17,7 +17,7 @@ class TestLayers(unittest.TestCase):
 
     def test_input_layer_write(self, mock_open):
         # Arrange
-        input_layer = InputLayer(self.layer_properties)
+        input_layer = layers.InputLayer(self.layer_properties)
 
         # Act
         input_layer.write_lines(mock_open.return_value.__enter__.return_value)
@@ -29,7 +29,7 @@ class TestLayers(unittest.TestCase):
 
     def test_dense_layer_write(self, mock_open):
         # Arrange
-        dense_layer = DenseLayer(self.layer_properties)
+        dense_layer = layers.DenseLayer(self.layer_properties)
 
         # Act
         dense_layer.write_lines(mock_open.return_value.__enter__.return_value)
@@ -41,7 +41,7 @@ class TestLayers(unittest.TestCase):
 
     def test_dropout_layer_write(self, mock_open):
         # Arrange
-        dropout_layer = DropoutLayer(self.layer_properties)
+        dropout_layer = layers.DropoutLayer(self.layer_properties)
 
         # Act
         dropout_layer.write_lines(mock_open.return_value.__enter__.return_value)
