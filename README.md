@@ -50,6 +50,14 @@ User specified path to the data on which the model will be trained. (CSV)
 **Project Directory**
 
 The directory to which all project files will be saved. Project files will take on the name specified by Canvas Name.
+Files stored in this directory:
+* canvas property pkl file `<canvas_name>.pkl`
+  * Used to reload a saved canvas design to the application
+* neural network python file `<canvas_name>_network.py`
+  * Used to load the canvas design into Keras
+* trained model files `<canvas_name>_weights.h5`, `<canvas_name>_model.h5`, `<canvas_name>_model.json`
+  * Used to reload a trained model into Keras
+
 
 **Training Size**
 
@@ -68,7 +76,8 @@ accuracy of the model, but also increases training time.
 ### Layers
 A layer can be clicked and dragged from the top right of the application window and dropped on an empty slot on the
 canvas to add the layer to the neural network design. Left clicking a layer on the canvas will open a properties editor
-box.
+box. To delete a canvas layer, click and hold on the canvas layer, drag the cursor over the trash icon at the bottom
+left of the canvas, and release the click. 
 
 **Input Layer**
 
@@ -78,14 +87,14 @@ box.
 
 **Dropout Layer**
 
-If you would like to use existing training data A
-test csv file is located in the `files` folder, simply unzip it, and point to it in the training data path. The project
-directory path will be the location of all output files which include the canvas property pkl file, the python script,
-and the h5 trained model file. Once the project properties are set, click okay to update the canvas. 
+### Control Buttons
 
-Next, to create a neural network, drag and drop the layer types on the right side onto slots in the canvas. If you wish
-to edit layer properties simply click the layer on the canvas to edit its properties. To delete individual layers drag
-them from the canvas to the trash icon. To clear all slots click the top clear slots button. To set all canvas
+**New Canvas**
+
+**Generate Network**
+
+
+To clear all slots click the top clear slots button. To set all canvas
 properties to default press the new canvas button. To open a saved canvas simply click file->open and select the pkl
 file you wish to load. A well-functioning neural network .pkl configuration can be found in the file folder, just be
 sure to change the project directory and csv location in project properties. Be sure that the input dimensions
