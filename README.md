@@ -66,14 +66,24 @@ Files stored in this directory:
 The proportion of training data to test data, in the training data file, that the application will use to train the
 model and test its accuracy.
 
+**Loss**
+
+The loss or cost function is the method used to evaluate how well a neural network is performing. The goal in training a neural network is to minimize this function.
+
+- [Introduction to Loss Functions](https://blog.algorithmia.com/introduction-to-loss-functions/)
+- [Keras documentation](https://keras.io/losses/)
+
 **Optimizer**
 
-**Loss**
+The optimizer is the algorithm used to minimize a loss function, or improve the weights and biases during training. A classic optimizer is [stochastic gradient descent](https://machinelearningmastery.com/gradient-descent-for-machine-learning/), however a more popular optimizer [Adam](https://machinelearningmastery.com/adam-optimization-algorithm-for-deep-learning/) is often used today because it achieves good results quickly.
+
+- [More info on optimizers](http://ruder.io/optimizing-gradient-descent/)
+- [Keras documentation](https://keras.io/optimizers/)
 
 **Epochs**
 
-Number of times the training data will run through the neural network. Increasing the number of Epochs increases the
-accuracy of the model, but also increases training time.
+Number of times the training data will be run through the neural network. Increasing the number of epochs can increase the
+accuracy of the model, however the rate of improvement will eventually degrade. Increasing the number of epochs also increases training time.
 
 ### Layers
 A layer can be clicked and dragged from the top right of the application window and dropped on an empty slot on the
@@ -82,21 +92,25 @@ box. To delete a canvas layer, click and hold on the canvas layer, drag the curs
 left of the canvas, and release the click. 
 
 **Input Layer**
+
 This must be the first layer and represents the first column of the neural network. 
 
 The only input this takes is the dimensions of the input data, which is the number of features. For the MNIST dataset this will be 784, but it will be different for every dataset.
 
 **Output Layer**
+
 This represents the final column of the neural network, although it is not required to be the final layer because the ouput layer and hidden layer are functionally the same.
 
 This layer type takes an activation function, which adds non-linearity to the network and allows it to classify more complex data, and the size. Size represents the number of classifications the network can make; for the MNIST dataset this number will be 10 because the network can classify a data point as an integer 0-9. 
 
 **Hidden Layer**
-Hidden layers are all middle columns in a neural network. More hidden layers means the network can classify more complex data, although too many hidden layers may cause the network to not "[overfit](https://en.wikipedia.org/wiki/Overfitting)", which is when it has a hard time generalizing for new data.
+
+Hidden layers are all middle columns in a neural network. More hidden layers means the network can classify more complex data, although too many hidden layers may cause the network to not [overfit](https://en.wikipedia.org/wiki/Overfitting), which is when it has a hard time generalizing for new data.
 
 This layer type takes an activation function and a size, just like the output layer, but in this case the size just corresponds to the number of nodes in the layer.
 
 **Dropout Layer**
+
 [Dropout](https://medium.com/@amarbudhiraja/https-medium-com-amarbudhiraja-learning-less-to-learn-better-dropout-in-deep-machine-learning-74334da4bfc5) layers prevent overfitting by reducing a network's ability to rely too heavily on a single neuron.
 
 This layer type only takes is a percentage, which represents the probability that any given node is ignored during a single epoch. By ignoring nodes no one node can become too highly weighted, which could cause it to have too much of an effect on the system. This helps improve the network's ability to generalize on data.
