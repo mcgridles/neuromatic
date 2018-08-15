@@ -141,28 +141,17 @@ Cancels the training of the model.
 
 Sets all current slots to empty layers
 
-To clear all slots click the top clear slots button. To set all canvas
-properties to default press the new canvas button. To open a saved canvas simply click file->open and select the pkl
-file you wish to load. A well-functioning neural network .pkl configuration can be found in the file folder, just be
-sure to change the project directory and csv location in project properties. Be sure that the input dimensions
-correspond to the number of features in the csv file. For the Mnist data set this input dimension is 784.
+### Tutorial
 
-Once you have a satisfactory neural network designed, click the generate button. This will create a python script in
-the project directory which can be externally used to create the neural network. After a script is generated you can
-train the model by clicking the train model button at the top, and can cancel it at any time by clicking the top cancel
-button. The trained model will be saved to the selected directory for use outside of the program.
-
-###Tutorial
-
-If this is your first time working with neuromatic it is suggested you follow this short guide to create your first
-network. You can begin by unzipping the mnist csv.zip file located in the files directory. Next follow the installation
-steps given in the setup section and then launch the application. When the program loads begin by modifying the
-canvas properties to point to the location of the mnist data set you have just unzipped. All other properties can
-be set to your liking. Next, when you begin designing the network, drag an input layer into the first slot on the
-canvas, and set its dimensions to 784, this is the feature size of the mnist data set. Next fill in all remaining
-layers. When the design is complete, click the generate button to create the python script representation of your
-network. Finally, click the train button to train a model. This will output the created model to your selected
-project directory as well as tell you how accurate the model was after training.
+If this is your first time working with neuromatic, it is suggested you follow this short guide to create your first
+network. You can begin by unzipping the mnist csv.zip file located in the files directory. Next, follow the installation
+steps given in the setup section of this README and then launch the application. When the program loads, begin by
+modifying the canvas properties to point to the location of the mnist data set you have just unzipped. All other
+properties can be set to your liking. Next, when you begin designing the network, drag an input layer into the first
+slot on the canvas and set its dimensions to 784. This is the feature size of the mnist data set. Next, fill in all
+remaining layers. When the design is complete, click the generate button to create the Python script representation of
+your network. Finally, click the train button to train a model. This will output the trained model to your selected
+project directory and the application will display the accuracy of the trained model.
 
 
 ## Data
