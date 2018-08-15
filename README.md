@@ -8,6 +8,8 @@ this application. **This application is supported on Unix based operating system
 
 ![neural network diagram](files/nn_diagram.png)
 
+A neural network with three layers; an input layer with three "nodes" or "neurons", a hidden layer with four, and an output layer with two. This type of network would output a probability that a given input belongs to class 1 or class 2, corresponding to the two output nodes.
+
 ## Setup
 ### Installation
 **Requires:**
@@ -80,12 +82,24 @@ box. To delete a canvas layer, click and hold on the canvas layer, drag the curs
 left of the canvas, and release the click. 
 
 **Input Layer**
+This must be the first layer and represents the first column of the neural network. 
+
+The only input this takes is the dimensions of the input data, which is the number of features. For the MNIST dataset this will be 784, but it will be different for every dataset.
 
 **Output Layer**
+This represents the final column of the neural network, although it is not required to be the final layer because the ouput layer and hidden layer are functionally the same.
+
+This layer type takes an activation function, which adds non-linearity to the network and allows it to classify more complex data, and the size. Size represents the number of classifications the network can make; for the MNIST dataset this number will be 10 because the network can classify a data point as an integer 0-9. 
 
 **Hidden Layer**
+Hidden layers are all middle columns in a neural network. More hidden layers means the network can classify more complex data, although too many hidden layers may cause the network to not "[overfit](https://en.wikipedia.org/wiki/Overfitting)", which is when it has a hard time generalizing for new data.
+
+This layer type takes an activation function and a size, just like the output layer, but in this case the size just corresponds to the number of nodes in the layer.
 
 **Dropout Layer**
+[Dropout](https://medium.com/@amarbudhiraja/https-medium-com-amarbudhiraja-learning-less-to-learn-better-dropout-in-deep-machine-learning-74334da4bfc5) layers prevent overfitting by reducing a network's ability to rely too heavily on a single neuron.
+
+This layer type only takes is a percentage, which represents the probability that any given node is ignored during a single epoch. By ignoring nodes no one node can become too highly weighted, which could cause it to have too much of an effect on the system. This helps improve the network's ability to generalize on data.
 
 ### Control Buttons
 
@@ -138,10 +152,20 @@ project directory as well as tell you how accurate the model was after training.
 
 
 ## Data
-A CSV formatted version of the MNIST dataset (example shown below) is included with this project under
-`neuromatic/files/mnist.csv.zip`. All data must be pre-processed to match the csv format. 
+A CSV formatted version of the MNIST dataset (example shown below) is included with this project under `neuromatic/files/mnist.csv.zip`. All data must be preprocessed to match the csv format. 
 
 ![mnist examples](files/mnist_examples.png)
+
+### Data Processing
+This system assumes the user has preprocessed their data beforehand. This includes converting data into CSV format.
+
+Properly understanding and processing data is crucial in the field of machine learning. Here are a few resources that may help get started.
+
+- [Data Preprocessing in Python](https://www.geeksforgeeks.org/data-preprocessing-machine-learning-python/)
+- [How to Prepare Data for Machine Learning](https://machinelearningmastery.com/how-to-prepare-data-for-machine-learning/)
+- [Data Processing: Data Types](https://medium.com/ai%C2%B3-theory-practice-business/the-engineers-guide-to-machine-learning-data-processing-data-types-ba40e6bf8765)
+- [Data Preprocessing using Scikit Learn](https://www.analyticsvidhya.com/blog/2016/07/practical-guide-data-preprocessing-python-scikit-learn/)
+- [ML Data Preprocessing](https://medium.com/@techspecialistacademy/machine-learning-ml-data-preprocessing-d968f86b703)
 
 ## Examples
 These are two baseline networks manually built using Keras and TensorFlow. Running the scripts trains them on the MNIST
