@@ -23,6 +23,7 @@ setup(
         'matplotlib>=2.2.3',
         'h5py>=2.8.0',
         'pyyaml>=3.13',
-        'cython>=0.28.5'
+        'cython>=0.28.5',
+        'absl-py'
     ]
 )
