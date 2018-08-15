@@ -91,8 +91,27 @@ left of the canvas, and release the click.
 
 **New Canvas**
 
-**Generate Network**
+Erases the current canvas and sets all canvas properties to their default values.
 
+**Generate Script**
+
+Creates a python script capable of creating the neural network. The file is saved to the project
+directory and can be used outside of neuromatic. A copy is also made for neuromatic to use in
+training the network. Can only be used once a valid canvas has been created.
+
+**Train Model**
+
+Used after the generate script python file has been created. Trains the network on the selected
+training data and saves the h5 and json files to the project directory, for the user to use outside
+of neuromatic. Displays the status of the training process and outputs the created models accuracy.
+
+**Cancel**
+
+Cancels the training of the model.
+
+**Clear Canvas**
+
+Sets all current slots to empty layers
 
 To clear all slots click the top clear slots button. To set all canvas
 properties to default press the new canvas button. To open a saved canvas simply click file->open and select the pkl
@@ -104,6 +123,19 @@ Once you have a satisfactory neural network designed, click the generate button.
 the project directory which can be externally used to create the neural network. After a script is generated you can
 train the model by clicking the train model button at the top, and can cancel it at any time by clicking the top cancel
 button. The trained model will be saved to the selected directory for use outside of the program.
+
+###Tutorial
+
+If this is your first time working with neuromatic it is suggested you follow this short guide to create your first
+network. You can begin by unzipping the mnist csv.zip file located in the files directory. Next follow the installation
+steps given in the setup section and then launch the application. When the program loads begin by modifying the
+canvas properties to point to the location of the mnist data set you have just unzipped. All other properties can
+be set to your liking. Next, when you begin designing the network, drag an input layer into the first slot on the
+canvas, and set its dimensions to 784, this is the feature size of the mnist data set. Next fill in all remaining
+layers. When the design is complete, click the generate button to create the python script representation of your
+network. Finally, click the train button to train a model. This will output the created model to your selected
+project directory as well as tell you how accurate the model was after training.
+
 
 ## Data
 A CSV formatted version of the MNIST dataset (example shown below) is included with this project under
