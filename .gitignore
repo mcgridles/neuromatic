@@ -3,3 +3,7 @@ venv/*
 __pycache__
 .DS_Store
 logs/*.log
+build/
+dist/
+neuromatic.egg-info
+backend/network.py
